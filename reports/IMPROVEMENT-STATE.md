@@ -9,7 +9,18 @@ Consecutive empty research rounds: 0
 This file is the loop's only memory between runs. The loop reads it first and writes it
 last. Keep it short.
 
-## Backlog (actionable ideas — highest value first)
+## Backlog
+
+**Canonical backlog = GitHub issues labeled `loop-candidate`** (`gh issue list --label loop-candidate --state open`).
+The loop picks the highest-value open issue each run and closes it via `Closes #N` on
+merge. Research rounds create new `loop-candidate` issues. The list below is a
+**pre-issue idea pool** — the research phase promotes these to issues when it runs.
+
+Research-derived items are already filed as issues **#2–#8** (passive voice, escape
+clause, negative requirement, unclear actor, EARS pattern, ISO-29148 per-req judging,
+score calibration).
+
+### Idea pool (not yet issues; promote during research)
 
 Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]` blocked.
 
@@ -25,13 +36,6 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
 - [ ] adapter-config-schema — Validate `.sddreview.toml` against a schema and warn on unknown keys. (sddreview gap)
 - [ ] precommit-hook — Provide a pre-commit hook config that runs `sddreview review --rules --fail-under`. (CI/dev-loop practice)
-- [ ] pitfall-passive-voice — Detect requirements in passive voice / with no clear actor ("shall be able to be ..."). (IBM RQA issue taxonomy / INCOSE)
-- [ ] pitfall-escape-clause — Detect escape/loophole clauses in requirements ("if possible", "where feasible", "as appropriate"). (IBM RQA / Requirements Smells)
-- [ ] pitfall-negative-requirement — Flag requirements stated negatively ("shall not ..."), which are hard to verify. (IBM RQA)
-- [ ] pitfall-unclear-actor — Flag requirements with no identifiable subject/actor. (IBM RQA / ISO 29148 unambiguous)
-- [ ] check-ears-pattern — Optional check that functional requirements follow an EARS-style pattern (When/While/Where/If ... the system shall ...). (QVscribe / EARS)
-- [ ] judge-iso29148-perreq — Judge-side per-requirement scoring on ISO/IEC/IEEE 29148 characteristics (singular, complete, correct). (ISO/IEC/IEEE 29148; cf. QVscribe 5-pt, RQA 11-score)
-- [ ] score-calibration — Compare sddreview scores against IBM RQA / QVscribe-style per-requirement scoring as a calibration benchmark. (competitive analysis)
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)

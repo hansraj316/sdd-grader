@@ -44,23 +44,29 @@ For each open PR from a `loop/*` branch (`gh pr list --search "head:loop/" --jso
 
 ### Phase 2 — Decide whether to build this run
 - Count open `loop/*` PRs. **If ≥ 3, skip to Phase 7** (state + stop).
-- Read `reports/IMPROVEMENT-STATE.md`. If the backlog has no actionable idea, go to Phase 3.
+- **The backlog is GitHub issues labeled `loop-candidate`.** List them:
+  `gh issue list --label loop-candidate --state open --json number,title,body`.
+  These are the actionable candidates (`reports/IMPROVEMENT-STATE.md` is now a mirror +
+  run-log). If any open issues exist, skip Phase 3 and go to Phase 4.
 
-### Phase 3 — Research (when backlog has < 3 actionable ideas, or every 5th iteration)
+### Phase 3 — Research (only when < 3 open `loop-candidate` issues, or every 5th iteration)
 Fan out **sub-agents in parallel**, one per SDD framework, each returning concrete
 features `sddreview` lacks. Cover at least: **OpenSpec, Spec-Kit extensions/presets,
 AIDE, Canon, MAQA, Kiro, Tessl**, plus requirements-engineering practice (ISO/IEC/IEEE
-29148, INVEST, Gherkin). Each sub-agent answers: "What concrete, detectable spec-quality
-check or reviewer feature does this framework suggest that sddreview does not yet have?"
-Append **new, de-duplicated** ideas to the backlog with a one-line source. If two
-consecutive research rounds yield nothing new, note it (see Stop conditions).
+29148, INVEST, Gherkin, IBM RQA, QVscribe, EARS). Each sub-agent answers: "What concrete,
+detectable spec-quality check or reviewer feature does this framework suggest that
+sddreview does not yet have?" For each **new, de-duplicated** idea (check it against open
+AND closed `loop-candidate` issues first), **create a GitHub issue**:
+`gh issue create --label loop-candidate,enhancement --title "..." --body "what/why/source/acceptance"`.
+If two consecutive research rounds create no new issues, set `STATUS: NOTHING-TO-IMPROVE`.
 
 ### Phase 4 — Implement ONE improvement
-- Pick the highest-value actionable idea from the backlog.
+- Pick the highest-value open `loop-candidate` issue. Note its number `#N`.
 - `git checkout -b loop/<short-slug>`.
-- Implement it: code + tests + docs. Prefer extending the pitfall catalog
-  (`sddreview/rubric/pitfalls.toml`) and `engine/lint.py`/`engine/judge.py`, adding an
-  adapter, or a report/dashboard feature. Keep it focused.
+- Implement it: code + tests + docs, following the issue's Acceptance section. Prefer
+  extending the pitfall catalog (`sddreview/rubric/pitfalls.toml`) and
+  `engine/lint.py`/`engine/judge.py`, adding an adapter, or a report/dashboard feature.
+  Keep it focused — one issue per PR.
 
 ### Phase 5 — Objective gate (must pass before any PR)
 ```
@@ -73,7 +79,9 @@ branch, mark the idea `blocked`, go to Phase 7.
 
 ### Phase 6 — Open a PR (do NOT merge here)
 - Commit (Co-Authored-By trailer), `git push -u origin loop/<slug>`.
-- `gh pr create --title "..." --body "what + why + how tested"`.
+- `gh pr create --title "..." --body "what + why + how tested. Closes #N"` — the
+  **`Closes #N`** line auto-closes the `loop-candidate` issue when the PR squash-merges.
+- Comment on the issue: `gh issue comment N --body "Implemented in PR #<pr>; awaiting CI."`
 - CI runs on the PR. It will be merged in a **future** run's Phase 1 once green.
 
 ### Phase 7 — Update state and stop
@@ -84,12 +92,12 @@ branch, mark the idea `blocked`, go to Phase 7.
 
 ## Stop conditions (the loop is "done")
 Write `STATUS: NOTHING-TO-IMPROVE` at the top of the state file when **all** hold:
-- Backlog has no actionable ideas, AND
-- Two consecutive research rounds found nothing new, AND
+- No open `loop-candidate` issues remain, AND
+- Two consecutive research rounds created no new issues, AND
 - No open `loop/*` PRs remain.
 
 While in that state the routine still fires but should no-op (Phase 0–1 only). The user
-can add ideas to the backlog to wake it up.
+(or anyone) can wake it up by **opening a new issue labeled `loop-candidate`**.
 
 ## Autonomy
 Level 4 (auto-merge on green CI), explicitly chosen by the user. The independent grader
