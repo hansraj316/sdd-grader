@@ -24,6 +24,36 @@ _US_TAG_RE = re.compile(r"\[US\d+\]", re.IGNORECASE)
 _US_HEADING_RE = re.compile(r"user stor(?:y|ies)\s*(\d+)", re.IGNORECASE)
 _DIGIT_RE = re.compile(r"\d")
 _FILE_PATH_RE = re.compile(r"[\w./-]+\.[A-Za-z0-9]{1,5}\b")
+_NFR_RE = re.compile(
+    r"\b(latency|throughput|response time|uptime|availab|scalab|concurren|"
+    r"requests per second|\brps\b|performance|load handling)\b",
+    re.IGNORECASE,
+)
+_REQUIREMENTish_RE = re.compile(r"\b(shall|must|should|FR-\d|NFR-\d)\b", re.IGNORECASE)
+
+
+def _nfr_without_threshold(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement lines naming an NFR quality but stating no numeric threshold."""
+    p = catalog.get("SPEC-NFR-NO-THRESHOLD")
+    if p is None or not p.applies_to(art.type):
+        return []
+    for i, line in enumerate(art.raw.splitlines(), start=1):
+        # Strip requirement IDs (FR-001, NFR-2, T012, US3) so their digits don't
+        # masquerade as a measurable threshold.
+        without_ids = re.sub(r"\b(?:FR|NFR|US|T)-?\d+\b", "", line, flags=re.IGNORECASE)
+        if (
+            _NFR_RE.search(line)
+            and _REQUIREMENTish_RE.search(line)
+            and not _DIGIT_RE.search(without_ids)
+        ):
+            return [
+                _from_pitfall(
+                    p, art.path,
+                    "Non-functional requirement stated with no measurable threshold.",
+                    line=i,
+                )
+            ]
+    return []
 
 
 def _from_pitfall(
@@ -185,6 +215,8 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
                     )
                 )
                 break
+
+    out.extend(_nfr_without_threshold(art, catalog))
     return out
 
 
@@ -216,6 +248,8 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
             out.append(
                 _from_pitfall(p, art.path, "Constitution violation is not justified in Complexity Tracking.")
             )
+
+    out.extend(_nfr_without_threshold(art, catalog))
     return out
 
 

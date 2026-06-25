@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-06-25T08:51:19.961749+00:00",
+  "good": {
+    "path": "/Users/hansraj/projects/SDD-Reviewer/tests/fixtures/speckit_good",
+    "overall": 100.0,
+    "artifacts": [
+      {
+        "type": "spec",
+        "overall": 100.0,
+        "findings": 0
+      },
+      {
+        "type": "plan",
+        "overall": 100.0,
+        "findings": 0
+      },
+      {
+        "type": "tasks",
+        "overall": 100.0,
+        "findings": 0
+      },
+      {
+        "type": "data-model",
+        "overall": 100.0,
+        "findings": 0
+      },
+      {
+        "type": "contract",
+        "overall": 100.0,
+        "findings": 0
+      },
+      {
+        "type": "constitution",
+        "overall": 100.0,
+        "findings": 0
+      }
+    ],
+    "pitfalls": [],
+    "finding_count": 0
+  },
+  "bad": {
+    "path": "/Users/hansraj/projects/SDD-Reviewer/tests/fixtures/speckit_bad",
+    "overall": 60.5,
+    "artifacts": [
+      {
+        "type": "spec",
+        "overall": 24.0,
+        "findings": 10
+      },
+      {
+        "type": "plan",
+        "overall": 68.0,
+        "findings": 4
+      },
+      {
+        "type": "tasks",
+        "overall": 86.0,
+        "findings": 3
+      },
+      {
+        "type": "constitution",
+        "overall": 74.0,
+        "findings": 3
+      }
+    ],
+    "pitfalls": [
+      "CONST-PLACEHOLDER",
+      "CONST-UNVERSIONED",
+      "PLAN-CONSTITUTION-UNCHECKED",
+      "REQ-COMPOUND",
+      "SPEC-AMBIGUOUS-WORDING",
+      "SPEC-COMPARATIVE-NO-REFERENCE",
+      "SPEC-IMPL-DETAIL-LEAK",
+      "SPEC-LEFTOVER-PLACEHOLDER",
+      "SPEC-MISSING-ACCEPTANCE",
+      "SPEC-MISSING-EDGE-CASES",
+      "SPEC-NON-MEASURABLE-SUCCESS",
+      "SPEC-SPECULATIVE-FEATURE",
+      "SPEC-UNRESOLVED-CLARIFICATION",
+      "TASKS-MALFORMED",
+      "TASKS-TESTS-NOT-FIRST"
+    ],
+    "finding_count": 20
+  },
+  "extras": []
+}
