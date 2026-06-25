@@ -156,6 +156,17 @@ detect = "Edge Cases section is absent, empty, or only a placeholder."
 fix = "Enumerate boundary conditions and error scenarios with expected behavior."
 
 [[pitfall]]
+id = "SPEC-NFR-NO-THRESHOLD"
+name = "Non-functional requirement without a measurable threshold"
+dimension = "testability"
+artifacts = ["spec", "plan"]
+severity = "medium"
+method = "both"
+why = "29148 'verifiable': an NFR like 'fast' or 'highly available' with no number can't be tested or accepted, so the implementation has no target to hit."
+detect = "A requirement line about performance/latency/throughput/availability/scalability with no numeric threshold."
+fix = "State the metric and target, e.g. 'p95 latency < 200ms' or '99.9% monthly uptime'."
+
+[[pitfall]]
 id = "REQ-COMPOUND"
 name = "Compound requirement (not singular)"
 dimension = "clarity"
