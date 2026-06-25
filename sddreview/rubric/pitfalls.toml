@@ -1,0 +1,320 @@
+# SDD anti-pattern catalog. Grounded in research/PITFALLS.md.
+#
+# Each [[pitfall]] entry:
+#   id            stable identifier (findings + history reference this)
+#   name          short human label
+#   dimension     scoring dimension it counts against
+#   artifacts     artifact types it applies to
+#   severity      info | low | medium | high | critical
+#   method        lint | judge | both  (who can detect it)
+#   why           why it hurts (downstream impact)
+#   detect        how a reviewer detects it
+#   fix           how to fix it
+#   patterns      (optional) regex fragments for generic lexical lint checks
+#
+# `method = "lint"` / `"both"` entries are detected by the deterministic engine
+# (generic `patterns` checks, or a dedicated check keyed by `id`). The full catalog
+# is also handed to the LLM judge as guidance, which owns `method = "judge"`.
+
+# ----------------------------------------------------------------------------- spec
+
+[[pitfall]]
+id = "SPEC-UNRESOLVED-CLARIFICATION"
+name = "Unresolved [NEEDS CLARIFICATION] markers"
+dimension = "completeness"
+artifacts = ["spec", "plan"]
+severity = "high"
+method = "lint"
+why = "Spec-Kit's own marker for an unanswered question. Left in, the agent guesses, and the code implements a guess instead of the requirement."
+detect = "Count remaining `[NEEDS CLARIFICATION...]` markers in the artifact."
+fix = "Resolve each marker (run /speckit.clarify) and replace it with a concrete decision; remove the marker."
+
+[[pitfall]]
+id = "SPEC-LEFTOVER-PLACEHOLDER"
+name = "Unfilled template placeholders / TODO / TBD"
+dimension = "completeness"
+artifacts = ["spec", "plan", "tasks", "constitution"]
+severity = "high"
+method = "lint"
+why = "Placeholders mean the section was never authored; the artifact is a half-filled template, not a specification."
+detect = "Match leftover template tokens and stubs."
+fix = "Fill in every placeholder with real content; delete sections that genuinely do not apply."
+patterns = [
+  "\\bTODO\\b", "\\bTBD\\b", "\\bFIXME\\b", "\\bXXX\\b",
+  "\\[FEATURE NAME\\]", "\\[PROJECT_NAME\\]", "\\[PRINCIPLE_\\d", "\\[DATE\\]",
+  "\\$ARGUMENTS", "\\[Brief Title\\]", "\\[Entity \\d\\]", "\\[REMOVE IF UNUSED\\]",
+  "\\bplaceholder\\b", "<placeholder>", "\\.\\.\\.\\s*$",
+]
+
+[[pitfall]]
+id = "SPEC-AMBIGUOUS-WORDING"
+name = "Ambiguous / subjective wording"
+dimension = "clarity"
+artifacts = ["spec", "plan"]
+severity = "medium"
+method = "both"
+why = "ISO/IEC/IEEE 29148 requires requirements be unambiguous — interpretable in only one way. Vague terms let the implementation diverge from intent (a 'Requirements Smell')."
+detect = "Flag subjective/vague terms that have no objective meaning in a requirement."
+fix = "Replace each vague term with a concrete, measurable condition (a number, a unit, an enumerated case)."
+patterns = [
+  "\\bfast\\b", "\\bslow\\b", "\\bquick(ly)?\\b", "\\beasy\\b", "\\bsimple\\b",
+  "\\buser-?friendly\\b", "\\bintuitive\\b", "\\brobust\\b", "\\bscalable\\b",
+  "\\bseamless(ly)?\\b", "\\befficient(ly)?\\b", "\\bappropriate(ly)?\\b",
+  "\\bas needed\\b", "\\bas required\\b", "\\bif possible\\b", "\\bsome\\b",
+  "\\bminimal\\b", "\\bmodern\\b", "\\bsufficient(ly)?\\b", "\\betc\\.",
+]
+
+[[pitfall]]
+id = "SPEC-COMPARATIVE-NO-REFERENCE"
+name = "Comparative without a reference point"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "both"
+why = "A comparative ('faster', 'more secure') with no baseline is unverifiable — you can't test against an unstated reference (a 'Requirements Smell')."
+detect = "Flag comparatives that lack an explicit baseline or threshold."
+fix = "State the baseline and target ('p95 latency < 200ms', 'faster than the current 3s import')."
+patterns = [
+  "\\bfaster\\b", "\\bslower\\b", "\\bbetter\\b", "\\bworse\\b",
+  "\\bmore (secure|reliable|performant|responsive)\\b", "\\bas (fast|quick) as possible\\b",
+]
+
+[[pitfall]]
+id = "SPEC-IMPL-DETAIL-LEAK"
+name = "Implementation / tech-stack detail in the spec"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "both"
+why = "Spec-Kit requires specs be technology-agnostic (WHAT not HOW). Tech detail in the spec over-constrains design and confuses the boundary with plan.md."
+detect = "Flag concrete tech-stack tokens (languages, frameworks, datastores, protocols) appearing in spec.md."
+fix = "Move technology choices to plan.md; keep the spec about user needs and behavior."
+patterns = [
+  "\\bReact\\b", "\\bVue\\b", "\\bAngular\\b", "\\bPostgres(QL)?\\b", "\\bMySQL\\b",
+  "\\bMongoDB\\b", "\\bRedis\\b", "\\bKafka\\b", "\\bDocker\\b", "\\bKubernetes\\b",
+  "\\bGraphQL\\b", "\\bgRPC\\b", "\\bPython\\b", "\\bTypeScript\\b", "\\bJava\\b",
+  "\\bREST API\\b", "\\bmicroservice", "\\bDjango\\b", "\\bFastAPI\\b", "\\bnpm\\b",
+]
+
+[[pitfall]]
+id = "SPEC-NON-MEASURABLE-SUCCESS"
+name = "Non-measurable success criteria"
+dimension = "testability"
+artifacts = ["spec"]
+severity = "high"
+method = "both"
+why = "29148 requires requirements be verifiable/measurable. Success Criteria with no number or unit can't tell you whether the feature succeeded."
+detect = "Success Criteria / Measurable Outcomes section contains no quantities, units, or thresholds."
+fix = "Express each outcome as a measurable metric with a target value and unit."
+
+[[pitfall]]
+id = "SPEC-MISSING-ACCEPTANCE"
+name = "User story without acceptance criteria"
+dimension = "testability"
+artifacts = ["spec"]
+severity = "high"
+method = "both"
+why = "INVEST 'Testable': a story with no conditions of satisfaction can't be verified, so generated tests are guesses."
+detect = "A user-story section with no acceptance criteria / Given-When-Then scenario."
+fix = "Add explicit acceptance criteria per story, ideally Gherkin Given/When/Then."
+
+[[pitfall]]
+id = "SPEC-NON-INDEPENDENT-STORY"
+name = "User stories not independently testable"
+dimension = "traceability"
+artifacts = ["spec"]
+severity = "medium"
+method = "judge"
+why = "INVEST 'Independent/Small': tangled or oversized stories can't be delivered as standalone MVP slices, breaking incremental delivery."
+detect = "Stories that depend on each other or bundle many capabilities (judge)."
+fix = "Split into thin vertical slices, each independently deliverable and testable."
+
+[[pitfall]]
+id = "SPEC-SPECULATIVE-FEATURE"
+name = "Speculative / future-proofing requirement"
+dimension = "feasibility"
+artifacts = ["spec", "plan"]
+severity = "low"
+method = "both"
+why = "Spec-Kit's methodology calls out speculative 'might need' features and unjustified future-proofing as anti-patterns that inflate scope."
+detect = "Flag speculative hedging language not tied to a concrete user story."
+fix = "Remove speculative items, or convert to a concrete, justified requirement with a user story."
+patterns = [
+  "\\bmight need\\b", "\\bnice to have\\b", "\\bin the future\\b", "\\bfuture-?proof",
+  "\\beventually\\b", "\\bmay want to\\b", "\\bcould potentially\\b", "\\bdown the road\\b",
+]
+
+[[pitfall]]
+id = "SPEC-MISSING-EDGE-CASES"
+name = "Missing edge cases / error scenarios"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "Without boundary and error scenarios, the implementation handles only the happy path; 29148 'complete'."
+detect = "Edge Cases section is absent, empty, or only a placeholder."
+fix = "Enumerate boundary conditions and error scenarios with expected behavior."
+
+[[pitfall]]
+id = "REQ-COMPOUND"
+name = "Compound requirement (not singular)"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "low"
+method = "both"
+why = "29148 'singular': a requirement bundling several capabilities can't be tested or traced cleanly and is partially satisfiable."
+detect = "Requirement lines joining multiple capabilities with 'and'/'or'/';' (judge confirms)."
+fix = "Split into one requirement per capability."
+
+# ----------------------------------------------------------------------------- plan
+
+[[pitfall]]
+id = "PLAN-CONSTITUTION-UNCHECKED"
+name = "Constitution Check missing or not passed"
+dimension = "constitutional"
+artifacts = ["plan"]
+severity = "high"
+method = "lint"
+why = "The Constitution Check is a mandatory Spec-Kit gate before Phase 0. If absent or unaddressed, architectural principles aren't enforced."
+detect = "No 'Constitution Check' section, or it isn't marked as passing."
+fix = "Add the Constitution Check, evaluate each principle/gate, and mark pass/fail explicitly."
+
+[[pitfall]]
+id = "PLAN-UNJUSTIFIED-COMPLEXITY"
+name = "Constitution violation without justification"
+dimension = "constitutional"
+artifacts = ["plan"]
+severity = "high"
+method = "both"
+why = "Spec-Kit requires any gate violation be justified in Complexity Tracking; unjustified complexity is exactly the over-engineering the gates exist to stop."
+detect = "Constitution Check shows a violation/FAIL but Complexity Tracking is empty or a placeholder."
+fix = "Either remove the complexity, or document a concrete justification and the simpler alternative rejected."
+
+[[pitfall]]
+id = "PLAN-OVER-ENGINEERING"
+name = "Over-engineering / unnecessary abstraction"
+dimension = "feasibility"
+artifacts = ["plan"]
+severity = "medium"
+method = "judge"
+why = "Methodology anti-pattern: extra projects, wrapper layers, and abstractions beyond the need raise cost and risk with no user value."
+detect = "Speculative abstraction layers, wrappers around frameworks, or excess projects (judge)."
+fix = "Use the framework directly; collapse layers; justify any remaining complexity in Complexity Tracking."
+
+[[pitfall]]
+id = "PLAN-NO-RATIONALE"
+name = "Technical choice without rationale"
+dimension = "traceability"
+artifacts = ["plan"]
+severity = "medium"
+method = "judge"
+why = "SDD requires every technology choice trace to a requirement with documented rationale; undocumented choices can't be evaluated or revisited."
+detect = "Technical Context choices stated without a 'why' tied to a requirement (judge)."
+fix = "Add a one-line rationale per choice linking it to the requirement it serves."
+
+# ----------------------------------------------------------------------------- tasks
+
+[[pitfall]]
+id = "TASKS-TESTS-NOT-FIRST"
+name = "Implementation tasks before tests"
+dimension = "constitutional"
+artifacts = ["tasks"]
+severity = "medium"
+method = "lint"
+why = "Test-First is a core SDD/constitutional imperative; implementation-before-test tasks invert it and erode the safety net."
+detect = "Within a user story, implementation tasks appear with no preceding test tasks."
+fix = "Order each story's tasks tests-first; add the missing test tasks."
+
+[[pitfall]]
+id = "TASKS-MALFORMED"
+name = "Malformed task lines"
+dimension = "consistency"
+artifacts = ["tasks"]
+severity = "low"
+method = "lint"
+why = "Tasks drive /speckit.implement; missing IDs/checkboxes or malformed `[P]`/`[US]` markers break automation and tracking."
+detect = "Task lines missing a `T###` id or `[ ]`/`[x]` checkbox, or with malformed parallel/story markers."
+fix = "Format every task as `[ ] T### [P?] [US?] Description with file path`."
+
+[[pitfall]]
+id = "TASKS-VAGUE"
+name = "Vague task lacking a concrete action / path"
+dimension = "clarity"
+artifacts = ["tasks"]
+severity = "low"
+method = "both"
+why = "A task without a concrete deliverable or file path can't be executed unambiguously or verified as done."
+detect = "Implementation task with no file path and a vague verb."
+fix = "State the concrete artifact and path the task produces or changes."
+
+# --------------------------------------------------------------------- cross-artifact
+
+[[pitfall]]
+id = "XREF-STORY-NO-TASK"
+name = "User story with no implementing task"
+dimension = "traceability"
+artifacts = ["tasks"]
+severity = "high"
+method = "lint"
+why = "Broken traceability: a story nobody implements ships nothing; 29148 traceability."
+detect = "A spec user story (US#) with no `[US#]`-tagged tasks in tasks.md."
+fix = "Add tasks for the story, or remove the story if it's out of scope."
+
+[[pitfall]]
+id = "XREF-ENTITY-NO-TASK"
+name = "Data-model entity with no task"
+dimension = "traceability"
+artifacts = ["tasks"]
+severity = "medium"
+method = "lint"
+why = "An entity defined in data-model.md but never built leaves a gap between design and implementation."
+detect = "An entity named in data-model.md not referenced by any task."
+fix = "Add a model/creation task for the entity, or remove it from the data model."
+
+[[pitfall]]
+id = "XREF-CONTRACT-NO-TEST"
+name = "Contract with no contract test"
+dimension = "traceability"
+artifacts = ["tasks"]
+severity = "medium"
+method = "lint"
+why = "Integration-First requires contract tests; a contract with no test can drift from its implementation undetected."
+detect = "A file under contracts/ with no corresponding contract-test task."
+fix = "Add a contract-test task per contract before implementation tasks."
+
+[[pitfall]]
+id = "XREF-CONTRADICTION"
+name = "Cross-artifact contradiction"
+dimension = "consistency"
+artifacts = ["spec", "plan", "tasks"]
+severity = "high"
+method = "judge"
+why = "Contradictions between spec, plan, and tasks mean at least one is wrong; the agent will implement the contradiction."
+detect = "Conflicting statements across artifacts (judge / mirrors /speckit.analyze)."
+fix = "Reconcile the artifacts so a single consistent intent remains."
+
+# ----------------------------------------------------------------------- constitution
+
+[[pitfall]]
+id = "CONST-PLACEHOLDER"
+name = "Constitution left as template placeholders"
+dimension = "constitutional"
+artifacts = ["constitution"]
+severity = "high"
+method = "lint"
+why = "An unfilled constitution means there are no real governing principles; the Constitution Check gates against nothing."
+detect = "Principle/section placeholders like `[PRINCIPLE_n_NAME]` remain unfilled."
+fix = "Author concrete, project-specific principles (run /speckit.constitution)."
+patterns = ["\\[PRINCIPLE_\\d", "\\[SECTION_\\d", "\\[GOVERNANCE_RULES\\]"]
+
+[[pitfall]]
+id = "CONST-UNVERSIONED"
+name = "Constitution missing version / ratification metadata"
+dimension = "constitutional"
+artifacts = ["constitution"]
+severity = "low"
+method = "lint"
+why = "Without version and ratification/amendment dates, the constitution can't be governed or its changes tracked."
+detect = "Missing or placeholder Version / Ratified / Last Amended metadata."
+fix = "Fill in the governance line: Version | Ratified | Last Amended."
+patterns = ["\\[CONSTITUTION_VERSION\\]", "\\[RATIFICATION_DATE\\]", "\\[LAST_AMENDED_DATE\\]"]

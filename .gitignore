@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# sddreview local state (history is per-repo; don't commit this tool's own runs)
+.sddreview/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,32 @@
+[project]
+name = "sddreview"
+version = "0.1.0"
+description = "Benchmark & review tool for Spec-Driven Development artifacts (GitHub Spec-Kit)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "SDD-Reviewer" }]
+keywords = ["spec-kit", "spec-driven-development", "review", "lint", "benchmark"]
+dependencies = [
+    "typer>=0.12",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+api = ["anthropic>=0.40"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+sddreview = "sddreview.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sddreview"]
+# Non-.py package data (rubric catalog, agent command templates, research notes) is
+# included because it lives inside the package directory.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

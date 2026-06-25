@@ -1,0 +1,17 @@
+# [PROJECT_NAME] Constitution
+
+## Core Principles
+
+### [PRINCIPLE_1_NAME]
+
+[PRINCIPLE_1_DESCRIPTION]
+
+### [PRINCIPLE_2_NAME]
+
+[PRINCIPLE_2_DESCRIPTION]
+
+## Governance
+
+[GOVERNANCE_RULES]
+
+**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
