@@ -1,8 +1,8 @@
 # SDD-Reviewer Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 0
-Last run: (none yet — seeded by initial build)
+Iteration: 1
+Last run: 2026-06-25 (manual proof run during build)
 Open loop PRs: 0
 Consecutive empty research rounds: 0
 
@@ -14,7 +14,7 @@ last. Keep it short.
 Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]` blocked.
 
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
-- [ ] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable")
+- [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [ ] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD)
 - [ ] judge-invest — Judge-side INVEST scoring of user stories (independent, small, valuable, testable). (INVEST)
 - [ ] checklist-ingest — Ingest a generated /speckit.checklist and score item completion. (Spec-Kit checklist)
@@ -35,7 +35,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Merged
 
-(none)
+- #1 pitfall-nfr-thresholds — SPEC-NFR-NO-THRESHOLD pitfall + lint check (2026-06-25).
 
 ## Blocked
 
@@ -44,3 +44,6 @@ Tessl, and Spec-Kit extensions/presets.)
 ## Run log
 
 - (seed) Loop scaffolded; backlog seeded with 12 ideas across SDD frameworks.
+- iter 1 (2026-06-25, manual proof): implemented pitfall-nfr-thresholds; gate caught a
+  bug (FR-001 digits counted as a threshold), fixed; pytest 22 green; benchmark PASS;
+  PR #1 opened, CI green, squash-merged. Cycle validated end-to-end.
