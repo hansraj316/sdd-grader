@@ -167,6 +167,17 @@ detect = "A requirement line about performance/latency/throughput/availability/s
 fix = "State the metric and target, e.g. 'p95 latency < 200ms' or '99.9% monthly uptime'."
 
 [[pitfall]]
+id = "SPEC-PASSIVE-VOICE"
+name = "Passive voice / no clear actor in requirement"
+dimension = "clarity"
+artifacts = ["spec", "plan"]
+severity = "medium"
+method = "both"
+why = "IBM RQA / INCOSE: passive, actorless requirements are ambiguous about who does what. ISO/IEC/IEEE 29148 'unambiguous': every requirement must identify the subject responsible for the action."
+detect = "Requirement line (shall/must/should or FR-/NFR- label) that uses passive voice (auxiliary 'be' + past participle, or 'to be' + past participle) with no identifiable actor before the verb."
+fix = "Rewrite in active voice with an explicit subject: 'The system shall [action]' rather than '[thing] shall be [past-participle by actor]'."
+
+[[pitfall]]
 id = "REQ-COMPOUND"
 name = "Compound requirement (not singular)"
 dimension = "clarity"

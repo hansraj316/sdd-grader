@@ -56,6 +56,33 @@ def _nfr_without_threshold(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     return []
 
 
+_PASSIVE_VERB_RE = re.compile(
+    r"\b(?:shall|must|should|will)\s+be\s+\w+ed\b"
+    r"|\bto\s+be\s+\w+ed\b",
+    re.IGNORECASE,
+)
+
+
+def _passive_voice(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement lines using passive voice (be + past participle, no clear actor)."""
+    p = catalog.get("SPEC-PASSIVE-VOICE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    hits: list[int] = []
+    for i, line in enumerate(art.raw.splitlines(), start=1):
+        if _REQUIREMENTish_RE.search(line) and _PASSIVE_VERB_RE.search(line):
+            hits.append(i)
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Requirement uses passive voice (no clear actor): {len(hits)} line(s).",
+            line=hits[0],
+        )
+    ]
+
+
 def _from_pitfall(
     p: Pitfall, artifact_path: str, message: str, line: int | None = None
 ) -> Finding:
@@ -217,6 +244,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
                 break
 
     out.extend(_nfr_without_threshold(art, catalog))
+    out.extend(_passive_voice(art, catalog))
     return out
 
 
@@ -250,6 +278,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
             )
 
     out.extend(_nfr_without_threshold(art, catalog))
+    out.extend(_passive_voice(art, catalog))
     return out
 
 
