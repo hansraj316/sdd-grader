@@ -1,9 +1,9 @@
 # SDD-Reviewer Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 1
-Last run: 2026-06-25 (manual proof run during build)
-Open loop PRs: 0
+Iteration: 2
+Last run: 2026-06-26
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -24,6 +24,7 @@ score calibration).
 
 Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]` blocked.
 
+- [~] pitfall-passive-voice — see issue #2 → PR #9 (in review)
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [ ] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD)
@@ -42,7 +43,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #2 → PR #9 spec-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check (2026-06-26; awaiting CI)
 
 ## Merged
 
@@ -58,3 +59,6 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 1 (2026-06-25, manual proof): implemented pitfall-nfr-thresholds; gate caught a
   bug (FR-001 digits counted as a threshold), fixed; pytest 22 green; benchmark PASS;
   PR #1 opened, CI green, squash-merged. Cycle validated end-to-end.
+- iter 2 (2026-06-26): Phase 1 no open PRs; Phase 4 picked issue #2 (SPEC-PASSIVE-VOICE);
+  implemented pitfall + lint check + 6 unit tests; pytest 28 green; benchmark good=100 bad=60.5 PASS;
+  PR #9 opened; awaiting CI.
