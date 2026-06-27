@@ -1,8 +1,8 @@
 # SDD-Reviewer Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 2
-Last run: 2026-06-26
+Iteration: 3
+Last run: 2026-06-27
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -16,17 +16,17 @@ The loop picks the highest-value open issue each run and closes it via `Closes #
 merge. Research rounds create new `loop-candidate` issues. The list below is a
 **pre-issue idea pool** — the research phase promotes these to issues when it runs.
 
-Research-derived items are already filed as issues **#2–#8** (passive voice, escape
-clause, negative requirement, unclear actor, EARS pattern, ISO-29148 per-req judging,
-score calibration).
+Research-derived items are already filed as issues **#3–#8** (escape clause, negative
+requirement, unclear actor, EARS pattern, ISO-29148 per-req judging, score calibration).
 
 ### Idea pool (not yet issues; promote during research)
 
 Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]` blocked.
 
-- [~] pitfall-passive-voice — see issue #2 → PR #9 (in review)
+- [~] pitfall-escape-clause — see issue #3 → PR #10 (in review)
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
+- [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
 - [ ] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD)
 - [ ] judge-invest — Judge-side INVEST scoring of user stories (independent, small, valuable, testable). (INVEST)
 - [ ] checklist-ingest — Ingest a generated /speckit.checklist and score item completion. (Spec-Kit checklist)
@@ -43,11 +43,12 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #2 → PR #9 spec-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check (2026-06-26; awaiting CI)
+- #3 → PR #10 spec-escape-clause — SPEC-ESCAPE-CLAUSE pitfall + lint check (2026-06-27; awaiting CI)
 
 ## Merged
 
 - #1 pitfall-nfr-thresholds — SPEC-NFR-NO-THRESHOLD pitfall + lint check (2026-06-25).
+- #2 → PR #9 pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check (2026-06-27).
 
 ## Blocked
 
@@ -62,3 +63,6 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 2 (2026-06-26): Phase 1 no open PRs; Phase 4 picked issue #2 (SPEC-PASSIVE-VOICE);
   implemented pitfall + lint check + 6 unit tests; pytest 28 green; benchmark good=100 bad=60.5 PASS;
   PR #9 opened; awaiting CI.
+- iter 3 (2026-06-27): Phase 1 merged PR #9 (SPEC-PASSIVE-VOICE, issue #2 closed, CI was green);
+  Phase 4 picked issue #3 (SPEC-ESCAPE-CLAUSE); added pitfall to catalog with 11 escape-clause
+  patterns + 9 unit tests; pytest 37 green; benchmark good=100 bad=60.5 PASS; PR #10 opened.
