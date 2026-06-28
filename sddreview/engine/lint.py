@@ -83,6 +83,32 @@ def _passive_voice(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     ]
 
 
+_NEGATIVE_REQ_RE = re.compile(
+    r"\b(?:shall|must|should)\s+not\b",
+    re.IGNORECASE,
+)
+
+
+def _negative_requirement(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement lines that state what the system must NOT do."""
+    p = catalog.get("SPEC-NEGATIVE-REQUIREMENT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    hits: list[int] = []
+    for i, line in enumerate(art.raw.splitlines(), start=1):
+        if _REQUIREMENTish_RE.search(line) and _NEGATIVE_REQ_RE.search(line):
+            hits.append(i)
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Negative requirement (shall/must not): {len(hits)} line(s); prefer positive bounded statements.",
+            line=hits[0],
+        )
+    ]
+
+
 def _from_pitfall(
     p: Pitfall, artifact_path: str, message: str, line: int | None = None
 ) -> Finding:
@@ -245,6 +271,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
 
     out.extend(_nfr_without_threshold(art, catalog))
     out.extend(_passive_voice(art, catalog))
+    out.extend(_negative_requirement(art, catalog))
     return out
 
 
@@ -279,6 +306,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
 
     out.extend(_nfr_without_threshold(art, catalog))
     out.extend(_passive_voice(art, catalog))
+    out.extend(_negative_requirement(art, catalog))
     return out
 
 

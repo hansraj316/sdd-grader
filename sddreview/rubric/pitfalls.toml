@@ -202,6 +202,17 @@ patterns = [
 ]
 
 [[pitfall]]
+id = "SPEC-NEGATIVE-REQUIREMENT"
+name = "Negative requirement (shall not / must not)"
+dimension = "testability"
+artifacts = ["spec", "plan"]
+severity = "low"
+method = "both"
+why = "IBM RQA: negative requirements ('the system shall not X') are difficult to verify exhaustively — you cannot test all the things it must not do. 29148 'verifiable': requirements should be stated positively with bounded, testable conditions."
+detect = "Requirement line (shall/must/should/will … not, or FR-/NFR- label) that states what the system must NOT do rather than what it must do."
+fix = "Restate as a positive, bounded requirement. Instead of 'the system shall not expose PII', write 'the system shall encrypt all PII fields at rest with AES-256 and strip PII from logs'."
+
+[[pitfall]]
 id = "REQ-COMPOUND"
 name = "Compound requirement (not singular)"
 dimension = "clarity"
