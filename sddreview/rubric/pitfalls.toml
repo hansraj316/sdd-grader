@@ -178,6 +178,30 @@ detect = "Requirement line (shall/must/should or FR-/NFR- label) that uses passi
 fix = "Rewrite in active voice with an explicit subject: 'The system shall [action]' rather than '[thing] shall be [past-participle by actor]'."
 
 [[pitfall]]
+id = "SPEC-ESCAPE-CLAUSE"
+name = "Escape / loophole clause in requirement"
+dimension = "testability"
+artifacts = ["spec", "plan"]
+severity = "medium"
+method = "both"
+why = "IBM RQA / Requirements Smells: escape clauses ('where feasible', 'to the extent practical', 'best effort') let the implementation opt out of the requirement, making it unverifiable and unenforceable."
+detect = "Requirement line containing a hedge that qualifies the obligation — phrases that allow non-compliance without breach."
+fix = "Replace escape clauses with a concrete, verifiable commitment. If exceptions are genuinely needed, enumerate them explicitly rather than using an open-ended escape."
+patterns = [
+  "\\bwhere feasible\\b",
+  "\\bwhere practicable\\b",
+  "\\bwhere possible\\b",
+  "\\bto the extent practical\\b",
+  "\\bto the extent possible\\b",
+  "\\bas far as possible\\b",
+  "\\bif applicable\\b",
+  "\\bwhen applicable\\b",
+  "\\bat the discretion\\b",
+  "\\bbest effort\\b",
+  "\\breasonable effort\\b",
+]
+
+[[pitfall]]
 id = "REQ-COMPOUND"
 name = "Compound requirement (not singular)"
 dimension = "clarity"
