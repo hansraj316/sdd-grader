@@ -1,8 +1,8 @@
 # SDD-Reviewer Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 3
-Last run: 2026-06-27
+Iteration: 4
+Last run: 2026-06-28
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -23,7 +23,8 @@ requirement, unclear actor, EARS pattern, ISO-29148 per-req judging, score calib
 
 Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]` blocked.
 
-- [~] pitfall-escape-clause — see issue #3 → PR #10 (in review)
+- [x] pitfall-escape-clause — see issue #3 → merged in PR #10
+- [~] pitfall-negative-requirement — see issue #4 → PR #11 (in review)
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
@@ -43,12 +44,13 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #3 → PR #10 spec-escape-clause — SPEC-ESCAPE-CLAUSE pitfall + lint check (2026-06-27; awaiting CI)
+- #4 → PR #11 spec-negative-requirement — SPEC-NEGATIVE-REQUIREMENT pitfall + lint check (2026-06-28; awaiting CI)
 
 ## Merged
 
 - #1 pitfall-nfr-thresholds — SPEC-NFR-NO-THRESHOLD pitfall + lint check (2026-06-25).
 - #2 → PR #9 pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check (2026-06-27).
+- #3 → PR #10 pitfall-escape-clause — SPEC-ESCAPE-CLAUSE pitfall + lint check (2026-06-28).
 
 ## Blocked
 
@@ -66,3 +68,6 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 3 (2026-06-27): Phase 1 merged PR #9 (SPEC-PASSIVE-VOICE, issue #2 closed, CI was green);
   Phase 4 picked issue #3 (SPEC-ESCAPE-CLAUSE); added pitfall to catalog with 11 escape-clause
   patterns + 9 unit tests; pytest 37 green; benchmark good=100 bad=60.5 PASS; PR #10 opened.
+- iter 4 (2026-06-28): Phase 1 merged PR #10 (SPEC-ESCAPE-CLAUSE, issue #3 auto-closed, CI was green);
+  Phase 4 picked issue #4 (SPEC-NEGATIVE-REQUIREMENT); dedicated lint check + 8 unit tests;
+  pytest 45 green; benchmark good=100 bad=60.5 PASS; PR #11 opened.
