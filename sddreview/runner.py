@@ -15,7 +15,7 @@ from rich.console import Console
 
 from . import config as config_mod
 from . import history
-from .discovery import discover_artifacts, get_adapter
+from .discovery import discover_artifacts, resolve_adapter
 from .engine import lint as lint_mod
 from .engine import scoring
 from .model import Finding, ReviewResult
@@ -40,6 +40,7 @@ def run_review(
     require_judge: bool = False,
     top_fixes: int = 0,
     sarif_path: Path | None = None,
+    tool: str | None = None,
     console: Console | None = None,
 ) -> int:
     console = console or Console()
@@ -48,6 +49,8 @@ def run_review(
     cfg = config_mod.load(root)
     if fail_under is not None:
         cfg.fail_under = fail_under
+    if tool is not None:
+        cfg.tool = tool
 
     artifacts = discover_artifacts(root, cfg.tool)
     if not artifacts:
@@ -60,7 +63,7 @@ def run_review(
             )
         return EXIT_NO_ARTIFACTS
 
-    adapter = get_adapter(cfg.tool)
+    adapter = resolve_adapter(root, cfg.tool)
     findings: list[Finding] = lint_mod.lint(artifacts, adapter, root)
 
     engine_label = "rules"

@@ -73,14 +73,17 @@ def review(
     sarif: Path | None = typer.Option(
         None, "--sarif", help="Write SARIF 2.1.0 to this path (for GitHub code scanning).",
     ),
+    tool: str = typer.Option(
+        "auto", "--tool", help="Toolchain: auto | speckit | openspec.",
+    ),
 ) -> None:
-    """Grade every Spec-Kit artifact found under PATH."""
+    """Grade every Spec-Kit or OpenSpec artifact found under PATH."""
     from .runner import run_review
 
     backend = "rules" if rules else ("api" if api else "agent")
     exit_code = run_review(
         path, backend=backend, json_out=json_out, fail_under=fail_under,
-        require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif,
+        require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif, tool=tool,
     )
     raise typer.Exit(code=exit_code)
 
