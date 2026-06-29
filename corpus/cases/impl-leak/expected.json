@@ -1,0 +1,6 @@
+{
+  "quality": "medium",
+  "score_band": [82, 96],
+  "expect_pitfalls": ["SPEC-IMPL-DETAIL-LEAK", "SPEC-SPECULATIVE-FEATURE"],
+  "note": "Tech-stack detail and speculative future features in a spec. Calibration note: current scoring is arguably lenient here (~90)."
+}

@@ -1,0 +1,6 @@
+{
+  "quality": "low",
+  "score_band": [30, 60],
+  "expect_pitfalls": ["SPEC-UNRESOLVED-CLARIFICATION", "SPEC-LEFTOVER-PLACEHOLDER", "SPEC-MISSING-ACCEPTANCE"],
+  "note": "Unresolved clarification markers, placeholders, and a TODO instead of acceptance criteria."
+}

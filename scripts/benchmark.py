@@ -19,13 +19,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from sddreview import config as config_mod
+from sddreview.adapters.speckit import SpecKitAdapter
 from sddreview.discovery import discover_artifacts, get_adapter
 from sddreview.engine import lint as lint_mod
 from sddreview.engine import scoring
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
+CORPUS = ROOT / "corpus" / "cases"
 OUT_DIR = ROOT / "reports" / "benchmarks"
+
+# Corpus quality floors. Recall = expected pitfalls actually caught.
+MIN_RECALL = 0.9
 
 # Regression expectations. Tighten over time as the engine improves.
 EXPECT_GOOD_MIN = 100.0
@@ -57,18 +62,68 @@ def benchmark(path: Path) -> dict:
     }
 
 
+def evaluate_corpus_case(case_dir: Path) -> dict:
+    """Run the reviewer on one labeled corpus spec and compare to its labels."""
+    spec = case_dir / "spec.md"
+    labels = json.loads((case_dir / "expected.json").read_text(encoding="utf-8"))
+    adapter = SpecKitAdapter()
+    cfg = config_mod.Config()
+    art = adapter.parse(spec, case_dir)
+    findings = lint_mod.lint([art], adapter, case_dir)
+    result = scoring.score([art], findings, cfg)
+
+    detected = {f.pitfall_id for f in findings if f.pitfall_id}
+    expected = set(labels.get("expect_pitfalls", []))
+    tp = sorted(expected & detected)
+    fn = sorted(expected - detected)               # missed (false negatives)
+    unexpected = sorted(detected - expected)        # not labeled (possible false positives)
+    band = labels.get("score_band", [0, 100])
+    in_band = band[0] <= result.overall <= band[1]
+
+    return {
+        "case": case_dir.name,
+        "quality": labels.get("quality"),
+        "overall": round(result.overall, 1),
+        "score_band": band,
+        "in_band": in_band,
+        "true_positives": tp,
+        "false_negatives": fn,
+        "unexpected": unexpected,
+        "recall": round(len(tp) / len(expected), 2) if expected else 1.0,
+        "note": labels.get("note", ""),
+    }
+
+
+def evaluate_corpus() -> dict:
+    if not CORPUS.is_dir():
+        return {"cases": [], "summary": {}}
+    cases = [evaluate_corpus_case(c) for c in sorted(CORPUS.iterdir()) if (c / "spec.md").is_file()]
+    recalls = [c["recall"] for c in cases]
+    # "excellent" (no expected pitfalls) is the false-positive guard: it must be clean.
+    fp_on_clean = sum(len(c["unexpected"]) for c in cases if not c["true_positives"] and not c["false_negatives"] and c["quality"] == "high")
+    summary = {
+        "n": len(cases),
+        "mean_recall": round(sum(recalls) / len(recalls), 2) if recalls else 1.0,
+        "band_failures": [c["case"] for c in cases if not c["in_band"]],
+        "false_positives_on_high_quality": fp_on_clean,
+    }
+    return {"cases": cases, "summary": summary}
+
+
 def main(argv: list[str]) -> int:
     extra = [Path(p) for p in argv[1:]]
 
     good = benchmark(FIXTURES / "speckit_good")
     bad = benchmark(FIXTURES / "speckit_bad")
     extras = [benchmark(p) for p in extra if p.is_dir()]
+    corpus = evaluate_corpus()
 
     report = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "good": good,
         "bad": bad,
         "extras": extras,
+        "corpus": corpus,
     }
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -83,9 +138,32 @@ def main(argv: list[str]) -> int:
     if missing:
         failures.append(f"bad fixture stopped tripping pitfalls: {sorted(missing)}")
 
-    print(json.dumps({"good": good["overall"], "bad": bad["overall"],
-                      "bad_pitfalls": len(bad["pitfalls"]),
-                      "pass": not failures}, indent=2))
+    # Corpus gates: each case must land in its labeled score band, recall floor holds,
+    # and high-quality cases must produce no findings (false-positive guard).
+    cs = corpus["summary"]
+    if cs:
+        for case in corpus["cases"]:
+            if not case["in_band"]:
+                failures.append(
+                    f"corpus '{case['case']}' score {case['overall']} outside band {case['score_band']}"
+                )
+            if case["false_negatives"]:
+                failures.append(
+                    f"corpus '{case['case']}' missed expected pitfalls: {case['false_negatives']}"
+                )
+        if cs["false_positives_on_high_quality"] > 0:
+            failures.append(
+                f"false positives on high-quality corpus cases: {cs['false_positives_on_high_quality']}"
+            )
+        if cs["mean_recall"] < MIN_RECALL:
+            failures.append(f"corpus mean recall {cs['mean_recall']} < {MIN_RECALL}")
+
+    print(json.dumps({
+        "good": good["overall"], "bad": bad["overall"],
+        "bad_pitfalls": len(bad["pitfalls"]),
+        "corpus": cs,
+        "pass": not failures,
+    }, indent=2))
     if failures:
         for f in failures:
             print(f"REGRESSION: {f}", file=sys.stderr)
