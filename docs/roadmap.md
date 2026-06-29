@@ -5,7 +5,8 @@ suggestions, pitfall catalog, history, terminal dashboard, advisor, CI gate.
 
 Planned:
 
-- **OpenSpec adapter** — a second `ArtifactAdapter`; `--tool openspec` / auto-detect.
+- **OpenSpec adapter** — ✅ early support (auto-detect + `--tool openspec`). Next:
+  delta semantics (`## ADDED/MODIFIED/REMOVED Requirements`), archive handling.
 - **Tool-vs-tool benchmark** — score Spec-Kit vs OpenSpec output for the same intent.
 - **Self-updating pitfall catalog** — a scheduled loop that watches upstream Spec-Kit /
   OpenSpec releases and re-runs the pitfall research to refresh `rubric/pitfalls.toml`.

@@ -80,6 +80,23 @@ sddreview self check                  # version
 sddreview integration list            # supported agents
 ```
 
+## Toolchains: Spec-Kit and OpenSpec
+
+`sddreview` auto-detects the layout and picks the right adapter (override with
+`--tool speckit|openspec`):
+
+- **Spec-Kit** — `specs/<feature>/{spec,plan,tasks}.md`, `.specify/memory/constitution.md`.
+- **OpenSpec** (early support) — `openspec/specs/<capability>/spec.md`, change proposals
+  under `openspec/changes/<id>/{proposal.md,tasks.md,design.md,specs/}`, and
+  `openspec/project.md`. The universal requirement-smell checks (ambiguity, passive
+  voice, NFR thresholds, EARS) apply, plus an OpenSpec-specific check that every
+  `### Requirement:` has a `#### Scenario:`. Spec-Kit-template-specific structural checks
+  (Constitution Check, `[NEEDS CLARIFICATION]`, traceability) are not applied to OpenSpec.
+
+  *Limitations:* first-version adapter — it does not yet validate OpenSpec delta
+  semantics (`## ADDED/MODIFIED/REMOVED Requirements`) or archive handling beyond
+  skipping `changes/archive/`.
+
 ## Relationship to Spec-Kit
 
 Spec-Kit ships in-agent `/speckit.analyze`, `/speckit.checklist`, and
@@ -89,10 +106,10 @@ history-tracking** complement — it runs outside the agent, emits a numeric ben
 
 ## Status
 
-Phase 1 (Spec-Kit) with an OpenSpec adapter in progress. Roadmap: tool-vs-tool
-benchmark, a labeled spec corpus, self-updating pitfall catalog, rewrite/`--fix`, HTML
-dashboard, and shipping as a Spec-Kit extension. See [`docs/`](docs) for architecture
-and roadmap.
+Spec-Kit and early OpenSpec support. Roadmap: tool-vs-tool benchmark, OpenSpec delta
+semantics, growing the labeled corpus, self-updating pitfall catalog, rewrite/`--fix`,
+HTML dashboard, and shipping as a Spec-Kit extension. See [`docs/`](docs) for
+architecture and roadmap.
 
 ## License
 

@@ -410,3 +410,16 @@ method = "judge"
 why = "ISO/IEC/IEEE 29148 requires each requirement be necessary, singular, complete, correct, feasible, and verifiable — the per-requirement quality IBM RQA / QVscribe score, which deterministic lint can only partially check."
 detect = "Judge each functional requirement against the 29148 characteristics and report any that fail (which characteristic, and why)."
 fix = "Revise the requirement to satisfy the failing characteristic (split if not singular, quantify if not verifiable, add missing detail if not complete)."
+
+# ----------------------------------------------------------------- OpenSpec (issue #20)
+
+[[pitfall]]
+id = "OPENSPEC-REQ-NO-SCENARIO"
+name = "OpenSpec requirement with no scenario"
+dimension = "testability"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "OpenSpec requirements are validated by their scenarios; a '### Requirement:' with no '#### Scenario:' has no acceptance behavior to test against."
+detect = "A '### Requirement:' section whose body contains no '#### Scenario:'."
+fix = "Add at least one '#### Scenario:' with WHEN/THEN describing the expected behavior."

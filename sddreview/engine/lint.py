@@ -192,16 +192,55 @@ def lint(
     """Run every deterministic check over a parsed artifact set."""
     catalog = load_catalog()
     findings: list[Finding] = []
+    tool = getattr(adapter, "name", "speckit")
 
-    # Per-artifact checks.
+    # Per-artifact checks. Required-section + lexical (universal requirement smells)
+    # run for every toolchain; the template-specific structural checks are gated to
+    # the adapter they were written for so OpenSpec artifacts don't trip Spec-Kit rules.
     for art in artifacts:
         findings.extend(_required_sections(art, adapter, root))
         findings.extend(_lexical_pitfalls(art, catalog))
-        findings.extend(_structural(art, catalog))
+        if tool == "speckit":
+            findings.extend(_structural(art, catalog))
+        elif tool == "openspec":
+            findings.extend(_openspec_structural(art, catalog))
 
-    # Cross-artifact checks, grouped by feature.
-    findings.extend(_cross_artifact(artifacts, catalog))
+    # Cross-artifact checks are Spec-Kit-shaped (US tags, data-model, contracts).
+    if tool == "speckit":
+        findings.extend(_cross_artifact(artifacts, catalog))
     return findings
+
+
+def _openspec_structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """OpenSpec-specific checks: a Requirement with no Scenario."""
+    if art.type is not ArtifactType.SPEC:
+        return []
+    p = catalog.get("OPENSPEC-REQ-NO-SCENARIO")
+    if p is None:
+        return []
+    out: list[Finding] = []
+    secs = art.sections
+    for i, s in enumerate(secs):
+        if not (s.title.lower().startswith("requirement:") and s.level <= 3):
+            continue
+        # A scenario is a deeper heading (#### Scenario:) before the next same-or-
+        # higher-level heading — headings are siblings in the parse, not nested in body.
+        has_scenario = False
+        for t in secs[i + 1:]:
+            if t.level <= s.level:
+                break
+            if t.title.lower().startswith("scenario:"):
+                has_scenario = True
+                break
+        if not has_scenario:
+            out.append(
+                _from_pitfall(
+                    p, art.path,
+                    f"Requirement '{s.title}' has no #### Scenario.",
+                    line=s.line,
+                )
+            )
+    return out
 
 
 # --------------------------------------------------------------------------- layer 1
