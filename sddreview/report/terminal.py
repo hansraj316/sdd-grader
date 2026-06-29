@@ -30,7 +30,12 @@ def _score_style(score: float, fail_under: float) -> str:
     return "green"
 
 
-def render(result: ReviewResult, fail_under: float = 70.0, console: Console | None = None) -> None:
+def render(
+    result: ReviewResult,
+    fail_under: float = 70.0,
+    console: Console | None = None,
+    top_fixes: int = 0,
+) -> None:
     console = console or Console()
 
     style = _score_style(result.overall, fail_under)
@@ -73,6 +78,22 @@ def render(result: ReviewResult, fail_under: float = 70.0, console: Console | No
             str(len(a.findings)),
         )
     console.print(table)
+
+    # Prioritized "top fixes" — highest impact (severity × artifact weight) first.
+    if top_fixes > 0:
+        top = result.prioritized_findings()[:top_fixes]
+        if top:
+            console.print(f"\n[bold]Top {len(top)} fixes[/] [dim](highest impact first)[/]")
+            for i, f in enumerate(top, start=1):
+                sev_style = _SEV_STYLE.get(f.severity, "white")
+                tag = f" [dim]{f.pitfall_id}[/]" if f.pitfall_id else ""
+                loc = f":{f.line}" if f.line else ""
+                name = Path(f.artifact_path).name if f.artifact_path else "?"
+                console.print(
+                    f"  [bold]{i}.[/] [{sev_style}]{f.severity.value.upper()}[/] "
+                    f"[dim]{name}{loc}{tag}[/] {f.message}"
+                )
+                console.print(f"     [green]fix[/] {f.suggestion}")
 
     # Findings grouped by artifact, severity-ordered, with fix suggestions.
     for a in result.artifacts:

@@ -239,6 +239,22 @@ class ReviewResult:
             out.extend(a.findings)
         return out
 
+    def _artifact_weights(self) -> dict[str, float]:
+        return {a.path: a.type.weight for a in self.artifacts}
+
+    def finding_impact(self, f: Finding, weights: dict[str, float] | None = None) -> float:
+        """Impact = severity penalty × the artifact's weight (core artifacts hurt more)."""
+        weights = weights if weights is not None else self._artifact_weights()
+        return f.severity.penalty * weights.get(f.artifact_path or "", 0.5)
+
+    def prioritized_findings(self) -> list[Finding]:
+        """All findings, highest-impact first (severity × artifact weight)."""
+        weights = self._artifact_weights()
+        return sorted(
+            self.all_findings,
+            key=lambda f: (-self.finding_impact(f, weights), f.message),
+        )
+
     @property
     def judge_used(self) -> bool:
         """True if the semantic judge actually contributed (not a degraded rules run)."""
@@ -264,6 +280,11 @@ class ReviewResult:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        weights = self._artifact_weights()
+        top = [
+            {**f.to_dict(), "impact": round(self.finding_impact(f, weights), 1)}
+            for f in self.prioritized_findings()[:10]
+        ]
         return {
             "tool": self.tool,
             "engine": self.engine,
@@ -272,5 +293,6 @@ class ReviewResult:
             "coverage_note": self.coverage_note,
             "timestamp": self.timestamp,
             "overall": round(self.overall, 1),
+            "top_fixes": top,
             "artifacts": [a.to_dict() for a in self.artifacts],
         }

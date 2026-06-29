@@ -38,6 +38,7 @@ def run_review(
     fail_under: float | None = None,
     write_markdown: bool = True,
     require_judge: bool = False,
+    top_fixes: int = 0,
     console: Console | None = None,
 ) -> int:
     console = console or Console()
@@ -90,7 +91,9 @@ def run_review(
         # Plain stdout — never through rich, which would reflow/scramble the JSON.
         sys.stdout.write(render_json(result) + "\n")
     else:
-        terminal_report.render(result, fail_under=cfg.fail_under, console=console)
+        terminal_report.render(
+            result, fail_under=cfg.fail_under, console=console, top_fixes=top_fixes
+        )
         if write_markdown:
             md_path = root / ".sddreview" / "report.md"
             md_path.parent.mkdir(parents=True, exist_ok=True)
