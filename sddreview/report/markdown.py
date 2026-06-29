@@ -17,6 +17,9 @@ def render(result: ReviewResult) -> str:
     if result.timestamp:
         lines.append(f"- Generated: {result.timestamp}")
     lines.append(f"- **Overall score: {result.overall:.1f}/100**")
+    lines.append(f"- Coverage: `{result.coverage}`")
+    lines.append("")
+    lines.append(f"> **What this score proves:** {result.coverage_note}")
     lines.append("")
 
     lines.append("## Artifacts")

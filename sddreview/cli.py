@@ -63,13 +63,18 @@ def review(
     fail_under: float | None = typer.Option(
         None, "--fail-under", help="Exit non-zero if overall score is below N (CI gate)."
     ),
+    require_judge: bool = typer.Option(
+        False, "--require-judge",
+        help="Fail (exit 3) instead of degrading to lint-only when the judge is unavailable.",
+    ),
 ) -> None:
     """Grade every Spec-Kit artifact found under PATH."""
     from .runner import run_review
 
     backend = "rules" if rules else ("api" if api else "agent")
     exit_code = run_review(
-        path, backend=backend, json_out=json_out, fail_under=fail_under
+        path, backend=backend, json_out=json_out, fail_under=fail_under,
+        require_judge=require_judge,
     )
     raise typer.Exit(code=exit_code)
 

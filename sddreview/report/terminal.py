@@ -45,6 +45,19 @@ def render(result: ReviewResult, fail_under: float = 70.0, console: Console | No
         )
     )
 
+    # Coverage banner — make engine-mode confidence explicit so a clean rules-only
+    # score is never mistaken for full semantic validation.
+    if result.judge_used:
+        console.print(f"[green]coverage:[/] {result.coverage} — {result.coverage_note}")
+    else:
+        console.print(
+            Panel(
+                f"[yellow]{result.coverage_note}[/]",
+                title="⚠ lint-only score",
+                expand=False,
+            )
+        )
+
     # Per-artifact summary table.
     table = Table(show_lines=False, expand=True)
     table.add_column("Artifact", overflow="fold")

@@ -239,10 +239,37 @@ class ReviewResult:
             out.extend(a.findings)
         return out
 
+    @property
+    def judge_used(self) -> bool:
+        """True if the semantic judge actually contributed (not a degraded rules run)."""
+        return self.engine in ("agent", "api", "hybrid")
+
+    @property
+    def coverage(self) -> str:
+        """What the score covers: deterministic lint only, or lint + semantic judgment."""
+        return "lint+semantic" if self.judge_used else "lint-only"
+
+    @property
+    def coverage_note(self) -> str:
+        """A one-line caveat about what this score does and does not prove."""
+        if self.judge_used:
+            return (
+                "Lint + semantic judgment. Findings include deterministic checks and "
+                "the agent's review; a high score reflects both, but is still advisory."
+            )
+        return (
+            "Lint-only (no semantic judge ran). A high score means no KNOWN deterministic "
+            "findings — NOT that the spec is complete or semantically correct. Run the "
+            "agent judge (or --api) for semantic review."
+        )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "tool": self.tool,
             "engine": self.engine,
+            "coverage": self.coverage,
+            "judge_used": self.judge_used,
+            "coverage_note": self.coverage_note,
             "timestamp": self.timestamp,
             "overall": round(self.overall, 1),
             "artifacts": [a.to_dict() for a in self.artifacts],
