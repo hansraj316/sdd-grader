@@ -67,6 +67,9 @@ def review(
         False, "--require-judge",
         help="Fail (exit 3) instead of degrading to lint-only when the judge is unavailable.",
     ),
+    top_fixes: int = typer.Option(
+        0, "--top-fixes", help="Show the top N highest-impact fixes first (0 = off).",
+    ),
 ) -> None:
     """Grade every Spec-Kit artifact found under PATH."""
     from .runner import run_review
@@ -74,7 +77,7 @@ def review(
     backend = "rules" if rules else ("api" if api else "agent")
     exit_code = run_review(
         path, backend=backend, json_out=json_out, fail_under=fail_under,
-        require_judge=require_judge,
+        require_judge=require_judge, top_fixes=top_fixes,
     )
     raise typer.Exit(code=exit_code)
 
