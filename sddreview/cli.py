@@ -73,6 +73,9 @@ def review(
     sarif: Path | None = typer.Option(
         None, "--sarif", help="Write SARIF 2.1.0 to this path (for GitHub code scanning).",
     ),
+    html: Path | None = typer.Option(
+        None, "--html", help="Write a self-contained HTML report (findings + fixes) to this path.",
+    ),
     tool: str = typer.Option(
         "auto", "--tool", help="Toolchain: auto | speckit | openspec.",
     ),
@@ -83,7 +86,8 @@ def review(
     backend = "rules" if rules else ("api" if api else "agent")
     exit_code = run_review(
         path, backend=backend, json_out=json_out, fail_under=fail_under,
-        require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif, tool=tool,
+        require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif,
+        html_path=html, tool=tool,
     )
     raise typer.Exit(code=exit_code)
 

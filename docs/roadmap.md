@@ -11,7 +11,8 @@ Planned:
 - **Self-updating pitfall catalog** — a scheduled loop that watches upstream Spec-Kit /
   OpenSpec releases and re-runs the pitfall research to refresh `rubric/pitfalls.toml`.
 - **Rewrite proposals & `--fix`** — generate improved sections and optionally write them.
-- **HTML dashboard** — a shareable export of the terminal metrics view.
+- **HTML report** — ✅ `--html` writes a self-contained findings + fixes report. Next:
+  an HTML *dashboard* (score trends across history), not just a single-run report.
 - **Ship as a Spec-Kit extension/preset** — installable via `specify extension add`.
 - **Alternative SDD methodologies** — adapters for AIDE, Canon, MAQA, etc.
 
