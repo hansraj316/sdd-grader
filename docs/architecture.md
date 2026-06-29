@@ -19,7 +19,7 @@ cli → runner → { discovery → adapter } → engine(lint + judge) → scorin
 | `engine/judge.py` | Semantic judging via a `JudgeBackend`; yields more findings. |
 | `integrations/` | `agent.py` (default — the user's agent, no key) and `api.py` (optional, key-based). |
 | `engine/scoring.py` | Findings → per-dimension 0-100 + penalty-weighted overall. |
-| `report/` | Terminal (rich), Markdown, JSON renderers. |
+| `report/` | Terminal (rich), Markdown, JSON, SARIF, and self-contained HTML renderers. |
 | `history.py` / `dashboard.py` | Append-only JSONL trail and a terminal metrics view. |
 | `advisor.py` | Heuristic SDD-adoption recommendations for a codebase. |
 

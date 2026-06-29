@@ -73,6 +73,7 @@ sddreview review --rules --json       # offline, machine-readable (good for CI)
 sddreview review --fail-under 70      # non-zero exit below threshold (CI gate)
 sddreview review --require-judge      # fail instead of degrading to lint-only
 sddreview review --sarif out.sarif    # emit SARIF for GitHub code scanning
+sddreview review --html report.html   # self-contained HTML report (findings + fixes)
 sddreview review --top-fixes 5        # show the highest-impact fixes first
 sddreview advise                      # recommend how to adopt SDD for this codebase
 sddreview dashboard                   # terminal metrics: trends, dimensions, top pitfalls
@@ -106,9 +107,10 @@ history-tracking** complement — it runs outside the agent, emits a numeric ben
 
 ## Status
 
-Spec-Kit and early OpenSpec support. Roadmap: tool-vs-tool benchmark, OpenSpec delta
-semantics, growing the labeled corpus, self-updating pitfall catalog, rewrite/`--fix`,
-HTML dashboard, and shipping as a Spec-Kit extension. See [`docs/`](docs) for
+Spec-Kit and early OpenSpec support. Reports: terminal, Markdown, JSON, SARIF, and a
+self-contained **HTML** report (`--html`). Roadmap: tool-vs-tool benchmark, OpenSpec
+delta semantics, growing the labeled corpus, self-updating pitfall catalog,
+rewrite/`--fix`, and shipping as a Spec-Kit extension. See [`docs/`](docs) for
 architecture and roadmap.
 
 ## License
