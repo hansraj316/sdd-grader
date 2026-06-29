@@ -1,0 +1,6 @@
+{
+  "quality": "medium",
+  "score_band": [64, 88],
+  "expect_pitfalls": ["SPEC-NFR-NO-THRESHOLD", "SPEC-NON-MEASURABLE-SUCCESS"],
+  "note": "NFRs (latency/availability/scalability) with no thresholds; non-measurable success."
+}

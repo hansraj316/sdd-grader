@@ -1,0 +1,6 @@
+{
+  "quality": "medium",
+  "score_band": [80, 94],
+  "expect_pitfalls": ["SPEC-AMBIGUOUS-WORDING", "SPEC-MISSING-EDGE-CASES"],
+  "note": "Vague/subjective wording and no edge cases; otherwise structurally complete."
+}

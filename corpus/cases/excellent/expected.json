@@ -1,0 +1,6 @@
+{
+  "quality": "high",
+  "score_band": [95, 100],
+  "expect_pitfalls": [],
+  "note": "Clean, measurable, technology-agnostic spec. Should produce no findings."
+}
