@@ -78,6 +78,12 @@ def build_prompt(artifacts: list[Artifact]) -> str:
         "true ambiguity, hidden contradictions across artifacts, over-engineering, "
         "INVEST quality, and missing rationale.",
         "",
+        "Additionally, evaluate EACH functional requirement in spec.md against the "
+        "ISO/IEC/IEEE 29148 characteristics — necessary, singular, complete, correct, "
+        "feasible, verifiable. For any requirement that fails one, emit a finding with "
+        "pitfall_id JUDGE-29148-PERREQ naming the requirement, the failing characteristic, "
+        "and the fix (this is the per-requirement scoring IBM RQA / QVscribe provide).",
+        "",
         judge_guidance(),
         "",
         "Return ONLY JSON matching this shape: "
