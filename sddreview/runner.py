@@ -39,6 +39,7 @@ def run_review(
     write_markdown: bool = True,
     require_judge: bool = False,
     top_fixes: int = 0,
+    sarif_path: Path | None = None,
     console: Console | None = None,
 ) -> int:
     console = console or Console()
@@ -86,6 +87,14 @@ def run_review(
     result.timestamp = datetime.now(timezone.utc).isoformat()
 
     history.record(root, result)
+
+    if sarif_path is not None:
+        from .report import sarif as sarif_report
+
+        sarif_path.parent.mkdir(parents=True, exist_ok=True)
+        sarif_path.write_text(sarif_report.render(result, root=root), encoding="utf-8")
+        if not json_out:
+            console.print(f"[dim]SARIF written to {sarif_path}[/]")
 
     if json_out:
         # Plain stdout — never through rich, which would reflow/scramble the JSON.
