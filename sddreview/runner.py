@@ -24,12 +24,20 @@ from .report import terminal as terminal_report
 from .report.json_out import render as render_json
 
 
+# Exit codes: 0 pass · 1 below threshold · 2 nothing to review · 3 judge required but unavailable
+EXIT_PASS = 0
+EXIT_FAIL = 1
+EXIT_NO_ARTIFACTS = 2
+EXIT_JUDGE_REQUIRED = 3
+
+
 def run_review(
     path: Path,
     backend: str = "agent",
     json_out: bool = False,
     fail_under: float | None = None,
     write_markdown: bool = True,
+    require_judge: bool = False,
     console: Console | None = None,
 ) -> int:
     console = console or Console()
@@ -48,7 +56,7 @@ def run_review(
                 f"[yellow]No Spec-Kit artifacts found under[/] {root}. "
                 "Expected specs/<feature>/spec.md (run `specify init` first)."
             )
-        return 2
+        return EXIT_NO_ARTIFACTS
 
     adapter = get_adapter(cfg.tool)
     findings: list[Finding] = lint_mod.lint(artifacts, adapter, root)
@@ -57,6 +65,21 @@ def run_review(
     if backend in ("agent", "api"):
         judge_findings, engine_label = _run_judge(artifacts, backend, root, cfg, console)
         findings.extend(judge_findings)
+
+    # --require-judge: fail loudly rather than silently scoring lint-only.
+    if require_judge and engine_label == "rules":
+        msg = (
+            "judge required but unavailable: the semantic judge did not run, so this "
+            "would be a lint-only score. Run the agent judge command (or use --api with "
+            "a key), or drop --require-judge."
+        )
+        if json_out:
+            sys.stdout.write(
+                render_json(scoring.score(artifacts, findings, cfg, engine="rules"))
+            )
+            sys.stdout.write("\n")
+        console.print(f"[bold red]ERROR[/] {msg}")
+        return EXIT_JUDGE_REQUIRED
 
     result: ReviewResult = scoring.score(artifacts, findings, cfg, engine=engine_label)
     result.timestamp = datetime.now(timezone.utc).isoformat()
@@ -74,7 +97,7 @@ def run_review(
             md_path.write_text(markdown.render(result), encoding="utf-8")
             console.print(f"\n[dim]Markdown report written to {md_path}[/]")
 
-    return 0 if result.overall >= cfg.fail_under else 1
+    return EXIT_PASS if result.overall >= cfg.fail_under else EXIT_FAIL
 
 
 def _run_judge(artifacts, backend, root, cfg, console):
