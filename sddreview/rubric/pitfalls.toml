@@ -213,6 +213,17 @@ detect = "Requirement line (shall/must/should/will … not, or FR-/NFR- label) t
 fix = "Restate as a positive, bounded requirement. Instead of 'the system shall not expose PII', write 'the system shall encrypt all PII fields at rest with AES-256 and strip PII from logs'."
 
 [[pitfall]]
+id = "SPEC-UNCLEAR-ACTOR"
+name = "Unclear actor / missing subject in requirement"
+dimension = "clarity"
+artifacts = ["spec", "plan"]
+severity = "low"
+method = "both"
+why = "IBM RQA / ISO 29148 'unambiguous': a requirement with no identifiable actor cannot be traced to a responsible component. Pronoun subjects ('it shall', 'they must') or subjectless lines are untraceable."
+detect = "Requirement line (shall/must/should/will or FR-/NFR- label) whose grammatical subject before the modal verb is a vague pronoun (it, they, this, that, these, those) or is entirely absent (line starts with the modal)."
+fix = "Replace the pronoun with an explicit named actor: 'The system shall', 'The API gateway shall', 'The background worker shall'."
+
+[[pitfall]]
 id = "REQ-COMPOUND"
 name = "Compound requirement (not singular)"
 dimension = "clarity"

@@ -88,6 +88,20 @@ _NEGATIVE_REQ_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Pronoun subject immediately before a modal verb ("it shall", "they must", etc.)
+# Does not include "will" — that word is not in _REQUIREMENTish_RE so those lines
+# are not reached by this check.
+_VAGUE_SUBJECT_RE = re.compile(
+    r"\b(it|they|this|that|these|those)\s+(?:shall|must|should)\b",
+    re.IGNORECASE,
+)
+# Requirement line with no noun subject — starts (after optional bullet/FR prefix) directly
+# with a modal verb: "FR-001: shall generate a report" / "- Shall display the result"
+_SUBJECTLESS_RE = re.compile(
+    r"^\s*(?:[-*]\s*)?(?:(?:FR|NFR)-\d+\s*:\s*)?(?:shall|must|should|will)\b",
+    re.IGNORECASE,
+)
+
 
 def _negative_requirement(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Requirement lines that state what the system must NOT do."""
@@ -104,6 +118,28 @@ def _negative_requirement(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fi
         _from_pitfall(
             p, art.path,
             f"Negative requirement (shall/must not): {len(hits)} line(s); prefer positive bounded statements.",
+            line=hits[0],
+        )
+    ]
+
+
+def _unclear_actor(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement lines whose grammatical subject is a vague pronoun or entirely absent."""
+    p = catalog.get("SPEC-UNCLEAR-ACTOR")
+    if p is None or not p.applies_to(art.type):
+        return []
+    hits: list[int] = []
+    for i, line in enumerate(art.raw.splitlines(), start=1):
+        if not _REQUIREMENTish_RE.search(line):
+            continue
+        if _VAGUE_SUBJECT_RE.search(line) or _SUBJECTLESS_RE.match(line):
+            hits.append(i)
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Requirement has unclear actor (pronoun or missing subject): {len(hits)} line(s).",
             line=hits[0],
         )
     ]
@@ -272,6 +308,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_nfr_without_threshold(art, catalog))
     out.extend(_passive_voice(art, catalog))
     out.extend(_negative_requirement(art, catalog))
+    out.extend(_unclear_actor(art, catalog))
     return out
 
 
@@ -307,6 +344,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_nfr_without_threshold(art, catalog))
     out.extend(_passive_voice(art, catalog))
     out.extend(_negative_requirement(art, catalog))
+    out.extend(_unclear_actor(art, catalog))
     return out
 
 
