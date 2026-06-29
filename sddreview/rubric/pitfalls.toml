@@ -386,3 +386,27 @@ why = "Without version and ratification/amendment dates, the constitution can't 
 detect = "Missing or placeholder Version / Ratified / Last Amended metadata."
 fix = "Fill in the governance line: Version | Ratified | Last Amended."
 patterns = ["\\[CONSTITUTION_VERSION\\]", "\\[RATIFICATION_DATE\\]", "\\[LAST_AMENDED_DATE\\]"]
+
+# ----------------------------------------------------------------- EARS / 29148 (issues #6, #7)
+
+[[pitfall]]
+id = "REQ-EARS-PATTERN"
+name = "Functional requirement not in an EARS pattern"
+dimension = "consistency"
+artifacts = ["spec"]
+severity = "info"
+method = "lint"
+why = "EARS (Easy Approach to Requirements Syntax) requirements are more consistent, testable, and unambiguous. This is advisory, not mandatory, so it never lowers the score."
+detect = "A 'shall' requirement that does not match an EARS shape (ubiquitous 'The <system> shall ...' or keyword-led When/While/Where/If ... shall ...)."
+fix = "Rephrase as EARS: 'The <system> shall <response>' or 'When <trigger>, the <system> shall <response>'."
+
+[[pitfall]]
+id = "JUDGE-29148-PERREQ"
+name = "Requirement fails an ISO/IEC/IEEE 29148 characteristic"
+dimension = "testability"
+artifacts = ["spec"]
+severity = "medium"
+method = "judge"
+why = "ISO/IEC/IEEE 29148 requires each requirement be necessary, singular, complete, correct, feasible, and verifiable — the per-requirement quality IBM RQA / QVscribe score, which deterministic lint can only partially check."
+detect = "Judge each functional requirement against the 29148 characteristics and report any that fail (which characteristic, and why)."
+fix = "Revise the requirement to satisfy the failing characteristic (split if not singular, quantify if not verifiable, add missing detail if not complete)."

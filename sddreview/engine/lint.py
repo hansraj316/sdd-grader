@@ -30,6 +30,32 @@ _NFR_RE = re.compile(
     re.IGNORECASE,
 )
 _REQUIREMENTish_RE = re.compile(r"\b(shall|must|should|FR-\d|NFR-\d)\b", re.IGNORECASE)
+_SHALL_RE = re.compile(r"\bshall\b", re.IGNORECASE)
+# EARS shapes: ubiquitous ("The <system> shall ...") or keyword-led (When/While/Where/If ... shall).
+_EARS_UBIQUITOUS_RE = re.compile(r"\bthe\s+[\w-]+(?:\s+[\w-]+){0,5}\s+shall\b", re.IGNORECASE)
+_EARS_KEYWORD_RE = re.compile(r"\b(when|while|where|if)\b.*\bshall\b", re.IGNORECASE)
+
+
+def _ears_pattern(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Advisory (info): 'shall' requirements that don't match an EARS shape."""
+    p = catalog.get("REQ-EARS-PATTERN")
+    if p is None or not p.applies_to(art.type):
+        return []
+    offenders: list[int] = []
+    for i, line in enumerate(art.raw.splitlines(), start=1):
+        if _SHALL_RE.search(line) and not (
+            _EARS_UBIQUITOUS_RE.search(line) or _EARS_KEYWORD_RE.search(line)
+        ):
+            offenders.append(i)
+    if offenders:
+        return [
+            _from_pitfall(
+                p, art.path,
+                f"{len(offenders)} 'shall' requirement(s) not in an EARS pattern (advisory).",
+                line=offenders[0],
+            )
+        ]
+    return []
 
 
 def _nfr_without_threshold(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -309,6 +335,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_passive_voice(art, catalog))
     out.extend(_negative_requirement(art, catalog))
     out.extend(_unclear_actor(art, catalog))
+    out.extend(_ears_pattern(art, catalog))
     return out
 
 
