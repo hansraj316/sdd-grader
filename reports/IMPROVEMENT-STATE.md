@@ -1,10 +1,16 @@
 # SDD-Reviewer Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 5
-Last run: 2026-06-29
-Open loop PRs: 1
+Iteration: 6
+Last run: 2026-06-29 (manual batch — cleared the open backlog)
+Open loop PRs: 0
 Consecutive empty research rounds: 0
+
+> Manual batch on 2026-06-29 merged PR #12 (#5) and then shipped #6, #7, #8, #13, #14,
+> #15, #16, #17, #18, #19, #20 as PRs #21–#28 (all CI-green, squash-merged). No open
+> `loop-candidate` issues remain. The loop's next run should do Phase 0–1 and, finding
+> the backlog empty, run a research round (Phase 3) to refill it — or set
+> STATUS: NOTHING-TO-IMPROVE after two empty rounds.
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
 last. Keep it short.
