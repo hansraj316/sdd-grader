@@ -1,8 +1,8 @@
 # SDD-Reviewer Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 4
-Last run: 2026-06-28
+Iteration: 5
+Last run: 2026-06-29
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -44,13 +44,14 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #4 → PR #11 spec-negative-requirement — SPEC-NEGATIVE-REQUIREMENT pitfall + lint check (2026-06-28; awaiting CI)
+- #5 → PR #12 spec-unclear-actor — SPEC-UNCLEAR-ACTOR pitfall + lint check (2026-06-29; awaiting CI)
 
 ## Merged
 
 - #1 pitfall-nfr-thresholds — SPEC-NFR-NO-THRESHOLD pitfall + lint check (2026-06-25).
 - #2 → PR #9 pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check (2026-06-27).
 - #3 → PR #10 pitfall-escape-clause — SPEC-ESCAPE-CLAUSE pitfall + lint check (2026-06-28).
+- #4 → PR #11 spec-negative-requirement — SPEC-NEGATIVE-REQUIREMENT pitfall + lint check (2026-06-29, CI was green).
 
 ## Blocked
 
@@ -71,3 +72,6 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 4 (2026-06-28): Phase 1 merged PR #10 (SPEC-ESCAPE-CLAUSE, issue #3 auto-closed, CI was green);
   Phase 4 picked issue #4 (SPEC-NEGATIVE-REQUIREMENT); dedicated lint check + 8 unit tests;
   pytest 45 green; benchmark good=100 bad=60.5 PASS; PR #11 opened.
+- iter 5 (2026-06-29): Phase 1 merged PR #11 (SPEC-NEGATIVE-REQUIREMENT, issue #4 auto-closed, CI was green);
+  Phase 4 picked issue #5 (SPEC-UNCLEAR-ACTOR); pronoun-subject + subjectless-requirement lint check + 10 unit tests;
+  pytest 55 green; benchmark good=100 bad=60.5 PASS; PR #12 opened.
