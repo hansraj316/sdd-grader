@@ -70,6 +70,9 @@ def review(
     top_fixes: int = typer.Option(
         0, "--top-fixes", help="Show the top N highest-impact fixes first (0 = off).",
     ),
+    sarif: Path | None = typer.Option(
+        None, "--sarif", help="Write SARIF 2.1.0 to this path (for GitHub code scanning).",
+    ),
 ) -> None:
     """Grade every Spec-Kit artifact found under PATH."""
     from .runner import run_review
@@ -77,7 +80,7 @@ def review(
     backend = "rules" if rules else ("api" if api else "agent")
     exit_code = run_review(
         path, backend=backend, json_out=json_out, fail_under=fail_under,
-        require_judge=require_judge, top_fixes=top_fixes,
+        require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif,
     )
     raise typer.Exit(code=exit_code)
 
