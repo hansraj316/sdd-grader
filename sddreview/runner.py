@@ -45,6 +45,9 @@ def run_review(
     console: Console | None = None,
 ) -> int:
     console = console or Console()
+    # When emitting machine-readable JSON, human warnings must go to stderr so
+    # they don't corrupt the stdout JSON document.
+    warn_console = Console(stderr=True) if json_out else console
     root = path.resolve()
 
     cfg = config_mod.load(root)
@@ -69,7 +72,7 @@ def run_review(
 
     engine_label = "rules"
     if backend in ("agent", "api"):
-        judge_findings, engine_label = _run_judge(artifacts, backend, root, cfg, console)
+        judge_findings, engine_label = _run_judge(artifacts, backend, root, cfg, warn_console)
         findings.extend(judge_findings)
 
     # --require-judge: fail loudly rather than silently scoring lint-only.
@@ -84,7 +87,7 @@ def run_review(
                 render_json(scoring.score(artifacts, findings, cfg, engine="rules"))
             )
             sys.stdout.write("\n")
-        console.print(f"[bold red]ERROR[/] {msg}")
+        warn_console.print(f"[bold red]ERROR[/] {msg}")
         return EXIT_JUDGE_REQUIRED
 
     result: ReviewResult = scoring.score(artifacts, findings, cfg, engine=engine_label)
