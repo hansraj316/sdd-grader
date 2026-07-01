@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from rich.console import Console
 
 from sddreview import config as config_mod
@@ -215,6 +217,55 @@ def test_agent_judgment_merges(good_repo: Path):
     assert len(raw) == 1
     assert raw[0].source.value == "judge"
     assert raw[0].pitfall_id == "PLAN-OVER-ENGINEERING"
+
+
+# --------------------------------------------------------------------------- malformed judge.json (issue #30)
+
+def test_agent_judge_top_level_list_does_not_crash(good_repo: Path):
+    """Top-level JSON array in judge.json must not raise AttributeError."""
+    judge_dir = good_repo / ".sddreview"
+    judge_dir.mkdir(parents=True, exist_ok=True)
+    (judge_dir / "judge.json").write_text(json.dumps(["not-an-object"]))
+    from sddreview.engine import judge as judge_mod
+
+    arts = discover_artifacts(good_repo)
+    # Must degrade gracefully — the string item is skipped, returning zero findings.
+    raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
+    assert raw == []
+
+
+def test_agent_judge_findings_list_with_non_dict_items(good_repo: Path):
+    """String items in the findings array must be skipped, not crash."""
+    judge_dir = good_repo / ".sddreview"
+    judge_dir.mkdir(parents=True, exist_ok=True)
+    (judge_dir / "judge.json").write_text(json.dumps({"findings": ["bad", 42, None]}))
+    from sddreview.engine import judge as judge_mod
+
+    arts = discover_artifacts(good_repo)
+    raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
+    assert raw == []
+
+
+def test_agent_judge_malformed_degrades_in_review(good_repo: Path):
+    """run_review must not raise on malformed judge.json; it degrades to rules-only."""
+    judge_dir = good_repo / ".sddreview"
+    judge_dir.mkdir(parents=True, exist_ok=True)
+    (judge_dir / "judge.json").write_text(json.dumps(["not-an-object"]))
+    # The top-level list is now accepted; items are skipped; review completes cleanly.
+    exit_code = run_review(good_repo, backend="agent", console=_quiet())
+    assert exit_code in (0, 1)
+
+
+def test_agent_judge_scalar_top_level_raises_judge_unavailable(good_repo: Path):
+    """A bare scalar (e.g. 42) at the top level of judge.json raises JudgeUnavailable."""
+    judge_dir = good_repo / ".sddreview"
+    judge_dir.mkdir(parents=True, exist_ok=True)
+    (judge_dir / "judge.json").write_text("42")
+    from sddreview.integrations.agent import AgentJudge
+    from sddreview.engine.judge import JudgeUnavailable
+
+    with pytest.raises(JudgeUnavailable, match="top level"):
+        AgentJudge().read_judgment(good_repo)
 
 
 # --------------------------------------------------------------------------- dashboard / advise

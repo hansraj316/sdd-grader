@@ -84,7 +84,14 @@ class AgentJudge:
             data = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             raise JudgeUnavailable(f"judge.json is not valid JSON: {exc}") from exc
-        findings = data.get("findings", data if isinstance(data, list) else [])
-        if not isinstance(findings, list):
-            raise JudgeUnavailable("judge.json has no 'findings' array")
+        if isinstance(data, list):
+            findings = data
+        elif isinstance(data, dict):
+            findings = data.get("findings", [])
+            if not isinstance(findings, list):
+                raise JudgeUnavailable("judge.json 'findings' value is not an array")
+        else:
+            raise JudgeUnavailable(
+                "judge.json must be a JSON object or array at the top level"
+            )
         return findings
