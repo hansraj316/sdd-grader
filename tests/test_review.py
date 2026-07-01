@@ -144,6 +144,28 @@ def test_run_review_records_history(bad_repo: Path):
     assert line["overall"] < 70 and line["finding_count"] > 0
 
 
+# --------------------------------------------------------------------------- json stdout cleanliness
+
+def test_json_mode_stdout_is_valid_json_when_judge_unavailable(bad_repo: Path, capsys):
+    """run_review --json must emit valid JSON on stdout even when no judge.json exists."""
+    # No judge.json → agent backend degrades to rules-only; warning must not corrupt stdout.
+    exit_code = run_review(bad_repo, backend="agent", json_out=True)
+    out = capsys.readouterr().out
+    parsed = json.loads(out)  # raises JSONDecodeError if warning bled onto stdout
+    assert "overall" in parsed
+    assert exit_code in (0, 1)
+
+
+def test_json_mode_judge_warning_goes_to_stderr(bad_repo: Path, capsys):
+    """The judge-unavailable warning must appear on stderr, not stdout, in --json mode."""
+    run_review(bad_repo, backend="agent", json_out=True)
+    captured = capsys.readouterr()
+    # stdout must be a clean JSON document
+    json.loads(captured.out)
+    # the human warning lands on stderr
+    assert "unavailable" in captured.err.lower()
+
+
 # --------------------------------------------------------------------------- integrations
 
 def test_init_scaffolds_agent_command(good_repo: Path):
