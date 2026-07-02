@@ -47,8 +47,11 @@ class ApiJudge:
                 messages=[{"role": "user", "content": prompt}],
             ) as stream:
                 message = stream.get_final_message()
-        except Exception as exc:  # network/auth/etc. — degrade rather than crash review
-            raise JudgeUnavailable(f"API call failed: {exc}") from exc
+        except Exception as exc:  # network/auth/etc. — surface class + detail; the
+            # runner decides whether to degrade (agent default) or fail (--api).
+            status = getattr(exc, "status_code", None)
+            detail = f"{type(exc).__name__}" + (f", HTTP {status}" if status else "")
+            raise JudgeUnavailable(f"API call failed ({detail}): {exc}") from exc
 
         text = next((b.text for b in message.content if getattr(b, "type", None) == "text"), "")
         try:

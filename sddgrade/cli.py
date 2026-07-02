@@ -68,7 +68,10 @@ def init(
 def review(
     path: Path = typer.Argument(Path("."), help="Repo or specs directory to review."),
     rules: bool = typer.Option(False, "--rules", help="Deterministic lint only (no LLM)."),
-    api: bool = typer.Option(False, "--api", help="Use the key-based API judge (CI/headless)."),
+    api: bool = typer.Option(
+        False, "--api",
+        help="Use the key-based API judge (CI/headless). Fails (exit 3) if it can't run.",
+    ),
     json_out: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
     fail_under: float | None = typer.Option(
         None, "--fail-under",
