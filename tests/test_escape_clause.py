@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from sddreview.adapters.base import parse_sections
-from sddreview.catalog import load_catalog
-from sddreview.engine.lint import _lexical_pitfalls
-from sddreview.model import Artifact, ArtifactType
+from sddgrade.adapters.base import parse_sections
+from sddgrade.catalog import load_catalog
+from sddgrade.engine.lint import _lexical_pitfalls
+from sddgrade.model import Artifact, ArtifactType
 
 
 def _spec(text: str) -> Artifact:

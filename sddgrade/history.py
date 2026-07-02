@@ -1,4 +1,4 @@
-"""Local, per-repo review history — a JSONL trail under ``.sddreview/``.
+"""Local, per-repo review history — a JSONL trail under ``.sddgrade/``.
 
 One line per run, append-only. The dashboard reads this back for trends and
 top-pitfall metrics. No DB, no server.
@@ -12,7 +12,7 @@ from pathlib import Path
 
 from .model import ReviewResult
 
-HISTORY_DIR = ".sddreview"
+HISTORY_DIR = ".sddgrade"
 HISTORY_FILE = "history.jsonl"
 
 

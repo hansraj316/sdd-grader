@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sddreview import config as config_mod
-from sddreview.adapters.openspec import OpenSpecAdapter
-from sddreview.adapters.speckit import SpecKitAdapter
-from sddreview.discovery import discover_artifacts, resolve_adapter
-from sddreview.engine import lint as lint_mod
-from sddreview.engine import scoring
-from sddreview.model import ArtifactType
+from sddgrade import config as config_mod
+from sddgrade.adapters.openspec import OpenSpecAdapter
+from sddgrade.adapters.speckit import SpecKitAdapter
+from sddgrade.discovery import discover_artifacts, resolve_adapter
+from sddgrade.engine import lint as lint_mod
+from sddgrade.engine import scoring
+from sddgrade.model import ArtifactType
 
 FIXTURES = Path(__file__).parent / "fixtures"
 OS_GOOD = FIXTURES / "openspec_good"

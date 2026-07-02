@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from sddreview.adapters.base import parse_sections
-from sddreview.catalog import load_catalog
-from sddreview.engine.judge import build_prompt, judge_guidance
-from sddreview.engine.lint import _ears_pattern
-from sddreview.model import Artifact, ArtifactType
+from sddgrade.adapters.base import parse_sections
+from sddgrade.catalog import load_catalog
+from sddgrade.engine.judge import build_prompt, judge_guidance
+from sddgrade.engine.lint import _ears_pattern
+from sddgrade.model import Artifact, ArtifactType
 
 
 def _spec(text: str) -> Artifact:

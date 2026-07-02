@@ -75,7 +75,7 @@ def _is_artifact(value: str) -> bool:
 @lru_cache(maxsize=1)
 def load_catalog() -> dict[str, Pitfall]:
     """Return the bundled pitfall catalog keyed by id (cached)."""
-    text = (resources.files("sddreview.rubric") / "pitfalls.toml").read_text(
+    text = (resources.files("sddgrade.rubric") / "pitfalls.toml").read_text(
         encoding="utf-8"
     )
     data = tomllib.loads(text)

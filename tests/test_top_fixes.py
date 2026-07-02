@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from sddreview import config as config_mod
-from sddreview.discovery import discover_artifacts, get_adapter
-from sddreview.engine import lint as lint_mod
-from sddreview.engine import scoring
-from sddreview.report.json_out import render as render_json
+from sddgrade import config as config_mod
+from sddgrade.discovery import discover_artifacts, get_adapter
+from sddgrade.engine import lint as lint_mod
+from sddgrade.engine import scoring
+from sddgrade.report.json_out import render as render_json
 
 
 def _result(repo: Path):

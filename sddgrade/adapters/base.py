@@ -1,7 +1,7 @@
 """Adapter protocol + shared Markdown parsing.
 
 An adapter knows how a particular SDD toolchain lays out its artifacts on disk and
-how to normalize them into :class:`~sddreview.model.Artifact` objects. The engine and
+how to normalize them into :class:`~sddgrade.model.Artifact` objects. The engine and
 reports depend only on this protocol, so adding OpenSpec later is a new adapter, not a
 change to the core.
 """

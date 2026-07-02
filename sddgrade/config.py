@@ -1,8 +1,8 @@
-"""Load and merge configuration: built-in defaults + user ``.sddreview.toml``.
+"""Load and merge configuration: built-in defaults + user ``.sddgrade.toml``.
 
-Everything has a sensible default so the common case (`sddreview review`) needs no
+Everything has a sensible default so the common case (`sddgrade review`) needs no
 config at all. A repo can override weights, thresholds, and the chosen agent in
-``.sddreview.toml`` at its root.
+``.sddgrade.toml`` at its root.
 """
 
 from __future__ import annotations
@@ -14,10 +14,14 @@ from typing import Any
 
 from .model import Dimension
 
-CONFIG_FILENAME = ".sddreview.toml"
+CONFIG_FILENAME = ".sddgrade.toml"
+
+
+class ConfigError(Exception):
+    """A config file the user wrote exists but cannot be read or parsed."""
 
 # Default per-dimension penalty multipliers. Neutral (1.0) so a score reads as a
-# plain penalty sum; bump a dimension in .sddreview.toml to make its defects hurt more.
+# plain penalty sum; bump a dimension in .sddgrade.toml to make its defects hurt more.
 DEFAULT_WEIGHTS: dict[Dimension, float] = {
     Dimension.COMPLETENESS: 1.0,
     Dimension.CLARITY: 1.0,
@@ -35,7 +39,9 @@ class Config:
 
     tool: str = "speckit"
     integration: str = "claude"
-    fail_under: float = 70.0
+    # CI gate threshold. None (the default) means no gating: a bare review exits 0
+    # regardless of score. Opt in via --fail-under or `fail_under` in .sddgrade.toml.
+    fail_under: float | None = None
     weights: dict[Dimension, float] = field(
         default_factory=lambda: dict(DEFAULT_WEIGHTS)
     )
@@ -59,7 +65,7 @@ def _coerce_weights(raw: dict[str, Any]) -> dict[Dimension, float]:
 
 
 def find_config_file(start: Path) -> Path | None:
-    """Walk upward from ``start`` looking for a ``.sddreview.toml``."""
+    """Walk upward from ``start`` looking for a ``.sddgrade.toml``."""
     start = start.resolve()
     for parent in [start, *start.parents]:
         candidate = parent / CONFIG_FILENAME
@@ -69,7 +75,7 @@ def find_config_file(start: Path) -> Path | None:
 
 
 def load(root: Path | None = None) -> Config:
-    """Build a :class:`Config`, merging any discovered ``.sddreview.toml`` over defaults."""
+    """Build a :class:`Config`, merging any discovered ``.sddgrade.toml`` over defaults."""
     root = (root or Path.cwd()).resolve()
     cfg = Config(root=root)
 
@@ -77,13 +83,16 @@ def load(root: Path | None = None) -> Config:
     if config_file is None:
         return cfg
 
+    # Config the user wrote must never be silently ignored: surface the problem
+    # instead of quietly reverting their thresholds/weights to defaults.
     try:
         data = tomllib.loads(config_file.read_text(encoding="utf-8"))
-    except (tomllib.TOMLDecodeError, OSError):
-        # A malformed config shouldn't break a review; fall back to defaults.
-        return cfg
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(f"invalid TOML in {config_file}: {exc}") from exc
+    except OSError as exc:
+        raise ConfigError(f"could not read {config_file}: {exc}") from exc
 
-    section = data.get("sddreview", data)
+    section = data.get("sddgrade", data)
     if isinstance(section.get("tool"), str):
         cfg.tool = section["tool"]
     if isinstance(section.get("integration"), str):

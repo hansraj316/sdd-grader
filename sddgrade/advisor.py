@@ -1,4 +1,4 @@
-"""`sddreview advise` — scan a codebase and recommend how to adopt Spec-Kit / SDD.
+"""`sddgrade advise` — scan a codebase and recommend how to adopt Spec-Kit / SDD.
 
 Heuristic-first so it always works with no LLM. It infers the stack, test posture, and
 structure, then emits concrete, prioritized recommendations. (An LLM-enriched mode via
@@ -67,8 +67,8 @@ def _recommendations(info: dict) -> list[str]:
 
     if info["has_speckit"]:
         recs.append(
-            "Spec-Kit is already initialized here. Run `sddreview review` on your "
-            "specs/ to benchmark their quality and `sddreview dashboard` to track trends."
+            "Spec-Kit is already initialized here. Run `sddgrade review` on your "
+            "specs/ to benchmark their quality and `sddgrade dashboard` to track trends."
         )
     else:
         recs.append(
@@ -99,17 +99,17 @@ def _recommendations(info: dict) -> list[str]:
         recs.append(
             "Monorepo detected (multiple package manifests). Use one specs/<feature> "
             "tree per service and a shared constitution; review each with "
-            "`sddreview review <path>`."
+            "`sddgrade review <path>`."
         )
 
     if info["has_ci"]:
         recs.append(
-            "You have CI. Add a spec-quality gate: `sddreview review --rules --fail-under "
+            "You have CI. Add a spec-quality gate: `sddgrade review --rules --fail-under "
             "70` (offline, deterministic) as a required check on PRs that touch specs/."
         )
     else:
         recs.append(
-            "Add CI that runs `sddreview review --rules --fail-under 70` so spec quality "
+            "Add CI that runs `sddgrade review --rules --fail-under 70` so spec quality "
             "is gated like code quality."
         )
 

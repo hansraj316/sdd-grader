@@ -217,7 +217,7 @@ class ArtifactReview:
 
 @dataclass
 class ReviewResult:
-    """The result of one ``sddreview review`` run over a repo."""
+    """The result of one ``sddgrade review`` run over a repo."""
 
     artifacts: list[ArtifactReview] = field(default_factory=list)
     tool: str = "speckit"

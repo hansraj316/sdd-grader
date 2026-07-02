@@ -1,6 +1,6 @@
 """Terminal metrics dashboard over local review history.
 
-Reads ``.sddreview/history.jsonl`` and renders score trends (sparklines), the latest
+Reads ``.sddgrade/history.jsonl`` and renders score trends (sparklines), the latest
 per-artifact breakdown, and the most frequent pitfalls across runs. No browser.
 """
 
@@ -48,7 +48,7 @@ def show(path: Path, console: Console | None = None) -> int:
     if not runs:
         console.print(
             f"[yellow]No review history under[/] {root}. "
-            "Run [bold]sddreview review[/] first."
+            "Run [bold]sddgrade review[/] first."
         )
         return 0
 

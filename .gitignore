@@ -13,8 +13,8 @@ venv/
 .ruff_cache/
 .mypy_cache/
 
-# sddreview local state (history is per-repo; don't commit this tool's own runs)
-.sddreview/
+# sddgrade local state (history is per-repo; don't commit this tool's own runs)
+.sddgrade/
 
 # OS / editor
 .DS_Store

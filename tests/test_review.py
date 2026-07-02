@@ -9,14 +9,14 @@ import pytest
 
 from rich.console import Console
 
-from sddreview import config as config_mod
-from sddreview.catalog import load_catalog
-from sddreview.discovery import discover_artifacts, get_adapter
-from sddreview.engine import lint as lint_mod
-from sddreview.engine import scoring
-from sddreview.model import ArtifactType
-from sddreview.report import json_out, markdown
-from sddreview.runner import run_review
+from sddgrade import config as config_mod
+from sddgrade.catalog import load_catalog
+from sddgrade.discovery import discover_artifacts, get_adapter
+from sddgrade.engine import lint as lint_mod
+from sddgrade.engine import scoring
+from sddgrade.model import ArtifactType
+from sddgrade.report import json_out, markdown
+from sddgrade.runner import run_review
 
 
 # --------------------------------------------------------------------------- catalog
@@ -134,13 +134,48 @@ def test_run_review_exit_codes(good_repo: Path, bad_repo: Path):
     assert run_review(bad_repo, backend="rules", fail_under=70, console=_quiet()) == 1
 
 
+def test_bare_review_never_gates(bad_repo: Path):
+    # #45: gating is opt-in. Without --fail-under or a config threshold, findings
+    # alone must not produce a non-zero exit.
+    assert run_review(bad_repo, backend="rules", console=_quiet()) == 0
+
+
+def test_config_fail_under_gates(bad_repo: Path):
+    # #45: a fail_under written to .sddgrade.toml is an explicit opt-in and gates.
+    (bad_repo / ".sddgrade.toml").write_text("[sddgrade]\nfail_under = 70\n")
+    assert run_review(bad_repo, backend="rules", console=_quiet()) == 1
+
+
+def test_malformed_config_errors_loudly(bad_repo: Path):
+    # #47: a config the user wrote must never be silently ignored — bad TOML is a
+    # named error on stderr and a non-zero exit, not a quiet fall back to defaults.
+    import io
+
+    import pytest
+
+    from sddgrade.config import ConfigError
+    from sddgrade.runner import EXIT_CONFIG_ERROR
+
+    (bad_repo / ".sddgrade.toml").write_text("[sddgrade\nfail_under = 90\n")
+
+    with pytest.raises(ConfigError) as excinfo:
+        config_mod.load(bad_repo)
+    assert ".sddgrade.toml" in str(excinfo.value)
+
+    err = Console(file=io.StringIO(), width=200)
+    code = run_review(bad_repo, backend="rules", console=_quiet(), err_console=err)
+    assert code == EXIT_CONFIG_ERROR
+    text = err.file.getvalue()
+    assert "ERROR" in text and ".sddgrade.toml" in text
+
+
 def test_run_review_no_artifacts(tmp_path: Path):
     assert run_review(tmp_path, backend="rules", console=_quiet()) == 2
 
 
 def test_run_review_records_history(bad_repo: Path):
     run_review(bad_repo, backend="rules", fail_under=70, console=_quiet())
-    hist = bad_repo / ".sddreview" / "history.jsonl"
+    hist = bad_repo / ".sddgrade" / "history.jsonl"
     assert hist.is_file()
     line = json.loads(hist.read_text().splitlines()[0])
     assert line["overall"] < 70 and line["finding_count"] > 0
@@ -171,19 +206,19 @@ def test_json_mode_judge_warning_goes_to_stderr(bad_repo: Path, capsys):
 # --------------------------------------------------------------------------- integrations
 
 def test_init_scaffolds_agent_command(good_repo: Path):
-    from sddreview.integrations import agent as agent_backend
+    from sddgrade.integrations import agent as agent_backend
 
     written = agent_backend.scaffold(good_repo, "claude")
-    assert (good_repo / ".claude/commands/sddreview.md").is_file()
-    assert (good_repo / ".sddreview.toml").is_file()
-    assert any("sddreview.md" in str(p) for p in written)
+    assert (good_repo / ".claude/commands/sddgrade.md").is_file()
+    assert (good_repo / ".sddgrade.toml").is_file()
+    assert any("sddgrade.md" in str(p) for p in written)
     # The command embeds the pitfall guidance.
-    text = (good_repo / ".claude/commands/sddreview.md").read_text()
+    text = (good_repo / ".claude/commands/sddgrade.md").read_text()
     assert "PLAN-OVER-ENGINEERING" in text
 
 
 def test_supported_agents_listed():
-    from sddreview.integrations import agent as agent_backend
+    from sddgrade.integrations import agent as agent_backend
 
     agents = agent_backend.supported_agents()
     assert {"claude", "copilot", "cursor", "gemini"} <= set(agents)
@@ -197,9 +232,13 @@ def test_agent_backend_degrades_without_judgment(bad_repo: Path):
 
 def test_agent_judgment_merges(good_repo: Path):
     # A stub judgment adds a semantic finding; the good repo should then drop below 100.
-    judge_dir = good_repo / ".sddreview"
+    from sddgrade.integrations.agent import artifact_manifest
+
+    arts = discover_artifacts(good_repo)
+    judge_dir = good_repo / ".sddgrade"
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / "judge.json").write_text(json.dumps({
+        "artifacts": artifact_manifest(arts, good_repo),
         "findings": [{
             "artifact": "plan.md",
             "dimension": "feasibility",
@@ -210,9 +249,8 @@ def test_agent_judgment_merges(good_repo: Path):
         }]
     }))
     # Use the lower-level judge to confirm merge without needing the agent.
-    from sddreview.engine import judge as judge_mod
+    from sddgrade.engine import judge as judge_mod
 
-    arts = discover_artifacts(good_repo)
     raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
     assert len(raw) == 1
     assert raw[0].source.value == "judge"
@@ -222,47 +260,55 @@ def test_agent_judgment_merges(good_repo: Path):
 # --------------------------------------------------------------------------- malformed judge.json (issue #30)
 
 def test_agent_judge_top_level_list_does_not_crash(good_repo: Path):
-    """Top-level JSON array in judge.json must not raise AttributeError."""
-    judge_dir = good_repo / ".sddreview"
+    """Top-level JSON array in judge.json must not raise AttributeError.
+
+    A bare array is the legacy manifest-less format: it can't be verified fresh,
+    so it fails the staleness check cleanly (JudgeUnavailable, not a crash).
+    """
+    judge_dir = good_repo / ".sddgrade"
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / "judge.json").write_text(json.dumps(["not-an-object"]))
-    from sddreview.engine import judge as judge_mod
+    from sddgrade.engine import judge as judge_mod
 
     arts = discover_artifacts(good_repo)
-    # Must degrade gracefully — the string item is skipped, returning zero findings.
-    raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
-    assert raw == []
+    with pytest.raises(judge_mod.JudgeUnavailable, match="stale"):
+        judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
 
 
 def test_agent_judge_findings_list_with_non_dict_items(good_repo: Path):
     """String items in the findings array must be skipped, not crash."""
-    judge_dir = good_repo / ".sddreview"
-    judge_dir.mkdir(parents=True, exist_ok=True)
-    (judge_dir / "judge.json").write_text(json.dumps({"findings": ["bad", 42, None]}))
-    from sddreview.engine import judge as judge_mod
+    from sddgrade.engine import judge as judge_mod
+    from sddgrade.integrations.agent import artifact_manifest
 
     arts = discover_artifacts(good_repo)
+    judge_dir = good_repo / ".sddgrade"
+    judge_dir.mkdir(parents=True, exist_ok=True)
+    (judge_dir / "judge.json").write_text(
+        json.dumps(
+            {"artifacts": artifact_manifest(arts, good_repo), "findings": ["bad", 42, None]}
+        )
+    )
     raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
     assert raw == []
 
 
 def test_agent_judge_malformed_degrades_in_review(good_repo: Path):
     """run_review must not raise on malformed judge.json; it degrades to rules-only."""
-    judge_dir = good_repo / ".sddreview"
+    judge_dir = good_repo / ".sddgrade"
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / "judge.json").write_text(json.dumps(["not-an-object"]))
-    # The top-level list is now accepted; items are skipped; review completes cleanly.
+    # Legacy list format fails the freshness check → clean degrade to rules-only.
     exit_code = run_review(good_repo, backend="agent", console=_quiet())
     assert exit_code in (0, 1)
 
 
 def test_agent_judge_scalar_top_level_raises_judge_unavailable(good_repo: Path):
     """A bare scalar (e.g. 42) at the top level of judge.json raises JudgeUnavailable."""
-    judge_dir = good_repo / ".sddreview"
+    judge_dir = good_repo / ".sddgrade"
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / "judge.json").write_text("42")
-    from sddreview.integrations.agent import AgentJudge
-    from sddreview.engine.judge import JudgeUnavailable
+    from sddgrade.integrations.agent import AgentJudge
+    from sddgrade.engine.judge import JudgeUnavailable
 
     with pytest.raises(JudgeUnavailable, match="top level"):
         AgentJudge().read_judgment(good_repo)
@@ -271,7 +317,7 @@ def test_agent_judge_scalar_top_level_raises_judge_unavailable(good_repo: Path):
 # --------------------------------------------------------------------------- dashboard / advise
 
 def test_sparkline_monotonic():
-    from sddreview.dashboard import sparkline
+    from sddgrade.dashboard import sparkline
 
     s = sparkline([0, 50, 100])
     assert len(s) == 3
@@ -279,14 +325,14 @@ def test_sparkline_monotonic():
 
 
 def test_dashboard_runs_after_history(bad_repo: Path):
-    from sddreview.dashboard import show
+    from sddgrade.dashboard import show
 
     run_review(bad_repo, backend="rules", console=_quiet())
     assert show(bad_repo, console=_quiet()) == 0
 
 
 def test_advise_returns_recommendations(good_repo: Path):
-    from sddreview.advisor import _recommendations, _scan
+    from sddgrade.advisor import _recommendations, _scan
 
     info = _scan(good_repo)
     recs = _recommendations(info)

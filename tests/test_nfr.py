@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sddreview.adapters.base import parse_sections
-from sddreview.catalog import load_catalog
-from sddreview.engine.lint import _nfr_without_threshold
-from sddreview.model import Artifact, ArtifactType
+from sddgrade.adapters.base import parse_sections
+from sddgrade.catalog import load_catalog
+from sddgrade.engine.lint import _nfr_without_threshold
+from sddgrade.model import Artifact, ArtifactType
 
 
 def _spec(text: str) -> Artifact:
