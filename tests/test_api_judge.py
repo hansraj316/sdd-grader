@@ -177,10 +177,8 @@ def test_api_backend_api_error_fails_run_with_reason(monkeypatch, good_repo: Pat
 def test_api_backend_failure_json_is_labeled_lint_only(monkeypatch, good_repo: Path, capsys):
     # Even the JSON emitted alongside the failure never claims lint+semantic coverage.
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    code = run_review(
-        good_repo, backend="api", json_out=True, fail_under=70,
-        console=Console(file=io.StringIO()),
-    )
+    # No injected console: err_console defaults to real stderr, json goes to stdout.
+    code = run_review(good_repo, backend="api", json_out=True, fail_under=70)
     assert code == EXIT_JUDGE_REQUIRED
     captured = capsys.readouterr()
     data = json.loads(captured.out)  # stdout stays pure, parseable JSON
