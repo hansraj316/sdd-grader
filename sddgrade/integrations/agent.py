@@ -102,9 +102,18 @@ class AgentJudge:
             data = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             raise JudgeUnavailable(f"judge.json is not valid JSON: {exc}") from exc
-        findings = data.get("findings", data if isinstance(data, list) else [])
-        if not isinstance(findings, list):
-            raise JudgeUnavailable("judge.json has no 'findings' array")
+        if isinstance(data, dict):
+            findings = data.get("findings", [])
+            if not isinstance(findings, list):
+                raise JudgeUnavailable("judge.json 'findings' value is not an array")
+        elif isinstance(data, list):
+            # Legacy bare-array format: carries no hash manifest, so with artifacts
+            # to verify it fails the freshness check below rather than crashing.
+            findings = data
+        else:
+            raise JudgeUnavailable(
+                "judge.json must be a JSON object at the top level"
+            )
         if artifacts is not None:
             self._check_freshness(data, artifacts, Path(root))
         return findings

@@ -1,16 +1,10 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 6
-Last run: 2026-06-29 (manual batch — cleared the open backlog)
-Open loop PRs: 0
+Iteration: 9
+Last run: 2026-07-02
+Open loop PRs: 1
 Consecutive empty research rounds: 0
-
-> Manual batch on 2026-06-29 merged PR #12 (#5) and then shipped #6, #7, #8, #13, #14,
-> #15, #16, #17, #18, #19, #20 as PRs #21–#28 (all CI-green, squash-merged). No open
-> `loop-candidate` issues remain. The loop's next run should do Phase 0–1 and, finding
-> the backlog empty, run a research round (Phase 3) to refill it — or set
-> STATUS: NOTHING-TO-IMPROVE after two empty rounds.
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
 last. Keep it short.
@@ -30,7 +24,7 @@ requirement, unclear actor, EARS pattern, ISO-29148 per-req judging, score calib
 Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]` blocked.
 
 - [x] pitfall-escape-clause — see issue #3 → merged in PR #10
-- [~] pitfall-negative-requirement — see issue #4 → PR #11 (in review)
+- [x] pitfall-negative-requirement — see issue #4 → merged in PR #11
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
@@ -50,7 +44,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #5 → PR #12 spec-unclear-actor — SPEC-UNCLEAR-ACTOR pitfall + lint check (2026-06-29; awaiting CI)
+- #31 → PR #35 config-tool-precedence — honor .sddreview.toml tool= when no --tool CLI flag (2026-07-02; awaiting CI)
 
 ## Merged
 
@@ -58,6 +52,9 @@ Tessl, and Spec-Kit extensions/presets.)
 - #2 → PR #9 pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check (2026-06-27).
 - #3 → PR #10 pitfall-escape-clause — SPEC-ESCAPE-CLAUSE pitfall + lint check (2026-06-28).
 - #4 → PR #11 spec-negative-requirement — SPEC-NEGATIVE-REQUIREMENT pitfall + lint check (2026-06-29, CI was green).
+- #5 → PR #12/#33-batch spec-unclear-actor — SPEC-UNCLEAR-ACTOR pitfall + lint check (2026-06-29, CI was green; merged in manual batch).
+- #29 → PR #33 json-warnings-to-stderr — route judge-unavailable warning to stderr in --json mode (2026-07-01, CI was green; squash-merged).
+- #30 → PR #34 fix-malformed-judge-json — handle malformed judge.json without crashing (2026-07-02, CI was green; squash-merged).
 
 ## Blocked
 
@@ -81,3 +78,17 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 5 (2026-06-29): Phase 1 merged PR #11 (SPEC-NEGATIVE-REQUIREMENT, issue #4 auto-closed, CI was green);
   Phase 4 picked issue #5 (SPEC-UNCLEAR-ACTOR); pronoun-subject + subjectless-requirement lint check + 10 unit tests;
   pytest 55 green; benchmark good=100 bad=60.5 PASS; PR #12 opened.
+- iter 6 (2026-06-29, manual batch): merged PR #12 and shipped PRs #21–#32 (issues #6–#28);
+  backlog cleared; 0 open loop-candidate issues remain at close of batch.
+- iter 7 (2026-06-30): Phase 1 no open loop/* PRs; Phase 2 found 3 open loop-candidate issues
+  (#29, #30, #31 — all bugs filed by prior batch); Phase 4 picked #29 (--json warning on stdout);
+  route warn_console to stderr when json_out=True; 2 regression tests; pytest 92 green;
+  benchmark good=100 bad=60.5 PASS; PR #33 opened.
+- iter 8 (2026-07-01): Phase 1 merged PR #33 (issue #29 closed, CI was green); Phase 4 picked
+  #30 (malformed judge.json crash); fixed agent.py isinstance check before data.get() and added
+  TypeError to judge.py to_findings() except clause; 4 regression tests; pytest 96 green;
+  benchmark good=100 bad=60.5 PASS; PR #34 opened.
+- iter 9 (2026-07-02): Phase 1 merged PR #34 (issue #30 closed, CI was green); Phase 4 picked
+  #31 (CLI --tool default overrides .sddreview.toml); changed cli.py tool default None→None and
+  config.py Config.tool default "speckit"→"auto"; 4 regression tests; pytest 100 green;
+  benchmark good=100 bad=60.5 PASS; PR #35 opened.
