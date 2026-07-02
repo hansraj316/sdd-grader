@@ -173,9 +173,13 @@ def test_agent_backend_degrades_without_judgment(bad_repo: Path):
 
 def test_agent_judgment_merges(good_repo: Path):
     # A stub judgment adds a semantic finding; the good repo should then drop below 100.
+    from sddgrade.integrations.agent import artifact_manifest
+
+    arts = discover_artifacts(good_repo)
     judge_dir = good_repo / ".sddgrade"
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / "judge.json").write_text(json.dumps({
+        "artifacts": artifact_manifest(arts, good_repo),
         "findings": [{
             "artifact": "plan.md",
             "dimension": "feasibility",
@@ -188,7 +192,6 @@ def test_agent_judgment_merges(good_repo: Path):
     # Use the lower-level judge to confirm merge without needing the agent.
     from sddgrade.engine import judge as judge_mod
 
-    arts = discover_artifacts(good_repo)
     raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
     assert len(raw) == 1
     assert raw[0].source.value == "judge"

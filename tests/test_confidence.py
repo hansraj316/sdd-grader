@@ -64,8 +64,13 @@ def test_require_judge_fails_when_judge_unavailable(good_repo: Path):
 
 
 def test_require_judge_ok_with_stub_judgment(good_repo: Path):
+    from sddgrade.integrations.agent import artifact_manifest
+
+    manifest = artifact_manifest(discover_artifacts(good_repo), good_repo)
     (good_repo / ".sddgrade").mkdir(parents=True, exist_ok=True)
-    (good_repo / ".sddgrade" / "judge.json").write_text(json.dumps({"findings": []}))
+    (good_repo / ".sddgrade" / "judge.json").write_text(
+        json.dumps({"artifacts": manifest, "findings": []})
+    )
     code = run_review(
         good_repo, backend="agent", require_judge=True, fail_under=70, console=_quiet()
     )

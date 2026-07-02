@@ -35,7 +35,7 @@ class ApiJudge:
             ) from exc
 
         client = anthropic.Anthropic()
-        prompt = build_prompt(artifacts)
+        prompt = build_prompt(artifacts, root)
         try:
             # Stream to avoid HTTP timeouts on large specs; structured output guarantees
             # schema-valid JSON in the first text block.

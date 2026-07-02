@@ -11,6 +11,7 @@ from ..config import Config
 from ..model import (
     Artifact,
     ArtifactReview,
+    ArtifactType,
     Dimension,
     DimensionScore,
     Finding,
@@ -18,6 +19,28 @@ from ..model import (
 )
 
 ALL_DIMENSIONS = list(Dimension)
+
+# Synthetic review path for findings that name no discovered artifact (e.g. a judge
+# reporting "the specification"). They must stay visible in scores and reports.
+UNATTRIBUTED_PATH = "(unattributed)"
+
+
+def _dimension_scores(art_findings: list[Finding], config: Config) -> list[DimensionScore]:
+    dim_scores: list[DimensionScore] = []
+    for dim in ALL_DIMENSIONS:
+        dim_findings = [f for f in art_findings if f.dimension == dim]
+        weight = config.weight(dim)
+        penalty = sum(f.severity.penalty for f in dim_findings) * weight
+        dim_scores.append(
+            DimensionScore(
+                dimension=dim,
+                score=max(0.0, 100.0 - penalty),
+                weight=weight,
+                penalty=penalty,
+                findings=dim_findings,
+            )
+        )
+    return dim_scores
 
 
 def score(
@@ -32,27 +55,26 @@ def score(
 
     reviews: list[ArtifactReview] = []
     for art in artifacts:
-        art_findings = by_path.get(art.path, [])
-        dim_scores: list[DimensionScore] = []
-        for dim in ALL_DIMENSIONS:
-            dim_findings = [f for f in art_findings if f.dimension == dim]
-            weight = config.weight(dim)
-            penalty = sum(f.severity.penalty for f in dim_findings) * weight
-            dim_scores.append(
-                DimensionScore(
-                    dimension=dim,
-                    score=max(0.0, 100.0 - penalty),
-                    weight=weight,
-                    penalty=penalty,
-                    findings=dim_findings,
-                )
-            )
         reviews.append(
             ArtifactReview(
                 path=art.path,
                 type=art.type,
                 feature_id=art.feature_id,
-                dimension_scores=dim_scores,
+                dimension_scores=_dimension_scores(by_path.pop(art.path, []), config),
+            )
+        )
+
+    # Findings whose artifact_path matched no artifact: bucket them under a
+    # synthetic review so they still hit all_findings, reports, and the overall
+    # score instead of silently vanishing.
+    leftover = [f for fs in by_path.values() for f in fs]
+    if leftover:
+        reviews.append(
+            ArtifactReview(
+                path=UNATTRIBUTED_PATH,
+                type=ArtifactType.UNKNOWN,
+                feature_id=None,
+                dimension_scores=_dimension_scores(leftover, config),
             )
         )
 

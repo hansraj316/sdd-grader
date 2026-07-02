@@ -8,11 +8,12 @@ their existing subscription, no API key) judges the artifacts and writes
 
 from __future__ import annotations
 
+import hashlib
 import json
 from importlib import resources
 from pathlib import Path
 
-from ..engine.judge import JudgeUnavailable, judge_guidance
+from ..engine.judge import JudgeUnavailable, artifact_label, judge_guidance
 
 # Agent → relative path where its slash/prompt command file lives.
 # Best-effort conventions; the file is plain Markdown every agent can read.
@@ -70,10 +71,27 @@ def scaffold(root: Path, integration: str) -> list[Path]:
     return written
 
 
+def artifact_manifest(artifacts, root: Path) -> dict[str, str]:
+    """Relative artifact path → sha256 of its current on-disk content.
+
+    This is the freshness manifest the judge command writes into judge.json;
+    ``read_judgment`` compares it against the artifacts being reviewed so a stale
+    judgment never silently grades edited specs.
+    """
+    out: dict[str, str] = {}
+    for a in artifacts:
+        try:
+            digest = hashlib.sha256(Path(a.path).read_bytes()).hexdigest()
+        except OSError:
+            digest = ""
+        out[artifact_label(a.path, root)] = digest
+    return out
+
+
 class AgentJudge:
     """Reads the judgment JSON the user's agent produced."""
 
-    def read_judgment(self, root: Path) -> list[dict]:
+    def read_judgment(self, root: Path, artifacts: list | None = None) -> list[dict]:
         path = Path(root) / JUDGMENT_FILE
         if not path.is_file():
             raise JudgeUnavailable(
@@ -87,4 +105,23 @@ class AgentJudge:
         findings = data.get("findings", data if isinstance(data, list) else [])
         if not isinstance(findings, list):
             raise JudgeUnavailable("judge.json has no 'findings' array")
+        if artifacts is not None:
+            self._check_freshness(data, artifacts, Path(root))
         return findings
+
+    @staticmethod
+    def _check_freshness(data, artifacts, root: Path) -> None:
+        """Reject a judgment whose hash manifest doesn't match the current artifacts."""
+        manifest = data.get("artifacts") if isinstance(data, dict) else None
+        if not isinstance(manifest, dict) or not manifest:
+            raise JudgeUnavailable(
+                "judge.json is stale — it has no artifact hash manifest "
+                "(old format); re-run the sddgrade judge command"
+            )
+        recorded = {str(k).removeprefix("./"): str(v) for k, v in manifest.items()}
+        for rel, digest in artifact_manifest(artifacts, root).items():
+            if recorded.get(rel) != digest:
+                why = "changed since it was judged" if rel in recorded else "was not judged"
+                raise JudgeUnavailable(
+                    f"judge.json is stale — {rel} {why}; re-run the sddgrade judge command"
+                )

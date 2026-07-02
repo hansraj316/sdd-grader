@@ -14,6 +14,7 @@ deterministic lint can't catch), which the scorer folds in alongside lint findin
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from ..catalog import load_catalog
@@ -23,6 +24,12 @@ from ..model import Artifact, Dimension, Finding, Severity, Source
 JUDGE_SCHEMA = {
     "type": "object",
     "properties": {
+        # Optional freshness manifest: relative artifact path → sha256 of the
+        # content that was judged (written by the agent backend's judge.json).
+        "artifacts": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+        },
         "findings": {
             "type": "array",
             "items": {
@@ -69,7 +76,23 @@ def judge_guidance() -> str:
     return "\n".join(lines)
 
 
-def build_prompt(artifacts: list[Artifact]) -> str:
+def artifact_label(path: str | Path, root: Path | None = None) -> str:
+    """The path a judge should use to name an artifact: relative to ``root``.
+
+    Bare filenames are ambiguous in multi-feature repos (every feature has a
+    spec.md/plan.md/tasks.md), so prompts and matching both use the full
+    relative path, e.g. ``specs/001-login/spec.md``.
+    """
+    p = Path(path)
+    if root is not None:
+        try:
+            return p.resolve().relative_to(Path(root).resolve()).as_posix()
+        except ValueError:
+            pass
+    return p.as_posix()
+
+
+def build_prompt(artifacts: list[Artifact], root: Path | None = None) -> str:
     """The instruction an agent runs to judge the artifact set."""
     parts = [
         "You are an expert reviewer of Spec-Driven Development artifacts.",
@@ -87,29 +110,116 @@ def build_prompt(artifacts: list[Artifact]) -> str:
         judge_guidance(),
         "",
         "Return ONLY JSON matching this shape: "
-        '{"findings": [{"artifact": "<filename>", "dimension": "...", '
+        '{"findings": [{"artifact": "<path>", "dimension": "...", '
         '"severity": "low|medium|high|critical", "message": "...", '
         '"suggestion": "...", "pitfall_id": "ID or null"}]}',
+        "",
+        'Each finding\'s "artifact" must echo the artifact path exactly as it '
+        "appears in the ----- headers below (the full relative path, e.g. "
+        '"specs/001-login/spec.md") so findings land on the right file in '
+        "multi-feature repos.",
         "",
         "Artifacts:",
     ]
     for a in artifacts:
-        parts.append(f"\n----- {Path(a.path).name} ({a.type.value}) -----\n{a.raw}")
+        parts.append(f"\n----- {artifact_label(a.path, root)} ({a.type.value}) -----\n{a.raw}")
     return "\n".join(parts)
 
 
-def to_findings(raw: list[dict], artifacts: list[Artifact]) -> list[Finding]:
-    """Validate and map judge output dicts onto Finding objects."""
-    by_name = {Path(a.path).name: a.path for a in artifacts}
+# Common judge vocabulary drift → our enums. Conservative: only unambiguous synonyms.
+_SEVERITY_SYNONYMS: dict[str, Severity] = {
+    "blocker": Severity.CRITICAL,
+    "severe": Severity.HIGH,
+    "major": Severity.HIGH,
+    "error": Severity.HIGH,
+    "moderate": Severity.MEDIUM,
+    "warning": Severity.MEDIUM,
+    "warn": Severity.MEDIUM,
+    "minor": Severity.LOW,
+    "trivial": Severity.LOW,
+    "informational": Severity.INFO,
+    "note": Severity.INFO,
+}
+
+_DIMENSION_SYNONYMS: dict[str, Dimension] = {
+    "complete": Dimension.COMPLETENESS,
+    "clear": Dimension.CLARITY,
+    "ambiguity": Dimension.CLARITY,
+    "testable": Dimension.TESTABILITY,
+    "verifiability": Dimension.TESTABILITY,
+    "traceable": Dimension.TRACEABILITY,
+    "consistent": Dimension.CONSISTENCY,
+    "coherence": Dimension.CONSISTENCY,
+    "feasible": Dimension.FEASIBILITY,
+    "constitution": Dimension.CONSTITUTIONAL,
+}
+
+
+def _parse_severity(value: object) -> Severity | None:
+    text = str(value or "").strip().lower()
+    try:
+        return Severity(text)
+    except ValueError:
+        return _SEVERITY_SYNONYMS.get(text)
+
+
+def _parse_dimension(value: object) -> Dimension | None:
+    text = str(value or "").strip().lower()
+    try:
+        return Dimension(text)
+    except ValueError:
+        return _DIMENSION_SYNONYMS.get(text)
+
+
+def _resolve_artifact(reported: str, artifacts: list[Artifact], root: Path | None) -> str | None:
+    """Map a judge-reported artifact name onto a discovered artifact's path.
+
+    Full relative path first (what the prompt asks for), then suffix match,
+    then basename — but only when the basename is unique across artifacts.
+    """
+    reported = reported.strip().removeprefix("./")
+    if not reported:
+        return None
+    for a in artifacts:
+        if reported in (a.path, artifact_label(a.path, root), Path(a.path).as_posix()):
+            return a.path
+    # Fallbacks must be unique — never guess between colliding features (#36).
+    suffix = [a.path for a in artifacts if Path(a.path).as_posix().endswith("/" + reported)]
+    if len(suffix) == 1:
+        return suffix[0]
+    by_name = [a.path for a in artifacts if Path(a.path).name == Path(reported).name]
+    if len(by_name) == 1:
+        return by_name[0]
+    return None
+
+
+def to_findings(
+    raw: list[dict], artifacts: list[Artifact], root: Path | None = None
+) -> list[Finding]:
+    """Validate and map judge output dicts onto Finding objects.
+
+    Judge output drifts (casing, synonym vocabulary, loose artifact names), so this
+    is deliberately forgiving: values are normalized, unparseable enums fall back to
+    safe defaults, and findings that name no known artifact are kept (scoring buckets
+    them visibly) — never silently dropped. Anything imperfect gets a stderr warning.
+    """
     out: list[Finding] = []
+    skipped = defaulted = unresolved = 0
     for item in raw:
-        try:
-            dim = Dimension(item["dimension"])
-            sev = Severity(item["severity"])
-        except (KeyError, ValueError):
+        if not isinstance(item, dict) or not str(item.get("message", "")).strip():
+            skipped += 1
             continue
-        artifact_name = Path(str(item.get("artifact", ""))).name
-        path = by_name.get(artifact_name) or item.get("artifact")
+        dim = _parse_dimension(item.get("dimension"))
+        sev = _parse_severity(item.get("severity"))
+        if dim is None or sev is None:
+            defaulted += 1
+        dim = dim or Dimension.CLARITY
+        sev = sev or Severity.MEDIUM
+        reported = str(item.get("artifact", ""))
+        path = _resolve_artifact(reported, artifacts, root)
+        if path is None:
+            unresolved += 1
+            path = reported.strip() or "(unattributed)"
         out.append(
             Finding(
                 dimension=dim,
@@ -121,6 +231,23 @@ def to_findings(raw: list[dict], artifacts: list[Artifact]) -> list[Finding]:
                 artifact_path=path,
             )
         )
+    if skipped:
+        print(
+            f"sddgrade: warning: {skipped} judge finding(s) had no message and were skipped",
+            file=sys.stderr,
+        )
+    if defaulted:
+        print(
+            f"sddgrade: warning: {defaulted} judge finding(s) had an unrecognized "
+            "dimension/severity; kept with defaults (clarity/medium)",
+            file=sys.stderr,
+        )
+    if unresolved:
+        print(
+            f"sddgrade: warning: {unresolved} judge finding(s) named no known artifact; "
+            "kept and reported as unattributed",
+            file=sys.stderr,
+        )
     return out
 
 
@@ -129,11 +256,11 @@ def judge(artifacts, backend, root: Path, cfg, console=None) -> list[Finding]:
     if backend == "agent":
         from ..integrations.agent import AgentJudge
 
-        raw = AgentJudge().read_judgment(root)
+        raw = AgentJudge().read_judgment(root, artifacts)
     elif backend == "api":
         from ..integrations.api import ApiJudge
 
         raw = ApiJudge(cfg).judge(artifacts, root)
     else:
         return []
-    return to_findings(raw, artifacts)
+    return to_findings(raw, artifacts, root)
