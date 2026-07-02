@@ -16,6 +16,10 @@ from .model import Dimension
 
 CONFIG_FILENAME = ".sddgrade.toml"
 
+
+class ConfigError(Exception):
+    """A config file the user wrote exists but cannot be read or parsed."""
+
 # Default per-dimension penalty multipliers. Neutral (1.0) so a score reads as a
 # plain penalty sum; bump a dimension in .sddgrade.toml to make its defects hurt more.
 DEFAULT_WEIGHTS: dict[Dimension, float] = {
@@ -35,7 +39,9 @@ class Config:
 
     tool: str = "speckit"
     integration: str = "claude"
-    fail_under: float = 70.0
+    # CI gate threshold. None (the default) means no gating: a bare review exits 0
+    # regardless of score. Opt in via --fail-under or `fail_under` in .sddgrade.toml.
+    fail_under: float | None = None
     weights: dict[Dimension, float] = field(
         default_factory=lambda: dict(DEFAULT_WEIGHTS)
     )
@@ -77,11 +83,14 @@ def load(root: Path | None = None) -> Config:
     if config_file is None:
         return cfg
 
+    # Config the user wrote must never be silently ignored: surface the problem
+    # instead of quietly reverting their thresholds/weights to defaults.
     try:
         data = tomllib.loads(config_file.read_text(encoding="utf-8"))
-    except (tomllib.TOMLDecodeError, OSError):
-        # A malformed config shouldn't break a review; fall back to defaults.
-        return cfg
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(f"invalid TOML in {config_file}: {exc}") from exc
+    except OSError as exc:
+        raise ConfigError(f"could not read {config_file}: {exc}") from exc
 
     section = data.get("sddgrade", data)
     if isinstance(section.get("tool"), str):
