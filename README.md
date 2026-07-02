@@ -24,7 +24,8 @@ semantic judge for the deeper review (see Review modes).
 
 Every report states its **coverage** (`lint-only` vs `lint+semantic`) so a green CI check
 is never mistaken for full validation. Use `--require-judge` to *fail* rather than
-silently degrade to lint-only when the judge isn't available.
+silently degrade to lint-only when the judge isn't available; `--api` implies it, so an
+API-judged CI gate fails loudly (exit 3) instead of passing on a weaker lint-only score.
 
 ## How it works
 

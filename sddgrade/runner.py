@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from rich.console import Console
+from rich.markup import escape
 
 from . import config as config_mod
 from . import history
@@ -68,23 +69,56 @@ def run_review(
     findings: list[Finding] = lint_mod.lint(artifacts, adapter, root)
 
     engine_label = "rules"
+    judge_error: str | None = None
     if backend in ("agent", "api"):
-        judge_findings, engine_label = _run_judge(artifacts, backend, root, cfg, console)
+        judge_findings, engine_label, judge_error = _run_judge(
+            artifacts, backend, root, cfg, console
+        )
         findings.extend(judge_findings)
 
-    # --require-judge: fail loudly rather than silently scoring lint-only.
+    # Explicitly requesting the API judge (`--api`) implies --require-judge: someone
+    # gating CI on the key-based backend wants a hard failure when it can't run, not a
+    # silently weaker lint-only score. The interactive agent default stays forgiving.
+    if backend == "api":
+        require_judge = True
+
+    if judge_error is not None and not require_judge:
+        if json_out:
+            # Keep stdout pure JSON; diagnostics go to stderr.
+            sys.stderr.write(f"Judge unavailable ({judge_error}); running rules-only.\n")
+        else:
+            # escape(): exception text may contain [brackets] rich would eat as markup.
+            console.print(
+                f"[yellow]Judge unavailable[/] ({escape(judge_error)}); running rules-only."
+            )
+
+    # --require-judge (and any explicitly requested backend): fail loudly rather than
+    # silently scoring lint-only.
     if require_judge and engine_label == "rules":
-        msg = (
-            "judge required but unavailable: the semantic judge did not run, so this "
-            "would be a lint-only score. Run the agent judge command (or use --api with "
-            "a key), or drop --require-judge."
-        )
+        if backend == "api":
+            msg = (
+                f"the --api judge failed to run: {judge_error}. Refusing to emit a "
+                "lint-only score as if it were the requested lint+semantic review. "
+                "Fix the API setup (set ANTHROPIC_API_KEY, install `sddgrade[api]`, "
+                "check network/model access) or run without --api to accept lint-only."
+            )
+        else:
+            msg = (
+                "judge required but unavailable"
+                + (f" ({judge_error})" if judge_error else "")
+                + ": the semantic judge did not run, so this would be a lint-only "
+                "score. Run the agent judge command (or use --api with a key), or "
+                "drop --require-judge."
+            )
         if json_out:
             sys.stdout.write(
                 render_json(scoring.score(artifacts, findings, cfg, engine="rules"))
             )
             sys.stdout.write("\n")
-        console.print(f"[bold red]ERROR[/] {msg}")
+            # Keep stdout pure JSON; the error goes to stderr.
+            sys.stderr.write(f"ERROR: {msg}\n")
+        else:
+            console.print(f"[bold red]ERROR[/] {escape(msg)}")
         return EXIT_JUDGE_REQUIRED
 
     result: ReviewResult = scoring.score(artifacts, findings, cfg, engine=engine_label)
@@ -125,15 +159,19 @@ def run_review(
 
 
 def _run_judge(artifacts, backend, root, cfg, console):
-    """Run the semantic judge if available; degrade to rules cleanly otherwise."""
+    """Run the semantic judge if available.
+
+    Returns ``(findings, engine_label, error)``. On failure the error string carries
+    the reason so the caller can decide whether to degrade to rules (agent default)
+    or fail the run (--require-judge / explicit --api) — never swallow it.
+    """
     try:
         from .engine import judge as judge_mod
-    except Exception:  # judge not built yet
-        return [], "rules"
+    except Exception as exc:  # judge not built yet
+        return [], "rules", f"judge engine unavailable: {exc}"
 
     try:
         findings = judge_mod.judge(artifacts, backend, root, cfg, console=console)
-        return findings, backend
+        return findings, backend, None
     except judge_mod.JudgeUnavailable as exc:  # type: ignore[attr-defined]
-        console.print(f"[yellow]Judge unavailable[/] ({exc}); running rules-only.")
-        return [], "rules"
+        return [], "rules", str(exc)
