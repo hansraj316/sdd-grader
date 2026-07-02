@@ -59,10 +59,16 @@ in CI, on PRs, with a tracked trend.
 
 ## Install
 
+> **Note:** the repository is currently private, so the commands below require
+> repo access (a public PyPI release is tracked in
+> [#58](https://github.com/hansraj316/sdd-grader/issues/58)). With access:
+
 ```bash
 uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git
 # or zero-install:
 uvx --from git+https://github.com/hansraj316/sdd-grader.git sddgrade review
+# or from a local clone:
+uv tool install --from /path/to/sdd-grader sddgrade
 ```
 
 ## Commands
