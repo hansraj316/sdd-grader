@@ -1,8 +1,8 @@
 # SDD-Reviewer Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 8
-Last run: 2026-07-01
+Iteration: 9
+Last run: 2026-07-02
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -44,7 +44,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #30 → PR #34 fix-malformed-judge-json — handle malformed judge.json without crashing (2026-07-01; awaiting CI)
+- #31 → PR #35 config-tool-precedence — honor .sddreview.toml tool= when no --tool CLI flag (2026-07-02; awaiting CI)
 
 ## Merged
 
@@ -54,6 +54,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #4 → PR #11 spec-negative-requirement — SPEC-NEGATIVE-REQUIREMENT pitfall + lint check (2026-06-29, CI was green).
 - #5 → PR #12/#33-batch spec-unclear-actor — SPEC-UNCLEAR-ACTOR pitfall + lint check (2026-06-29, CI was green; merged in manual batch).
 - #29 → PR #33 json-warnings-to-stderr — route judge-unavailable warning to stderr in --json mode (2026-07-01, CI was green; squash-merged).
+- #30 → PR #34 fix-malformed-judge-json — handle malformed judge.json without crashing (2026-07-02, CI was green; squash-merged).
 
 ## Blocked
 
@@ -87,3 +88,7 @@ Tessl, and Spec-Kit extensions/presets.)
   #30 (malformed judge.json crash); fixed agent.py isinstance check before data.get() and added
   TypeError to judge.py to_findings() except clause; 4 regression tests; pytest 96 green;
   benchmark good=100 bad=60.5 PASS; PR #34 opened.
+- iter 9 (2026-07-02): Phase 1 merged PR #34 (issue #30 closed, CI was green); Phase 4 picked
+  #31 (CLI --tool default overrides .sddreview.toml); changed cli.py tool default None→None and
+  config.py Config.tool default "speckit"→"auto"; 4 regression tests; pytest 100 green;
+  benchmark good=100 bad=60.5 PASS; PR #35 opened.
