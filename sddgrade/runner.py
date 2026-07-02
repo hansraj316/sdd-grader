@@ -65,7 +65,9 @@ def run_review(
     try:
         cfg = config_mod.load(root)
     except config_mod.ConfigError as exc:
-        err_console.print(f"[bold red]ERROR[/] {exc}")
+        # soft_wrap: file paths must survive intact for grep/tests; escape: TOML
+        # errors contain [brackets] rich would parse as markup.
+        err_console.print(f"[bold red]ERROR[/] {escape(str(exc))}", soft_wrap=True)
         return EXIT_CONFIG_ERROR
     if fail_under is not None:
         cfg.fail_under = fail_under
