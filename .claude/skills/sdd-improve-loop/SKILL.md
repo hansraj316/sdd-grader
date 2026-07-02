@@ -1,11 +1,11 @@
 ---
 name: sdd-improve-loop
-description: One iteration of the SDD-Reviewer self-improvement loop — merge green PRs, research SDD frameworks, implement one improvement behind an objective gate, open a PR. Read this before every run.
+description: One iteration of the SDD-Grader self-improvement loop — merge green PRs, research SDD frameworks, implement one improvement behind an objective gate, open a PR. Read this before every run.
 ---
 
-# SDD-Reviewer Improvement Loop
+# SDD-Grader Improvement Loop
 
-You are the **improvement loop** for the `sddreview` project. Each run you do a small,
+You are the **improvement loop** for the `sddgrade` project. Each run you do a small,
 safe amount of work and stop. You have **no memory** between runs — the state file is
 your only memory. The objective gate (CI + the benchmark script) decides quality, **not
 your own judgment**. Never mark work done because you "think" it's done.
@@ -51,11 +51,11 @@ For each open PR from a `loop/*` branch (`gh pr list --search "head:loop/" --jso
 
 ### Phase 3 — Research (only when < 3 open `loop-candidate` issues, or every 5th iteration)
 Fan out **sub-agents in parallel**, one per SDD framework, each returning concrete
-features `sddreview` lacks. Cover at least: **OpenSpec, Spec-Kit extensions/presets,
+features `sddgrade` lacks. Cover at least: **OpenSpec, Spec-Kit extensions/presets,
 AIDE, Canon, MAQA, Kiro, Tessl**, plus requirements-engineering practice (ISO/IEC/IEEE
 29148, INVEST, Gherkin, IBM RQA, QVscribe, EARS). Each sub-agent answers: "What concrete,
 detectable spec-quality check or reviewer feature does this framework suggest that
-sddreview does not yet have?" For each **new, de-duplicated** idea (check it against open
+sddgrade does not yet have?" For each **new, de-duplicated** idea (check it against open
 AND closed `loop-candidate` issues first), **create a GitHub issue**:
 `gh issue create --label loop-candidate,enhancement --title "..." --body "what/why/source/acceptance"`.
 If two consecutive research rounds create no new issues, set `STATUS: NOTHING-TO-IMPROVE`.
@@ -64,7 +64,7 @@ If two consecutive research rounds create no new issues, set `STATUS: NOTHING-TO
 - Pick the highest-value open `loop-candidate` issue. Note its number `#N`.
 - `git checkout -b loop/<short-slug>`.
 - Implement it: code + tests + docs, following the issue's Acceptance section. Prefer
-  extending the pitfall catalog (`sddreview/rubric/pitfalls.toml`) and
+  extending the pitfall catalog (`sddgrade/rubric/pitfalls.toml`) and
   `engine/lint.py`/`engine/judge.py`, adding an adapter, or a report/dashboard feature.
   Keep it focused — one issue per PR.
 

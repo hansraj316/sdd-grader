@@ -4,9 +4,9 @@ The default judge runs in your existing agent (no key). For **headless CI** wher
 interactive agent exists, `--api` calls a provider directly.
 
 ```bash
-pip install 'sddreview[api]'        # installs the Anthropic SDK
+pip install 'sddgrade[api]'        # installs the Anthropic SDK
 export ANTHROPIC_API_KEY=sk-...     # required; keep it a CI secret
-sddreview review --api --fail-under 70
+sddgrade review --api --fail-under 70
 ```
 
 - **Optional and opt-in.** Without `--api`, no key is needed and no network call is made.

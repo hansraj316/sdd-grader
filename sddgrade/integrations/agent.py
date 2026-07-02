@@ -1,9 +1,9 @@
 """Agent integration — the default judge backend, using the user's own AI agent.
 
-Mirrors Spec-Kit's `--integration`: `sddreview init --integration <agent>` installs a
+Mirrors Spec-Kit's `--integration`: `sddgrade init --integration <agent>` installs a
 slash command into the agent's command directory. The user runs it; their agent (on
 their existing subscription, no API key) judges the artifacts and writes
-`.sddreview/judge.json`, which `sddreview review` reads back.
+`.sddgrade/judge.json`, which `sddgrade review` reads back.
 """
 
 from __future__ import annotations
@@ -17,16 +17,16 @@ from ..engine.judge import JudgeUnavailable, judge_guidance
 # Agent → relative path where its slash/prompt command file lives.
 # Best-effort conventions; the file is plain Markdown every agent can read.
 _AGENT_PATHS: dict[str, str] = {
-    "claude": ".claude/commands/sddreview.md",
-    "copilot": ".github/prompts/sddreview.prompt.md",
-    "cursor": ".cursor/commands/sddreview.md",
-    "gemini": ".gemini/commands/sddreview.md",
-    "windsurf": ".windsurf/workflows/sddreview.md",
-    "codex": ".codex/prompts/sddreview.md",
-    "generic": ".sddreview/commands/sddreview.md",
+    "claude": ".claude/commands/sddgrade.md",
+    "copilot": ".github/prompts/sddgrade.prompt.md",
+    "cursor": ".cursor/commands/sddgrade.md",
+    "gemini": ".gemini/commands/sddgrade.md",
+    "windsurf": ".windsurf/workflows/sddgrade.md",
+    "codex": ".codex/prompts/sddgrade.md",
+    "generic": ".sddgrade/commands/sddgrade.md",
 }
 
-JUDGMENT_FILE = ".sddreview/judge.json"
+JUDGMENT_FILE = ".sddgrade/judge.json"
 
 
 def supported_agents() -> list[str]:
@@ -35,15 +35,15 @@ def supported_agents() -> list[str]:
 
 def _command_text() -> str:
     template = (
-        resources.files("sddreview.integrations.commands") / "judge-command.md"
+        resources.files("sddgrade.integrations.commands") / "judge-command.md"
     ).read_text(encoding="utf-8")
     return template.replace("{{GUIDANCE}}", judge_guidance())
 
 
 def _default_config(integration: str) -> str:
     return (
-        "# sddreview configuration\n"
-        "[sddreview]\n"
+        "# sddgrade configuration\n"
+        "[sddgrade]\n"
         'tool = "speckit"\n'
         f'integration = "{integration}"\n'
         "fail_under = 70\n"
@@ -51,7 +51,7 @@ def _default_config(integration: str) -> str:
 
 
 def scaffold(root: Path, integration: str) -> list[Path]:
-    """Write the agent command file and a starter `.sddreview.toml`. Returns paths."""
+    """Write the agent command file and a starter `.sddgrade.toml`. Returns paths."""
     root = Path(root).resolve()
     rel = _AGENT_PATHS.get(integration, _AGENT_PATHS["generic"])
 
@@ -62,7 +62,7 @@ def scaffold(root: Path, integration: str) -> list[Path]:
     command_path.write_text(_command_text(), encoding="utf-8")
     written.append(command_path)
 
-    config_path = root / ".sddreview.toml"
+    config_path = root / ".sddgrade.toml"
     if not config_path.exists():
         config_path.write_text(_default_config(integration), encoding="utf-8")
         written.append(config_path)
@@ -77,7 +77,7 @@ class AgentJudge:
         path = Path(root) / JUDGMENT_FILE
         if not path.is_file():
             raise JudgeUnavailable(
-                "no .sddreview/judge.json found — run the sddreview judge command in "
+                "no .sddgrade/judge.json found — run the sddgrade judge command in "
                 "your agent first (or use --rules / --api)"
             )
         try:

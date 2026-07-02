@@ -7,14 +7,14 @@ from pathlib import Path
 
 from rich.console import Console
 
-from sddreview import config as config_mod
-from sddreview.catalog import load_catalog
-from sddreview.discovery import discover_artifacts, get_adapter
-from sddreview.engine import lint as lint_mod
-from sddreview.engine import scoring
-from sddreview.model import ArtifactType
-from sddreview.report import json_out, markdown
-from sddreview.runner import run_review
+from sddgrade import config as config_mod
+from sddgrade.catalog import load_catalog
+from sddgrade.discovery import discover_artifacts, get_adapter
+from sddgrade.engine import lint as lint_mod
+from sddgrade.engine import scoring
+from sddgrade.model import ArtifactType
+from sddgrade.report import json_out, markdown
+from sddgrade.runner import run_review
 
 
 # --------------------------------------------------------------------------- catalog
@@ -138,7 +138,7 @@ def test_run_review_no_artifacts(tmp_path: Path):
 
 def test_run_review_records_history(bad_repo: Path):
     run_review(bad_repo, backend="rules", fail_under=70, console=_quiet())
-    hist = bad_repo / ".sddreview" / "history.jsonl"
+    hist = bad_repo / ".sddgrade" / "history.jsonl"
     assert hist.is_file()
     line = json.loads(hist.read_text().splitlines()[0])
     assert line["overall"] < 70 and line["finding_count"] > 0
@@ -147,19 +147,19 @@ def test_run_review_records_history(bad_repo: Path):
 # --------------------------------------------------------------------------- integrations
 
 def test_init_scaffolds_agent_command(good_repo: Path):
-    from sddreview.integrations import agent as agent_backend
+    from sddgrade.integrations import agent as agent_backend
 
     written = agent_backend.scaffold(good_repo, "claude")
-    assert (good_repo / ".claude/commands/sddreview.md").is_file()
-    assert (good_repo / ".sddreview.toml").is_file()
-    assert any("sddreview.md" in str(p) for p in written)
+    assert (good_repo / ".claude/commands/sddgrade.md").is_file()
+    assert (good_repo / ".sddgrade.toml").is_file()
+    assert any("sddgrade.md" in str(p) for p in written)
     # The command embeds the pitfall guidance.
-    text = (good_repo / ".claude/commands/sddreview.md").read_text()
+    text = (good_repo / ".claude/commands/sddgrade.md").read_text()
     assert "PLAN-OVER-ENGINEERING" in text
 
 
 def test_supported_agents_listed():
-    from sddreview.integrations import agent as agent_backend
+    from sddgrade.integrations import agent as agent_backend
 
     agents = agent_backend.supported_agents()
     assert {"claude", "copilot", "cursor", "gemini"} <= set(agents)
@@ -173,7 +173,7 @@ def test_agent_backend_degrades_without_judgment(bad_repo: Path):
 
 def test_agent_judgment_merges(good_repo: Path):
     # A stub judgment adds a semantic finding; the good repo should then drop below 100.
-    judge_dir = good_repo / ".sddreview"
+    judge_dir = good_repo / ".sddgrade"
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / "judge.json").write_text(json.dumps({
         "findings": [{
@@ -186,7 +186,7 @@ def test_agent_judgment_merges(good_repo: Path):
         }]
     }))
     # Use the lower-level judge to confirm merge without needing the agent.
-    from sddreview.engine import judge as judge_mod
+    from sddgrade.engine import judge as judge_mod
 
     arts = discover_artifacts(good_repo)
     raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
@@ -198,7 +198,7 @@ def test_agent_judgment_merges(good_repo: Path):
 # --------------------------------------------------------------------------- dashboard / advise
 
 def test_sparkline_monotonic():
-    from sddreview.dashboard import sparkline
+    from sddgrade.dashboard import sparkline
 
     s = sparkline([0, 50, 100])
     assert len(s) == 3
@@ -206,14 +206,14 @@ def test_sparkline_monotonic():
 
 
 def test_dashboard_runs_after_history(bad_repo: Path):
-    from sddreview.dashboard import show
+    from sddgrade.dashboard import show
 
     run_review(bad_repo, backend="rules", console=_quiet())
     assert show(bad_repo, console=_quiet()) == 0
 
 
 def test_advise_returns_recommendations(good_repo: Path):
-    from sddreview.advisor import _recommendations, _scan
+    from sddgrade.advisor import _recommendations, _scan
 
     info = _scan(good_repo)
     recs = _recommendations(info)

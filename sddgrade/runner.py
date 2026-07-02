@@ -116,7 +116,7 @@ def run_review(
             result, fail_under=cfg.fail_under, console=console, top_fixes=top_fixes
         )
         if write_markdown:
-            md_path = root / ".sddreview" / "report.md"
+            md_path = root / ".sddgrade" / "report.md"
             md_path.parent.mkdir(parents=True, exist_ok=True)
             md_path.write_text(markdown.render(result), encoding="utf-8")
             console.print(f"\n[dim]Markdown report written to {md_path}[/]")

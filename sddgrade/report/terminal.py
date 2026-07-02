@@ -1,4 +1,4 @@
-"""Rich terminal report — the default human-facing output of `sddreview review`."""
+"""Rich terminal report — the default human-facing output of `sddgrade review`."""
 
 from __future__ import annotations
 

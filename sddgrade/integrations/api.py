@@ -18,7 +18,7 @@ DEFAULT_MODEL = "claude-opus-4-8"
 
 
 class ApiJudge:
-    """Judge via a direct Anthropic API call (requires `sddreview[api]` + a key)."""
+    """Judge via a direct Anthropic API call (requires `sddgrade[api]` + a key)."""
 
     def __init__(self, cfg) -> None:
         self.cfg = cfg
@@ -31,7 +31,7 @@ class ApiJudge:
             import anthropic
         except ImportError as exc:
             raise JudgeUnavailable(
-                "anthropic SDK not installed — `pip install 'sddreview[api]'`"
+                "anthropic SDK not installed — `pip install 'sddgrade[api]'`"
             ) from exc
 
         client = anthropic.Anthropic()

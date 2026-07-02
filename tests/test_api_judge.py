@@ -9,11 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from sddreview import config as config_mod
-from sddreview.adapters.base import parse_sections
-from sddreview.engine.judge import JudgeUnavailable
-from sddreview.integrations.api import DEFAULT_MODEL, ApiJudge
-from sddreview.model import Artifact, ArtifactType
+from sddgrade import config as config_mod
+from sddgrade.adapters.base import parse_sections
+from sddgrade.engine.judge import JudgeUnavailable
+from sddgrade.integrations.api import DEFAULT_MODEL, ApiJudge
+from sddgrade.model import Artifact, ArtifactType
 
 
 def _artifacts() -> list[Artifact]:

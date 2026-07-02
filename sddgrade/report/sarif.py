@@ -13,7 +13,7 @@ from ..catalog import load_catalog
 from ..model import ReviewResult, Severity
 
 SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
-GENERIC_RULE = "sddreview.finding"
+GENERIC_RULE = "sddgrade.finding"
 
 # SARIF level per severity.
 _LEVEL = {
@@ -62,8 +62,8 @@ def render(result: ReviewResult, root: Path | None = None) -> str:
             "id": rid,
             "name": pit.name if pit else "SDD finding",
             "shortDescription": {"text": pit.name if pit else "Spec quality finding"},
-            "fullDescription": {"text": pit.why if pit else "A spec-quality finding from sddreview."},
-            "helpUri": "https://github.com/hansraj316/sddreview",
+            "fullDescription": {"text": pit.why if pit else "A spec-quality finding from sddgrade."},
+            "helpUri": "https://github.com/hansraj316/sdd-grader",
             "defaultConfiguration": {"level": _LEVEL[pit.severity] if pit else "warning"},
         })
 
@@ -95,8 +95,8 @@ def render(result: ReviewResult, root: Path | None = None) -> str:
         "version": "2.1.0",
         "runs": [{
             "tool": {"driver": {
-                "name": "sddreview",
-                "informationUri": "https://github.com/hansraj316/sddreview",
+                "name": "sddgrade",
+                "informationUri": "https://github.com/hansraj316/sdd-grader",
                 "rules": rules,
             }},
             "results": results,

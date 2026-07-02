@@ -1,6 +1,6 @@
-# sddreview — judge Spec-Kit artifacts
+# sddgrade — judge Spec-Kit artifacts
 
-You are the semantic judge for **sddreview**. Run this when asked to review or grade
+You are the semantic judge for **sddgrade**. Run this when asked to review or grade
 the Spec-Driven Development artifacts in this repository.
 
 ## Steps
@@ -12,7 +12,7 @@ the Spec-Driven Development artifacts in this repository.
    regex linter cannot do: genuine ambiguity, contradictions *across* artifacts,
    over-engineering, INVEST quality of user stories, and missing rationale. Do not
    re-report the obvious lexical/structural defects; the deterministic lint covers those.
-3. Write your findings as JSON to `.sddreview/judge.json` (create the folder if needed),
+3. Write your findings as JSON to `.sddgrade/judge.json` (create the folder if needed),
    matching exactly this shape:
 
    ```json
@@ -30,7 +30,7 @@ the Spec-Driven Development artifacts in this repository.
    }
    ```
 
-4. Tell the user to run `sddreview review` to merge your judgment with the lint results,
+4. Tell the user to run `sddgrade review` to merge your judgment with the lint results,
    produce the scored report, and record history.
 
 ## Pitfalls to judge

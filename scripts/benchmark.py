@@ -18,11 +18,11 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sddreview import config as config_mod
-from sddreview.adapters.speckit import SpecKitAdapter
-from sddreview.discovery import discover_artifacts, get_adapter
-from sddreview.engine import lint as lint_mod
-from sddreview.engine import scoring
+from sddgrade import config as config_mod
+from sddgrade.adapters.speckit import SpecKitAdapter
+from sddgrade.discovery import discover_artifacts, get_adapter
+from sddgrade.engine import lint as lint_mod
+from sddgrade.engine import scoring
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"

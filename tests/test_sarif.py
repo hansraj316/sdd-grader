@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from sddreview import config as config_mod
-from sddreview.discovery import discover_artifacts, get_adapter
-from sddreview.engine import lint as lint_mod
-from sddreview.engine import scoring
-from sddreview.report import sarif
+from sddgrade import config as config_mod
+from sddgrade.discovery import discover_artifacts, get_adapter
+from sddgrade.engine import lint as lint_mod
+from sddgrade.engine import scoring
+from sddgrade.report import sarif
 
 
 def _result(repo: Path):
@@ -24,7 +24,7 @@ def test_sarif_is_valid_structure(bad_repo: Path):
     doc = json.loads(sarif.render(_result(bad_repo), root=bad_repo))
     assert doc["version"] == "2.1.0"
     run = doc["runs"][0]
-    assert run["tool"]["driver"]["name"] == "sddreview"
+    assert run["tool"]["driver"]["name"] == "sddgrade"
     assert run["tool"]["driver"]["rules"]
     assert run["results"]
     r = run["results"][0]

@@ -1,7 +1,7 @@
-"""Command-line surface for sddreview.
+"""Command-line surface for sddgrade.
 
 Deliberately small: five plain commands with sensible defaults, mirroring the
-`specify` CLI. The common case is a bare ``sddreview review``. Heavy modules are
+`specify` CLI. The common case is a bare ``sddgrade review``. Heavy modules are
 imported lazily inside each command so the app loads fast and stays importable
 while the codebase is built out.
 """
@@ -23,7 +23,7 @@ app = typer.Typer(
 
 def _version_callback(value: bool) -> None:
     if value:
-        typer.echo(f"sddreview {__version__}")
+        typer.echo(f"sddgrade {__version__}")
         raise typer.Exit()
 
 
@@ -34,7 +34,7 @@ def main(
         help="Show version and exit.",
     ),
 ) -> None:
-    """sddreview — the external quality gate for Spec-Kit artifacts."""
+    """sddgrade — the external quality gate for Spec-Kit artifacts."""
 
 
 @app.command()
@@ -45,11 +45,11 @@ def init(
     ),
     path: Path = typer.Argument(Path("."), help="Project root."),
 ) -> None:
-    """Scaffold .sddreview.toml and install the judge slash command into your agent."""
+    """Scaffold .sddgrade.toml and install the judge slash command into your agent."""
     from .integrations import agent as agent_backend
 
     written = agent_backend.scaffold(path, integration)
-    typer.echo(f"Initialized sddreview ({integration}). Wrote:")
+    typer.echo(f"Initialized sddgrade ({integration}). Wrote:")
     for p in written:
         typer.echo(f"  {p}")
 
@@ -104,7 +104,7 @@ def advise(
 
 @app.command()
 def dashboard(
-    path: Path = typer.Argument(Path("."), help="Repo whose .sddreview history to show."),
+    path: Path = typer.Argument(Path("."), help="Repo whose .sddgrade history to show."),
 ) -> None:
     """Show a terminal metrics dashboard over local review history."""
     from .dashboard import show
@@ -119,14 +119,14 @@ app.add_typer(self_app, name="self")
 @self_app.command("check")
 def self_check() -> None:
     """Report the installed version (release check is a roadmap item)."""
-    typer.echo(f"sddreview {__version__}")
+    typer.echo(f"sddgrade {__version__}")
 
 
 @self_app.command("upgrade")
 def self_upgrade() -> None:
-    """Upgrade sddreview (delegates to your installer)."""
+    """Upgrade sddgrade (delegates to your installer)."""
     typer.echo("Upgrade via your installer, e.g.:")
-    typer.echo("  uv tool upgrade sddreview")
+    typer.echo("  uv tool upgrade sddgrade")
 
 
 @app.command("integration")

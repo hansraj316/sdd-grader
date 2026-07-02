@@ -8,13 +8,13 @@ from pathlib import Path
 
 from rich.console import Console
 
-from sddreview import config as config_mod
-from sddreview.discovery import discover_artifacts, get_adapter
-from sddreview.engine import lint as lint_mod
-from sddreview.engine import scoring
-from sddreview.report import markdown
-from sddreview.report.json_out import render as render_json
-from sddreview.runner import EXIT_JUDGE_REQUIRED, run_review
+from sddgrade import config as config_mod
+from sddgrade.discovery import discover_artifacts, get_adapter
+from sddgrade.engine import lint as lint_mod
+from sddgrade.engine import scoring
+from sddgrade.report import markdown
+from sddgrade.report.json_out import render as render_json
+from sddgrade.runner import EXIT_JUDGE_REQUIRED, run_review
 
 
 def _quiet() -> Console:
@@ -56,7 +56,7 @@ def test_markdown_explains_coverage(good_repo: Path):
 
 
 def test_require_judge_fails_when_judge_unavailable(good_repo: Path):
-    # No .sddreview/judge.json → agent judge degrades; --require-judge must fail (3).
+    # No .sddgrade/judge.json → agent judge degrades; --require-judge must fail (3).
     code = run_review(
         good_repo, backend="agent", require_judge=True, console=_quiet()
     )
@@ -64,8 +64,8 @@ def test_require_judge_fails_when_judge_unavailable(good_repo: Path):
 
 
 def test_require_judge_ok_with_stub_judgment(good_repo: Path):
-    (good_repo / ".sddreview").mkdir(parents=True, exist_ok=True)
-    (good_repo / ".sddreview" / "judge.json").write_text(json.dumps({"findings": []}))
+    (good_repo / ".sddgrade").mkdir(parents=True, exist_ok=True)
+    (good_repo / ".sddgrade" / "judge.json").write_text(json.dumps({"findings": []}))
     code = run_review(
         good_repo, backend="agent", require_judge=True, fail_under=70, console=_quiet()
     )
