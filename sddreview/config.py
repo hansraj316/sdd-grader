@@ -33,7 +33,7 @@ DEFAULT_WEIGHTS: dict[Dimension, float] = {
 class Config:
     """Resolved configuration for a run."""
 
-    tool: str = "speckit"
+    tool: str = "auto"
     integration: str = "claude"
     fail_under: float = 70.0
     weights: dict[Dimension, float] = field(

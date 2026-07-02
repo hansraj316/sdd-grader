@@ -292,3 +292,44 @@ def test_advise_returns_recommendations(good_repo: Path):
     recs = _recommendations(info)
     assert len(recs) >= 4
     assert info["has_speckit"] is True
+
+
+# --------------------------------------------------------------------------- config tool precedence (issue #31)
+
+_FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def test_config_tool_honored_without_explicit_kwarg(tmp_path: Path):
+    """run_review() without tool= honors .sddreview.toml; openspec-only layout finds artifacts."""
+    import shutil
+    shutil.copytree(_FIXTURES / "openspec_good", tmp_path, dirs_exist_ok=True)
+    (tmp_path / ".sddreview.toml").write_text('[sddreview]\ntool = "openspec"\n')
+    exit_code = run_review(tmp_path, backend="rules", console=_quiet())
+    assert exit_code in (0, 1), "openspec adapter should find artifacts (not return EXIT_NO_ARTIFACTS=2)"
+
+
+def test_explicit_tool_kwarg_overrides_config(tmp_path: Path):
+    """An explicit tool= kwarg to run_review() overrides .sddreview.toml."""
+    import shutil
+    shutil.copytree(_FIXTURES / "openspec_good", tmp_path, dirs_exist_ok=True)
+    (tmp_path / ".sddreview.toml").write_text('[sddreview]\ntool = "openspec"\n')
+    # Force speckit: no speckit artifacts in openspec-only layout → no artifacts found.
+    exit_code = run_review(tmp_path, backend="rules", tool="speckit", console=_quiet())
+    assert exit_code == 2, "explicit tool=speckit finds nothing in openspec-only layout"
+
+
+def test_mixed_layout_config_tool_overrides_auto_preference(tmp_path: Path, capsys):
+    """In a mixed-layout repo, .sddreview.toml tool=openspec wins over auto's speckit preference."""
+    import shutil
+    shutil.copytree(_FIXTURES / "speckit_good", tmp_path, dirs_exist_ok=True)
+    shutil.copytree(_FIXTURES / "openspec_good", tmp_path, dirs_exist_ok=True)
+    (tmp_path / ".sddreview.toml").write_text('[sddreview]\ntool = "openspec"\n')
+    run_review(tmp_path, backend="rules", json_out=True)
+    result = json.loads(capsys.readouterr().out)
+    assert result["tool"] == "openspec"
+
+
+def test_default_config_tool_is_auto():
+    """Config.tool defaults to 'auto' so auto-detection runs when no config file exists."""
+    from sddreview.config import Config
+    assert Config().tool == "auto"

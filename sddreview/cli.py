@@ -76,8 +76,8 @@ def review(
     html: Path | None = typer.Option(
         None, "--html", help="Write a self-contained HTML report (findings + fixes) to this path.",
     ),
-    tool: str = typer.Option(
-        "auto", "--tool", help="Toolchain: auto | speckit | openspec.",
+    tool: str | None = typer.Option(
+        None, "--tool", help="Toolchain: auto | speckit | openspec (default: auto, or from .sddreview.toml).",
     ),
 ) -> None:
     """Grade every Spec-Kit or OpenSpec artifact found under PATH."""
