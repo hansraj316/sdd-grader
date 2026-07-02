@@ -106,7 +106,7 @@ def to_findings(raw: list[dict], artifacts: list[Artifact]) -> list[Finding]:
         try:
             dim = Dimension(item["dimension"])
             sev = Severity(item["severity"])
-        except (KeyError, ValueError):
+        except (KeyError, ValueError, TypeError):
             continue
         artifact_name = Path(str(item.get("artifact", ""))).name
         path = by_name.get(artifact_name) or item.get("artifact")
