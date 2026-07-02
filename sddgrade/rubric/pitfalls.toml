@@ -37,13 +37,15 @@ artifacts = ["spec", "plan", "tasks", "constitution"]
 severity = "high"
 method = "lint"
 why = "Placeholders mean the section was never authored; the artifact is a half-filled template, not a specification."
-detect = "Match leftover template tokens and stubs."
+detect = "Match leftover template tokens and stubs (an ellipsis only counts when it is the whole line or an empty field value, not a benign trailing '...' in prose)."
 fix = "Fill in every placeholder with real content; delete sections that genuinely do not apply."
 patterns = [
   "\\bTODO\\b", "\\bTBD\\b", "\\bFIXME\\b", "\\bXXX\\b",
   "\\[FEATURE NAME\\]", "\\[PROJECT_NAME\\]", "\\[PRINCIPLE_\\d", "\\[DATE\\]",
   "\\$ARGUMENTS", "\\[Brief Title\\]", "\\[Entity \\d\\]", "\\[REMOVE IF UNUSED\\]",
-  "\\bplaceholder\\b", "<placeholder>", "\\.\\.\\.\\s*$",
+  "\\bplaceholder\\b", "<placeholder>",
+  "^\\s*(?:[-*+]\\s+)?(?:\\.{3,}|…)\\s*$",
+  ":\\*{0,2}\\s*(?:\\.{3,}|…)\\s*$",
 ]
 
 [[pitfall]]

@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from ..adapters.base import ArtifactAdapter
+from ..adapters.base import ArtifactAdapter, _FENCE_RE
 from ..catalog import Pitfall, load_catalog
 from ..model import Artifact, ArtifactType, Dimension, Finding, Section, Severity, Source
 
@@ -276,20 +276,118 @@ def _required_sections(
 
 # --------------------------------------------------------------------------- layer 2
 
+_INLINE_CODE_RE = re.compile(r"`[^`]+`")
+
+# Requirement-smell pitfalls: their patterns describe defects *in requirements*
+# (ambiguity, hedging, tech leakage, speculation), so they only match in
+# requirement-bearing contexts — not user-story narrative, overview prose, or
+# out-of-scope declarations, where the same words are benign.
+_REQUIREMENT_SCOPED_PITFALLS = frozenset({
+    "SPEC-AMBIGUOUS-WORDING",
+    "SPEC-COMPARATIVE-NO-REFERENCE",
+    "SPEC-ESCAPE-CLAUSE",
+    "SPEC-IMPL-DETAIL-LEAK",
+    "SPEC-SPECULATIVE-FEATURE",
+})
+
+# Section titles whose contents are requirement-bearing.
+_REQ_SECTION_TITLE_RE = re.compile(r"requirement|acceptance|scenario", re.IGNORECASE)
+
+# A line that itself looks like a requirement: modal verb or an FR-/NFR- id
+# (multi-digit, unlike _REQUIREMENTish_RE whose FR-\d\b only matches one digit).
+_REQ_LINE_RE = re.compile(r"\b(?:shall|must|should)\b|\b(?:FR|NFR)-\d+", re.IGNORECASE)
+
+# Sections that describe the problem domain (used to suppress impl-detail hits on
+# terms that ARE the domain, e.g. a spec for a Python code-review tool).
+_DOMAIN_SECTION_TITLE_RE = re.compile(
+    r"^(overview|summary|introduction|purpose|background|context)\b", re.IGNORECASE
+)
+
+
+def _fence_mask(lines: list[str]) -> list[bool]:
+    """True for lines inside (or delimiting) fenced code blocks — same fence
+    tracking parse_sections uses."""
+    mask: list[bool] = []
+    in_fence = False
+    for line in lines:
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            mask.append(True)
+        else:
+            mask.append(in_fence)
+    return mask
+
+
+def _requirement_mask(art: Artifact, lines: list[str]) -> list[bool]:
+    """True for lines in a requirement-bearing context: inside a Requirements /
+    Acceptance / Scenario section, or a line that itself looks like a requirement
+    (shall/must/should, FR-/NFR- id)."""
+    mask = [False] * len(lines)
+    secs = art.sections
+    for idx, s in enumerate(secs):
+        if not _REQ_SECTION_TITLE_RE.search(s.title):
+            continue
+        start = s.line - 1  # include the heading line itself
+        end = secs[idx + 1].line - 1 if idx + 1 < len(secs) else len(lines)
+        for i in range(start, min(end, len(lines))):
+            mask[i] = True
+    for i, line in enumerate(lines):
+        if not mask[i] and _REQ_LINE_RE.search(line):
+            mask[i] = True
+    return mask
+
+
+def _domain_text(art: Artifact) -> str:
+    """Lower-cased text of the spec's title and overview-like sections — a term
+    appearing here is the problem domain, not a leaked implementation choice."""
+    parts: list[str] = []
+    for s in art.sections:
+        if s.level == 1 or _DOMAIN_SECTION_TITLE_RE.match(s.title.strip()):
+            parts.append(s.title)
+            parts.append(s.body)
+    if not parts:  # no headings at all — fall back to the first line
+        lines = art.raw.splitlines()
+        if lines:
+            parts.append(lines[0])
+    return "\n".join(parts).lower()
+
+
 def _lexical_pitfalls(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
-    """One finding per matching lexical pitfall, summarizing the matches."""
+    """One finding per matching lexical pitfall, summarizing the matches.
+
+    Fenced code blocks and inline code spans are never matched. Requirement-smell
+    pitfalls (see _REQUIREMENT_SCOPED_PITFALLS) match only requirement-bearing
+    lines; impl-detail hits on the spec's own domain terms are suppressed.
+    """
     out: list[Finding] = []
     lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask: list[bool] | None = None  # built lazily
+    domain: str | None = None
     for p in catalog.values():
         if not p.compiled or not p.lint_detectable or not p.applies_to(art.type):
             continue
+        scoped = p.id in _REQUIREMENT_SCOPED_PITFALLS
+        if scoped and req_mask is None:
+            req_mask = _requirement_mask(art, lines)
         hits: list[tuple[int, str]] = []
         for i, line in enumerate(lines, start=1):
+            if fenced[i - 1]:
+                continue
+            if scoped and req_mask is not None and not req_mask[i - 1]:
+                continue
+            text = _INLINE_CODE_RE.sub("", line)
             for rx in p.compiled:
-                m = rx.search(line)
-                if m:
-                    hits.append((i, m.group(0)))
-                    break
+                m = rx.search(text)
+                if not m:
+                    continue
+                if p.id == "SPEC-IMPL-DETAIL-LEAK":
+                    if domain is None:
+                        domain = _domain_text(art)
+                    if m.group(0).lower() in domain:
+                        continue  # the term is the problem domain, not a leak
+                hits.append((i, m.group(0)))
+                break
         if hits:
             examples = ", ".join(sorted({h[1] for h in hits})[:5])
             out.append(
