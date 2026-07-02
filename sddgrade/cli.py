@@ -8,11 +8,21 @@ while the codebase is built out.
 
 from __future__ import annotations
 
+from enum import Enum
 from pathlib import Path
 
 import typer
 
 from . import __version__
+
+
+class Tool(str, Enum):
+    """Supported spec toolchains; Typer rejects anything else with the valid choices."""
+
+    auto = "auto"
+    speckit = "speckit"
+    openspec = "openspec"
+
 
 app = typer.Typer(
     add_completion=False,
@@ -61,7 +71,9 @@ def review(
     api: bool = typer.Option(False, "--api", help="Use the key-based API judge (CI/headless)."),
     json_out: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
     fail_under: float | None = typer.Option(
-        None, "--fail-under", help="Exit non-zero if overall score is below N (CI gate)."
+        None, "--fail-under",
+        help="Exit non-zero if overall score is below N (CI gate; off unless set "
+        "here or via fail_under in .sddgrade.toml).",
     ),
     require_judge: bool = typer.Option(
         False, "--require-judge",
@@ -76,8 +88,8 @@ def review(
     html: Path | None = typer.Option(
         None, "--html", help="Write a self-contained HTML report (findings + fixes) to this path.",
     ),
-    tool: str = typer.Option(
-        "auto", "--tool", help="Toolchain: auto | speckit | openspec.",
+    tool: Tool = typer.Option(
+        Tool.auto, "--tool", help="Toolchain: auto | speckit | openspec.",
     ),
 ) -> None:
     """Grade every Spec-Kit or OpenSpec artifact found under PATH."""
@@ -87,7 +99,7 @@ def review(
     exit_code = run_review(
         path, backend=backend, json_out=json_out, fail_under=fail_under,
         require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif,
-        html_path=html, tool=tool,
+        html_path=html, tool=tool.value,
     )
     raise typer.Exit(code=exit_code)
 

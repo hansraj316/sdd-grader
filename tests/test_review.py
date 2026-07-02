@@ -132,6 +132,41 @@ def test_run_review_exit_codes(good_repo: Path, bad_repo: Path):
     assert run_review(bad_repo, backend="rules", fail_under=70, console=_quiet()) == 1
 
 
+def test_bare_review_never_gates(bad_repo: Path):
+    # #45: gating is opt-in. Without --fail-under or a config threshold, findings
+    # alone must not produce a non-zero exit.
+    assert run_review(bad_repo, backend="rules", console=_quiet()) == 0
+
+
+def test_config_fail_under_gates(bad_repo: Path):
+    # #45: a fail_under written to .sddgrade.toml is an explicit opt-in and gates.
+    (bad_repo / ".sddgrade.toml").write_text("[sddgrade]\nfail_under = 70\n")
+    assert run_review(bad_repo, backend="rules", console=_quiet()) == 1
+
+
+def test_malformed_config_errors_loudly(bad_repo: Path):
+    # #47: a config the user wrote must never be silently ignored — bad TOML is a
+    # named error on stderr and a non-zero exit, not a quiet fall back to defaults.
+    import io
+
+    import pytest
+
+    from sddgrade.config import ConfigError
+    from sddgrade.runner import EXIT_CONFIG_ERROR
+
+    (bad_repo / ".sddgrade.toml").write_text("[sddgrade\nfail_under = 90\n")
+
+    with pytest.raises(ConfigError) as excinfo:
+        config_mod.load(bad_repo)
+    assert ".sddgrade.toml" in str(excinfo.value)
+
+    err = Console(file=io.StringIO(), width=200)
+    code = run_review(bad_repo, backend="rules", console=_quiet(), err_console=err)
+    assert code == EXIT_CONFIG_ERROR
+    text = err.file.getvalue()
+    assert "ERROR" in text and ".sddgrade.toml" in text
+
+
 def test_run_review_no_artifacts(tmp_path: Path):
     assert run_review(tmp_path, backend="rules", console=_quiet()) == 2
 

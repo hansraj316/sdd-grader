@@ -1,8 +1,11 @@
 """Orchestrates a review: discover → lint → (judge) → score → report → history.
 
 This is the single place the CLI's ``review`` command calls into, so the pipeline
-is testable without Typer. Returns a process exit code (0 pass, 1 below threshold,
-2 nothing to review).
+is testable without Typer. Returns a process exit code (see EXIT_* below).
+
+Stream contract: the report itself goes to stdout; every diagnostic (warnings,
+notices, errors) goes to stderr, so ``--json`` output is always parseable and
+``review > out.json`` stays clean.
 """
 
 from __future__ import annotations
@@ -24,11 +27,17 @@ from .report import terminal as terminal_report
 from .report.json_out import render as render_json
 
 
-# Exit codes: 0 pass · 1 below threshold · 2 nothing to review · 3 judge required but unavailable
+# Exit codes: 0 pass · 1 below an explicitly requested --fail-under/config threshold
+# · 2 nothing to review · 3 judge required but unavailable · 4 config file unusable
 EXIT_PASS = 0
 EXIT_FAIL = 1
 EXIT_NO_ARTIFACTS = 2
 EXIT_JUDGE_REQUIRED = 3
+EXIT_CONFIG_ERROR = 4
+
+# Score-coloring threshold for reports when no gate is configured. Display only —
+# it never affects the exit code.
+DISPLAY_FAIL_UNDER = 70.0
 
 
 def run_review(
@@ -43,11 +52,20 @@ def run_review(
     html_path: Path | None = None,
     tool: str | None = None,
     console: Console | None = None,
+    err_console: Console | None = None,
 ) -> int:
+    # Diagnostics go to err_console (stderr by default) so stdout stays parseable
+    # under --json. When a caller injects only `console` (tests), it takes both roles.
+    if err_console is None:
+        err_console = console if console is not None else Console(stderr=True)
     console = console or Console()
     root = path.resolve()
 
-    cfg = config_mod.load(root)
+    try:
+        cfg = config_mod.load(root)
+    except config_mod.ConfigError as exc:
+        err_console.print(f"[bold red]ERROR[/] {exc}")
+        return EXIT_CONFIG_ERROR
     if fail_under is not None:
         cfg.fail_under = fail_under
     if tool is not None:
@@ -69,7 +87,7 @@ def run_review(
 
     engine_label = "rules"
     if backend in ("agent", "api"):
-        judge_findings, engine_label = _run_judge(artifacts, backend, root, cfg, console)
+        judge_findings, engine_label = _run_judge(artifacts, backend, root, cfg, err_console)
         findings.extend(judge_findings)
 
     # --require-judge: fail loudly rather than silently scoring lint-only.
@@ -84,7 +102,7 @@ def run_review(
                 render_json(scoring.score(artifacts, findings, cfg, engine="rules"))
             )
             sys.stdout.write("\n")
-        console.print(f"[bold red]ERROR[/] {msg}")
+        err_console.print(f"[bold red]ERROR[/] {msg}")
         return EXIT_JUDGE_REQUIRED
 
     result: ReviewResult = scoring.score(artifacts, findings, cfg, engine=engine_label)
@@ -92,39 +110,46 @@ def run_review(
 
     history.record(root, result)
 
+    # Reports color scores against the configured gate, or 70 when no gate is set.
+    display_fail_under = cfg.fail_under if cfg.fail_under is not None else DISPLAY_FAIL_UNDER
+
     if sarif_path is not None:
         from .report import sarif as sarif_report
 
         sarif_path.parent.mkdir(parents=True, exist_ok=True)
         sarif_path.write_text(sarif_report.render(result, root=root), encoding="utf-8")
-        if not json_out:
-            console.print(f"[dim]SARIF written to {sarif_path}[/]")
+        err_console.print(f"[dim]SARIF written to {sarif_path}[/]")
 
     if html_path is not None:
         from .report import html as html_report
 
         html_path.parent.mkdir(parents=True, exist_ok=True)
-        html_path.write_text(html_report.render(result, fail_under=cfg.fail_under), encoding="utf-8")
-        if not json_out:
-            console.print(f"[dim]HTML report written to {html_path}[/]")
+        html_path.write_text(
+            html_report.render(result, fail_under=display_fail_under), encoding="utf-8"
+        )
+        err_console.print(f"[dim]HTML report written to {html_path}[/]")
 
     if json_out:
         # Plain stdout — never through rich, which would reflow/scramble the JSON.
         sys.stdout.write(render_json(result) + "\n")
     else:
         terminal_report.render(
-            result, fail_under=cfg.fail_under, console=console, top_fixes=top_fixes
+            result, fail_under=display_fail_under, console=console, top_fixes=top_fixes
         )
         if write_markdown:
             md_path = root / ".sddgrade" / "report.md"
             md_path.parent.mkdir(parents=True, exist_ok=True)
             md_path.write_text(markdown.render(result), encoding="utf-8")
-            console.print(f"\n[dim]Markdown report written to {md_path}[/]")
+            err_console.print(f"\n[dim]Markdown report written to {md_path}[/]")
 
+    # Gating is opt-in: findings alone never fail the exit code unless the user
+    # asked for a threshold via --fail-under or the config file.
+    if cfg.fail_under is None:
+        return EXIT_PASS
     return EXIT_PASS if result.overall >= cfg.fail_under else EXIT_FAIL
 
 
-def _run_judge(artifacts, backend, root, cfg, console):
+def _run_judge(artifacts, backend, root, cfg, err_console):
     """Run the semantic judge if available; degrade to rules cleanly otherwise."""
     try:
         from .engine import judge as judge_mod
@@ -132,8 +157,8 @@ def _run_judge(artifacts, backend, root, cfg, console):
         return [], "rules"
 
     try:
-        findings = judge_mod.judge(artifacts, backend, root, cfg, console=console)
+        findings = judge_mod.judge(artifacts, backend, root, cfg, console=err_console)
         return findings, backend
     except judge_mod.JudgeUnavailable as exc:  # type: ignore[attr-defined]
-        console.print(f"[yellow]Judge unavailable[/] ({exc}); running rules-only.")
+        err_console.print(f"[yellow]Judge unavailable[/] ({exc}); running rules-only.")
         return [], "rules"

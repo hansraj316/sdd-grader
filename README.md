@@ -70,7 +70,7 @@ uvx --from git+https://github.com/hansraj316/sdd-grader.git sddgrade review
 sddgrade init --integration claude   # scaffold config + agent judge slash command
 sddgrade review                      # grade every artifact (lint + agent judgment if present)
 sddgrade review --rules --json       # offline, machine-readable (good for CI)
-sddgrade review --fail-under 70      # non-zero exit below threshold (CI gate)
+sddgrade review --fail-under 70      # opt-in CI gate: non-zero exit below threshold
 sddgrade review --require-judge      # fail instead of degrading to lint-only
 sddgrade review --sarif out.sarif    # emit SARIF for GitHub code scanning
 sddgrade review --html report.html   # self-contained HTML report (findings + fixes)
@@ -80,6 +80,11 @@ sddgrade dashboard                   # terminal metrics: trends, dimensions, top
 sddgrade self check                  # version
 sddgrade integration list            # supported agents
 ```
+
+Exit codes: `0` reviewed (gating is opt-in — a bare `review` never fails on findings) ·
+`1` score below the `--fail-under`/config threshold · `2` nothing to review ·
+`3` `--require-judge` but the judge is unavailable · `4` malformed `.sddgrade.toml`.
+With `--json`, stdout carries only the JSON report; warnings and notices go to stderr.
 
 ## Toolchains: Spec-Kit and OpenSpec
 
