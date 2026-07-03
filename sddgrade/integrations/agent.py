@@ -41,13 +41,22 @@ def _command_text() -> str:
     return template.replace("{{GUIDANCE}}", judge_guidance())
 
 
-def _default_config(integration: str) -> str:
+def _default_config() -> str:
+    # Every key written here must be honored by `sddgrade review` (#46): a scaffolded
+    # key that does nothing is a lie. Currently honored: tool, fail_under, weights.
     return (
-        "# sddgrade configuration\n"
+        "# sddgrade configuration — every key here is honored by `sddgrade review`.\n"
         "[sddgrade]\n"
-        'tool = "speckit"\n'
-        f'integration = "{integration}"\n'
+        '# Toolchain adapter: "auto" detects the layout; set "speckit" or "openspec"\n'
+        "# to force one. An explicit `--tool` flag overrides this.\n"
+        'tool = "auto"\n'
+        "# CI gate: exit non-zero when the overall score is below this threshold.\n"
+        "# Delete the line (or omit --fail-under) to disable gating.\n"
         "fail_under = 70\n"
+        "\n"
+        "# Optional per-dimension penalty multipliers (default 1.0). Example:\n"
+        "# [sddgrade.weights]\n"
+        '# clarity = 1.5\n'
     )
 
 
@@ -65,7 +74,7 @@ def scaffold(root: Path, integration: str) -> list[Path]:
 
     config_path = root / ".sddgrade.toml"
     if not config_path.exists():
-        config_path.write_text(_default_config(integration), encoding="utf-8")
+        config_path.write_text(_default_config(), encoding="utf-8")
         written.append(config_path)
 
     return written

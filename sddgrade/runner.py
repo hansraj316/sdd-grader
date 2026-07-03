@@ -71,6 +71,9 @@ def run_review(
         return EXIT_CONFIG_ERROR
     if fail_under is not None:
         cfg.fail_under = fail_under
+    # Toolchain precedence (#31): explicit --tool flag (tool is not None here) >
+    # `tool` in .sddgrade.toml (already merged into cfg) > "auto" detection (the
+    # Config default). The CLI passes None when the flag was not given.
     if tool is not None:
         cfg.tool = tool
 

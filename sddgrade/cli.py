@@ -1,9 +1,9 @@
 """Command-line surface for sddgrade.
 
-Deliberately small: five plain commands with sensible defaults, mirroring the
-`specify` CLI. The common case is a bare ``sddgrade review``. Heavy modules are
-imported lazily inside each command so the app loads fast and stays importable
-while the codebase is built out.
+Deliberately small: four plain commands (init, review, advise, dashboard) with
+sensible defaults, mirroring the `specify` CLI. The common case is a bare
+``sddgrade review``. Heavy modules are imported lazily inside each command so the
+app loads fast and stays importable while the codebase is built out.
 """
 
 from __future__ import annotations
@@ -51,13 +51,20 @@ def main(
 def init(
     integration: str = typer.Option(
         "claude", "--integration", "-i",
-        help="AI agent whose subscription runs the judge (claude, copilot, cursor, gemini, ...).",
+        help="AI agent whose subscription runs the judge: "
+        "claude | codex | copilot | cursor | gemini | windsurf | generic.",
     ),
     path: Path = typer.Argument(Path("."), help="Project root."),
 ) -> None:
     """Scaffold .sddgrade.toml and install the judge slash command into your agent."""
     from .integrations import agent as agent_backend
 
+    supported = agent_backend.supported_agents()
+    if integration not in supported:
+        raise typer.BadParameter(
+            f"unknown integration {integration!r}; supported: {', '.join(supported)}",
+            param_hint="--integration",
+        )
     written = agent_backend.scaffold(path, integration)
     typer.echo(f"Initialized sddgrade ({integration}). Wrote:")
     for p in written:
@@ -91,8 +98,12 @@ def review(
     html: Path | None = typer.Option(
         None, "--html", help="Write a self-contained HTML report (findings + fixes) to this path.",
     ),
-    tool: Tool = typer.Option(
-        Tool.auto, "--tool", help="Toolchain: auto | speckit | openspec.",
+    # Default None (not "auto") so an unset flag is distinguishable from an explicit
+    # `--tool auto`: precedence is explicit flag > .sddgrade.toml `tool` > auto (#31).
+    tool: Tool | None = typer.Option(
+        None, "--tool",
+        help="Toolchain: auto | speckit | openspec "
+        "(default: `tool` from .sddgrade.toml, else auto).",
     ),
 ) -> None:
     """Grade every Spec-Kit or OpenSpec artifact found under PATH."""
@@ -102,7 +113,7 @@ def review(
     exit_code = run_review(
         path, backend=backend, json_out=json_out, fail_under=fail_under,
         require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif,
-        html_path=html, tool=tool.value,
+        html_path=html, tool=None if tool is None else tool.value,
     )
     raise typer.Exit(code=exit_code)
 
@@ -125,37 +136,6 @@ def dashboard(
     from .dashboard import show
 
     show(path)
-
-
-self_app = typer.Typer(no_args_is_help=True, help="Version checks and upgrades.")
-app.add_typer(self_app, name="self")
-
-
-@self_app.command("check")
-def self_check() -> None:
-    """Report the installed version (release check is a roadmap item)."""
-    typer.echo(f"sddgrade {__version__}")
-
-
-@self_app.command("upgrade")
-def self_upgrade() -> None:
-    """Upgrade sddgrade (delegates to your installer)."""
-    typer.echo("Upgrade via your installer, e.g.:")
-    typer.echo("  uv tool upgrade sddgrade")
-
-
-@app.command("integration")
-def integration_cmd(
-    action: str = typer.Argument("list", help="Currently only 'list'."),
-) -> None:
-    """List supported AI agent integrations for the judge backend."""
-    from .integrations import agent as agent_backend
-
-    if action == "list":
-        for name in agent_backend.supported_agents():
-            typer.echo(name)
-    else:
-        typer.echo("Only 'list' is supported.")
 
 
 if __name__ == "__main__":

@@ -71,6 +71,9 @@ uvx --from git+https://github.com/hansraj316/sdd-grader.git sddgrade review
 uv tool install --from /path/to/sdd-grader sddgrade
 ```
 
+Upgrade via your installer, e.g. `uv tool upgrade sddgrade`. Check the installed
+version with `sddgrade --version`.
+
 ## Commands
 
 ```bash
@@ -84,9 +87,10 @@ sddgrade review --html report.html   # self-contained HTML report (findings + fi
 sddgrade review --top-fixes 5        # show the highest-impact fixes first
 sddgrade advise                      # recommend how to adopt SDD for this codebase
 sddgrade dashboard                   # terminal metrics: trends, dimensions, top pitfalls
-sddgrade self check                  # version
-sddgrade integration list            # supported agents
 ```
+
+Supported `--integration` agents: claude, codex, copilot, cursor, gemini, windsurf,
+generic (see `sddgrade init --help`).
 
 Exit codes: `0` reviewed (gating is opt-in — a bare `review` never fails on findings) ·
 `1` score below the `--fail-under`/config threshold · `2` nothing to review ·
@@ -95,8 +99,9 @@ With `--json`, stdout carries only the JSON report; warnings and notices go to s
 
 ## Toolchains: Spec-Kit and OpenSpec
 
-`sddgrade` auto-detects the layout and picks the right adapter (override with
-`--tool speckit|openspec`):
+`sddgrade` auto-detects the layout and picks the right adapter. Precedence: an
+explicit `--tool speckit|openspec|auto` flag > `tool` in `.sddgrade.toml` >
+auto-detection.
 
 - **Spec-Kit** — `specs/<feature>/{spec,plan,tasks}.md`, `.specify/memory/constitution.md`.
 - **OpenSpec** (early support) — `openspec/specs/<capability>/spec.md`, change proposals

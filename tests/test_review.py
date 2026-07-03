@@ -338,3 +338,78 @@ def test_advise_returns_recommendations(good_repo: Path):
     recs = _recommendations(info)
     assert len(recs) >= 4
     assert info["has_speckit"] is True
+
+
+# ------------------------------------------------------------- tool precedence (#31)
+# Precedence matrix: explicit tool= (the --tool flag) > `tool` in .sddgrade.toml >
+# auto-detection (the Config default).
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def _mixed_repo(tmp_path: Path) -> Path:
+    """A repo carrying both a Spec-Kit tree and an OpenSpec tree."""
+    import shutil
+
+    shutil.copytree(FIXTURES / "speckit_good", tmp_path, dirs_exist_ok=True)
+    shutil.copytree(FIXTURES / "openspec_good", tmp_path, dirs_exist_ok=True)
+    return tmp_path
+
+
+def _reviewed(capsys) -> dict:
+    return json.loads(capsys.readouterr().out)
+
+
+def test_config_tool_default_is_auto():
+    # No config file → auto-detection runs (not a silent speckit pin).
+    assert config_mod.Config().tool == "auto"
+
+
+def test_config_tool_honored_when_flag_absent(tmp_path: Path, capsys):
+    # #31 regression: mixed layout + config selecting OpenSpec, no --tool flag →
+    # the config wins over auto's Spec-Kit preference.
+    repo = _mixed_repo(tmp_path)
+    (repo / ".sddgrade.toml").write_text('[sddgrade]\ntool = "openspec"\n')
+    run_review(repo, backend="rules", json_out=True, err_console=_quiet())
+    result = _reviewed(capsys)
+    assert result["tool"] == "openspec"
+    assert all("openspec" in a["path"] for a in result["artifacts"])
+
+
+def test_explicit_tool_overrides_config(tmp_path: Path, capsys):
+    repo = _mixed_repo(tmp_path)
+    (repo / ".sddgrade.toml").write_text('[sddgrade]\ntool = "openspec"\n')
+    run_review(repo, backend="rules", json_out=True, tool="speckit", err_console=_quiet())
+    result = _reviewed(capsys)
+    assert result["tool"] == "speckit"
+    assert all("openspec" not in a["path"] for a in result["artifacts"])
+
+
+def test_explicit_auto_overrides_config(tmp_path: Path, capsys):
+    # `--tool auto` is an explicit choice, distinct from "flag not given": it beats
+    # the config file, and auto prefers Spec-Kit in a mixed layout.
+    repo = _mixed_repo(tmp_path)
+    (repo / ".sddgrade.toml").write_text('[sddgrade]\ntool = "openspec"\n')
+    run_review(repo, backend="rules", json_out=True, tool="auto", err_console=_quiet())
+    result = _reviewed(capsys)
+    assert result["tool"] == "auto"
+    assert any("specs/001" in a["path"] for a in result["artifacts"])
+    assert all("openspec" not in a["path"] for a in result["artifacts"])
+
+
+def test_no_flag_no_config_auto_detects(tmp_path: Path, capsys):
+    # Neither flag nor config: auto-detection, Spec-Kit preferred in mixed layouts.
+    repo = _mixed_repo(tmp_path)
+    run_review(repo, backend="rules", json_out=True, err_console=_quiet())
+    result = _reviewed(capsys)
+    assert result["tool"] == "auto"
+    assert all("openspec" not in a["path"] for a in result["artifacts"])
+
+
+def test_auto_detects_openspec_only_layout(tmp_path: Path):
+    # Sanity: with no config and no flag, an OpenSpec-only repo is still reviewed.
+    import shutil
+
+    shutil.copytree(FIXTURES / "openspec_good", tmp_path, dirs_exist_ok=True)
+    code = run_review(tmp_path, backend="rules", console=_quiet())
+    assert code == 0  # not EXIT_NO_ARTIFACTS (2)

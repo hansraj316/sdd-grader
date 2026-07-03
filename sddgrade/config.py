@@ -1,8 +1,9 @@
 """Load and merge configuration: built-in defaults + user ``.sddgrade.toml``.
 
 Everything has a sensible default so the common case (`sddgrade review`) needs no
-config at all. A repo can override weights, thresholds, and the chosen agent in
-``.sddgrade.toml`` at its root.
+config at all. A repo can override the toolchain, gate threshold, and dimension
+weights in ``.sddgrade.toml`` at its root. Every key parsed here is honored by the
+runner — a config key with no consumer must not be added (#46).
 """
 
 from __future__ import annotations
@@ -37,16 +38,15 @@ DEFAULT_WEIGHTS: dict[Dimension, float] = {
 class Config:
     """Resolved configuration for a run."""
 
-    tool: str = "speckit"
-    integration: str = "claude"
+    # Toolchain selection. "auto" detects the layout; a config-file `tool` wins over
+    # auto-detection, and an explicit --tool flag wins over both (#31).
+    tool: str = "auto"
     # CI gate threshold. None (the default) means no gating: a bare review exits 0
     # regardless of score. Opt in via --fail-under or `fail_under` in .sddgrade.toml.
     fail_under: float | None = None
     weights: dict[Dimension, float] = field(
         default_factory=lambda: dict(DEFAULT_WEIGHTS)
     )
-    # Optional path to a user rubric dir/file that overrides bundled rubrics.
-    rubric_override: str | None = None
     root: Path = field(default_factory=Path.cwd)
 
     def weight(self, dim: Dimension) -> float:
@@ -95,12 +95,8 @@ def load(root: Path | None = None) -> Config:
     section = data.get("sddgrade", data)
     if isinstance(section.get("tool"), str):
         cfg.tool = section["tool"]
-    if isinstance(section.get("integration"), str):
-        cfg.integration = section["integration"]
     if isinstance(section.get("fail_under"), (int, float)):
         cfg.fail_under = float(section["fail_under"])
-    if isinstance(section.get("rubric_override"), str):
-        cfg.rubric_override = section["rubric_override"]
     if isinstance(section.get("weights"), dict):
         cfg.weights = _coerce_weights(section["weights"])
 
