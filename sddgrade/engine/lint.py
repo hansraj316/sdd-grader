@@ -555,10 +555,6 @@ _STRUCTURAL_CHECKS = {
 }
 
 
-def _get(catalog: dict[str, Pitfall], key: str) -> Pitfall | None:
-    return catalog.get(key)
-
-
 # --------------------------------------------------------------------------- cross-artifact
 
 def _cross_artifact(artifacts: list[Artifact], catalog: dict[str, Pitfall]) -> list[Finding]:

@@ -80,7 +80,3 @@ def load_catalog() -> dict[str, Pitfall]:
     )
     data = tomllib.loads(text)
     return {e["id"]: _coerce(e) for e in data.get("pitfall", [])}
-
-
-def get(pitfall_id: str) -> Pitfall | None:
-    return load_catalog().get(pitfall_id)

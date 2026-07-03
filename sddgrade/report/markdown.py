@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from ..model import ReviewResult, Severity
-
-_SEV_ORDER = {s: i for i, s in enumerate([
-    Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO
-])}
+from ..model import ReviewResult
+from . import common
 
 
 def render(result: ReviewResult) -> str:
@@ -16,7 +13,7 @@ def render(result: ReviewResult) -> str:
     lines.append(f"- Tool: `{result.tool}`  •  Engine: `{result.engine}`")
     if result.timestamp:
         lines.append(f"- Generated: {result.timestamp}")
-    lines.append(f"- **Overall score: {result.overall:.1f}/100**")
+    lines.append(f"- **Overall score: {common.format_score(result.overall)}/100**")
     lines.append(f"- Coverage: `{result.coverage}`")
     lines.append("")
     lines.append(f"> **What this score proves:** {result.coverage_note}")
@@ -28,16 +25,17 @@ def render(result: ReviewResult) -> str:
     lines.append("|----------|------|------:|---------:|")
     for a in result.artifacts:
         lines.append(
-            f"| `{a.path}` | {a.type.value} | {a.overall:.0f} | {len(a.findings)} |"
+            f"| `{a.path}` | {a.type.value} | {common.format_score(a.overall)} "
+            f"| {len(a.findings)} |"
         )
     lines.append("")
 
     for a in result.artifacts:
         if not a.findings:
             continue
-        lines.append(f"## `{a.path}` — {a.overall:.0f}/100")
+        lines.append(f"## `{a.path}` — {common.format_score(a.overall)}/100")
         lines.append("")
-        for f in sorted(a.findings, key=lambda x: _SEV_ORDER.get(x.severity, 9)):
+        for f in common.sort_findings(a.findings):
             tag = f" [{f.pitfall_id}]" if f.pitfall_id else ""
             loc = f" (line {f.line})" if f.line else ""
             lines.append(
