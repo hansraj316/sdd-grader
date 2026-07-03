@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 9
-Last run: 2026-07-02
+Iteration: 10
+Last run: 2026-07-03
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -44,7 +44,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #31 → PR #35 config-tool-precedence — honor .sddreview.toml tool= when no --tool CLI flag (2026-07-02; awaiting CI)
+- #43 → PR #70 dedup-judge-findings — dedup 'both'-method pitfall findings at lint+judge merge (2026-07-03; awaiting CI)
 
 ## Merged
 
@@ -92,3 +92,9 @@ Tessl, and Spec-Kit extensions/presets.)
   #31 (CLI --tool default overrides .sddreview.toml); changed cli.py tool default None→None and
   config.py Config.tool default "speckit"→"auto"; 4 regression tests; pytest 100 green;
   benchmark good=100 bad=60.5 PASS; PR #35 opened.
+- iter 10 (2026-07-03): Phase 0 synced (37 commits ahead; sddreview→sddgrade rename + many
+  new features merged); Phase 1 no open loop/* PRs (PR #35 appears merged by manual batch;
+  issue #31 still open); Phase 2 found 23 open loop-candidate issues; Phase 4 picked #43
+  (lint+judge double-count 'both'-method pitfalls); added dedup in runner.py before
+  findings.extend(); 3 regression tests; pytest 142 green; benchmark good=100 bad=61 PASS;
+  PR #70 opened; issue #43 commented.
