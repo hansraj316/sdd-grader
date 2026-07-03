@@ -30,4 +30,7 @@ jobs:
 
 Drop `continue-on-error` if you want the job (not just the annotations) to fail the PR
 when the score is below `--fail-under`. For a semantic review in CI, use `--api` with an
-API key configured as a secret instead of `--rules`.
+API key configured as a secret instead of `--rules` — but note that judged scores have
+run-to-run variance, so an `--api` gate can flake when scores hover near the threshold
+(the review warns on stderr when that happens; see
+[api-judge.md](api-judge.md#run-to-run-variance-and---fail-under)).

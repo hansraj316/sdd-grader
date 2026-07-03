@@ -16,6 +16,7 @@ from ..model import (
     DimensionScore,
     Finding,
     ReviewResult,
+    Source,
 )
 
 ALL_DIMENSIONS = list(Dimension)
@@ -24,13 +25,29 @@ ALL_DIMENSIONS = list(Dimension)
 # reporting "the specification"). They must stay visible in scores and reports.
 UNATTRIBUTED_PATH = "(unattributed)"
 
+# Judge findings legitimately vary run to run (#51), while lint findings do not.
+# To keep a --fail-under gate from flapping on judge noise, judge findings are
+# scored at half the deterministic lint penalty and a single judge finding is
+# capped at 12 points (the lint "high" step) — one borderline judge call can move
+# the score by at most a few points, and a judge "critical" can never swing 25
+# points on its own. Lint findings keep full weight: they are reproducible.
+JUDGE_PENALTY_SCALE = 0.5
+JUDGE_PENALTY_CAP = 12.0
+
+
+def finding_penalty(f: Finding) -> float:
+    """Points a finding subtracts before dimension weighting (judge weight is capped)."""
+    if f.source is Source.JUDGE:
+        return min(f.severity.penalty * JUDGE_PENALTY_SCALE, JUDGE_PENALTY_CAP)
+    return f.severity.penalty
+
 
 def _dimension_scores(art_findings: list[Finding], config: Config) -> list[DimensionScore]:
     dim_scores: list[DimensionScore] = []
     for dim in ALL_DIMENSIONS:
         dim_findings = [f for f in art_findings if f.dimension == dim]
         weight = config.weight(dim)
-        penalty = sum(f.severity.penalty for f in dim_findings) * weight
+        penalty = sum(finding_penalty(f) for f in dim_findings) * weight
         dim_scores.append(
             DimensionScore(
                 dimension=dim,

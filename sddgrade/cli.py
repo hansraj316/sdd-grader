@@ -1,6 +1,6 @@
 """Command-line surface for sddgrade.
 
-Deliberately small: five plain commands with sensible defaults, mirroring the
+Deliberately small: a handful of plain commands with sensible defaults, mirroring the
 `specify` CLI. The common case is a bare ``sddgrade review``. Heavy modules are
 imported lazily inside each command so the app loads fast and stays importable
 while the codebase is built out.
@@ -105,6 +105,20 @@ def review(
         html_path=html, tool=tool.value,
     )
     raise typer.Exit(code=exit_code)
+
+
+@app.command("judge-prompt")
+def judge_prompt(
+    path: Path = typer.Argument(Path("."), help="Project root."),
+) -> None:
+    """Print the current judge instructions for this repo's detected toolchain.
+
+    The scaffolded agent command runs this instead of carrying baked-in guidance,
+    so the pitfall catalog and artifact paths are always the installed version's.
+    """
+    from .integrations import agent as agent_backend
+
+    typer.echo(agent_backend.judge_instructions(path))
 
 
 @app.command()
