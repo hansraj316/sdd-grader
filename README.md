@@ -60,13 +60,18 @@ in CI, on PRs, with a tracked trend.
 ## Install
 
 > **Note:** the repository is currently private, so the commands below require
-> repo access (a public PyPI release is tracked in
-> [#58](https://github.com/hansraj316/sdd-grader/issues/58)). With access:
+> repo access. Releases are tagged (`v*`) and published from
+> [`release.yml`](.github/workflows/release.yml) — see
+> [docs/release.md](docs/release.md); PyPI publishing activates once the owner
+> configures the Trusted Publisher described there. With access:
 
 ```bash
+# pin a released version (recommended — reproducible installs & CI gates):
+uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.2.0
+# or track tip-of-main (moves daily; scores can change between installs):
 uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git
 # or zero-install:
-uvx --from git+https://github.com/hansraj316/sdd-grader.git sddgrade review
+uvx --from git+https://github.com/hansraj316/sdd-grader.git@v0.2.0 sddgrade review
 # or from a local clone:
 uv tool install --from /path/to/sdd-grader sddgrade
 ```
