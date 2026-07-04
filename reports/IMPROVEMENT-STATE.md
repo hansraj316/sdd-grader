@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 10
-Last run: 2026-07-03
+Iteration: 11
+Last run: 2026-07-04
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -44,7 +44,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #43 → PR #70 dedup-judge-findings — dedup 'both'-method pitfall findings at lint+judge merge (2026-07-03; awaiting CI)
+- #69 → PR #71 template-aware-lint — fix phantom clarification markers + sibling acceptance sections (2026-07-04; awaiting CI)
 
 ## Merged
 
@@ -55,6 +55,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #5 → PR #12/#33-batch spec-unclear-actor — SPEC-UNCLEAR-ACTOR pitfall + lint check (2026-06-29, CI was green; merged in manual batch).
 - #29 → PR #33 json-warnings-to-stderr — route judge-unavailable warning to stderr in --json mode (2026-07-01, CI was green; squash-merged).
 - #30 → PR #34 fix-malformed-judge-json — handle malformed judge.json without crashing (2026-07-02, CI was green; squash-merged).
+- #43 → PR #70 dedup-judge-findings — dedup 'both'-method pitfall findings at lint+judge merge (2026-07-04, CI was green; squash-merged).
 
 ## Blocked
 
@@ -98,3 +99,9 @@ Tessl, and Spec-Kit extensions/presets.)
   (lint+judge double-count 'both'-method pitfalls); added dedup in runner.py before
   findings.extend(); 3 regression tests; pytest 142 green; benchmark good=100 bad=61 PASS;
   PR #70 opened; issue #43 commented.
+- iter 11 (2026-07-04): Phase 1 merged PR #70 (issue #43 closed, CI was green; squash-merged
+  via MCP); Phase 2 found 22 open loop-candidate issues; Phase 4 picked #69 (phantom
+  SPEC-UNRESOLVED-CLARIFICATION on blockquote template lines + SPEC-MISSING-ACCEPTANCE
+  missing sibling acceptance sections); added _count_real_clarification_markers() helper
+  + expanded acceptance scan to sibling sections; 9 regression tests; pytest 152 green;
+  benchmark good=100 bad=61 PASS; PR #71 opened via MCP (git push 503'd); issue #69 commented.
