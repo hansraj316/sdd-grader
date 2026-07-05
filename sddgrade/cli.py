@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 import typer
 
@@ -91,8 +92,8 @@ def review(
     html: Path | None = typer.Option(
         None, "--html", help="Write a self-contained HTML report (findings + fixes) to this path.",
     ),
-    tool: Tool = typer.Option(
-        Tool.auto, "--tool", help="Toolchain: auto | speckit | openspec.",
+    tool: Optional[Tool] = typer.Option(
+        None, "--tool", help="Toolchain: auto | speckit | openspec.",
     ),
 ) -> None:
     """Grade every Spec-Kit or OpenSpec artifact found under PATH."""
@@ -102,7 +103,7 @@ def review(
     exit_code = run_review(
         path, backend=backend, json_out=json_out, fail_under=fail_under,
         require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif,
-        html_path=html, tool=tool.value,
+        html_path=html, tool=tool.value if tool is not None else None,
     )
     raise typer.Exit(code=exit_code)
 
