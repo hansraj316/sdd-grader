@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 11
-Last run: 2026-07-04
+Iteration: 12
+Last run: 2026-07-05
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -44,7 +44,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #69 → PR #71 template-aware-lint — fix phantom clarification markers + sibling acceptance sections (2026-07-04; awaiting CI)
+- #31 → PR #72 fix-cli-tool-default — Optional[Tool] default None in cli.py; Config.tool default "auto" (2026-07-05; awaiting CI)
 
 ## Merged
 
@@ -56,6 +56,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #29 → PR #33 json-warnings-to-stderr — route judge-unavailable warning to stderr in --json mode (2026-07-01, CI was green; squash-merged).
 - #30 → PR #34 fix-malformed-judge-json — handle malformed judge.json without crashing (2026-07-02, CI was green; squash-merged).
 - #43 → PR #70 dedup-judge-findings — dedup 'both'-method pitfall findings at lint+judge merge (2026-07-04, CI was green; squash-merged).
+- #69 → PR #71 template-aware-lint — phantom clarification markers + sibling acceptance sections (2026-07-05, CI was green; squash-merged).
 
 ## Blocked
 
@@ -105,3 +106,9 @@ Tessl, and Spec-Kit extensions/presets.)
   missing sibling acceptance sections); added _count_real_clarification_markers() helper
   + expanded acceptance scan to sibling sections; 9 regression tests; pytest 152 green;
   benchmark good=100 bad=61 PASS; PR #71 opened via MCP (git push 503'd); issue #69 commented.
+- iter 12 (2026-07-05): Phase 1 merged PR #71 (issue #69 closed, CI was green; squash-merged
+  via MCP); PR #35 closed (irrecoverable conflicts from sddreview→sddgrade rename); Phase 2
+  found 21 open loop-candidate issues; Phase 4 picked #31 (CLI --tool default overrides
+  .sddgrade.toml); changed cli.py tool default to Optional[Tool]=None + config.py Config.tool
+  default "speckit"→"auto"; 5 regression tests; pytest 157 green; benchmark good=100 bad=61
+  PASS; PR #72 opened via MCP (git push 503'd); issue #31 commented.
