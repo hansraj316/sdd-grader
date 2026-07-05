@@ -18,6 +18,26 @@ from ..catalog import Pitfall, load_catalog
 from ..model import Artifact, ArtifactType, Dimension, Finding, Section, Severity, Source
 
 _CLARIFICATION_RE = re.compile(r"\[NEEDS CLARIFICATION", re.IGNORECASE)
+_NO_CLARIF_RE = re.compile(r"no\s+\[needs\s+clarif", re.IGNORECASE)
+
+
+def _count_real_clarification_markers(raw: str) -> int:
+    """Count genuine [NEEDS CLARIFICATION markers, excluding template boilerplate.
+
+    Skips blockquote lines (Spec-Kit template instructions start with '>')
+    and checklist lines that reference the marker as the item being verified
+    (e.g. '- [ ] No [NEEDS CLARIFICATION] markers remain').
+    """
+    count = 0
+    for line in raw.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith(">"):
+            continue
+        if _NO_CLARIF_RE.search(stripped):
+            continue
+        if _CLARIFICATION_RE.search(line):
+            count += 1
+    return count
 _TASK_LINE_RE = re.compile(r"^\s*-?\s*\[[ xX]\]")  # a checkbox bullet
 _TASK_ID_RE = re.compile(r"\bT\d{2,}\b")
 _US_TAG_RE = re.compile(r"\[US\d+\]", re.IGNORECASE)
@@ -415,10 +435,10 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
 
     # Unresolved [NEEDS CLARIFICATION] markers.
-    clar = _CLARIFICATION_RE.findall(art.raw)
-    if clar and (p := catalog.get("SPEC-UNRESOLVED-CLARIFICATION")):
+    clar_count = _count_real_clarification_markers(art.raw)
+    if clar_count and (p := catalog.get("SPEC-UNRESOLVED-CLARIFICATION")):
         out.append(
-            _from_pitfall(p, art.path, f"{len(clar)} unresolved [NEEDS CLARIFICATION] marker(s).")
+            _from_pitfall(p, art.path, f"{clar_count} unresolved [NEEDS CLARIFICATION] marker(s).")
         )
 
     # Edge cases present and non-trivial.
@@ -439,11 +459,22 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
         out.append(_from_pitfall(p, art.path, "Success Criteria contain no measurable values."))
 
     # Each user story has real acceptance criteria (Given/When/Then or an acceptance
-    # block that isn't just a TODO).
+    # block that isn't just a TODO).  Also look at sibling/child sections whose title
+    # suggests acceptance criteria — the canonical Spec-Kit layout puts them in a
+    # separate "### Acceptance Scenarios" section after "### Primary User Story".
     if p := catalog.get("SPEC-MISSING-ACCEPTANCE"):
-        for s in art.sections:
+        for i, s in enumerate(art.sections):
             if "user story" in s.title.lower():
-                body = s.body.lower()
+                combined = s.body
+                for following in art.sections[i + 1:]:
+                    if following.level < s.level:
+                        break  # parent section: stop
+                    if "user story" in following.title.lower():
+                        break  # next story: these sections belong to it
+                    t = following.title.lower()
+                    if "acceptance" in t or "scenario" in t:
+                        combined += "\n" + following.body
+                body = combined.lower()
                 has_gwt = "given" in body and "when" in body
                 has_block = "acceptance" in body and "todo" not in body
                 if not (has_gwt or has_block):
@@ -479,9 +510,9 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
 def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
 
-    clar = _CLARIFICATION_RE.findall(art.raw)
-    if clar and (p := catalog.get("SPEC-UNRESOLVED-CLARIFICATION")):
-        out.append(_from_pitfall(p, art.path, f"{len(clar)} unresolved [NEEDS CLARIFICATION] marker(s)."))
+    clar_count = _count_real_clarification_markers(art.raw)
+    if clar_count and (p := catalog.get("SPEC-UNRESOLVED-CLARIFICATION")):
+        out.append(_from_pitfall(p, art.path, f"{clar_count} unresolved [NEEDS CLARIFICATION] marker(s)."))
 
     check_section = art.section("Constitution Check")
     if p := catalog.get("PLAN-CONSTITUTION-UNCHECKED"):
