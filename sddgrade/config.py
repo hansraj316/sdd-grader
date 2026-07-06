@@ -37,7 +37,7 @@ DEFAULT_WEIGHTS: dict[Dimension, float] = {
 class Config:
     """Resolved configuration for a run."""
 
-    tool: str = "speckit"
+    tool: str = "auto"
     integration: str = "claude"
     # CI gate threshold. None (the default) means no gating: a bare review exits 0
     # regardless of score. Opt in via --fail-under or `fail_under` in .sddgrade.toml.
