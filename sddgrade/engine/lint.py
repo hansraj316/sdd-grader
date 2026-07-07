@@ -621,7 +621,7 @@ def _cross_artifact(artifacts: list[Artifact], catalog: dict[str, Pitfall]) -> l
         # Entity → task.
         if data_model and (p := catalog.get("XREF-ENTITY-NO-TASK")):
             for entity in _entities(data_model):
-                if entity.lower() not in tasks_text:
+                if not _entity_word_re(entity).search(tasks_text):
                     out.append(_from_pitfall(p, tasks.path, f"Entity '{entity}' is referenced by no task."))
 
         # Contract → contract test.
@@ -641,10 +641,44 @@ def _first(arts: list[Artifact], atype: ArtifactType) -> Artifact | None:
     return None
 
 
+# Structural sub-section titles that appear inside entity blocks but are not
+# entity names themselves.  Treating these as entities produces bogus findings.
+_STRUCTURAL_HEADINGS: frozenset[str] = frozenset({
+    "attributes", "attribute",
+    "fields", "field",
+    "properties", "property",
+    "validation rules", "validation rule", "validation",
+    "state transitions", "state transition", "states",
+    "relationships", "relationship",
+    "indexes", "index", "indices",
+    "constraints", "constraint",
+    "notes", "note",
+    "references", "reference",
+    "examples", "example",
+    "overview", "summary", "description",
+    "schema", "schemas",
+    "types", "type",
+    "enums", "enum", "enumerations", "enumeration",
+})
+
+_ENTITY_WORD_RE_CACHE: dict[str, re.Pattern[str]] = {}
+
+
+def _entity_word_re(entity: str) -> re.Pattern[str]:
+    """Word-boundary pattern for *entity* (cached)."""
+    key = entity.lower()
+    if key not in _ENTITY_WORD_RE_CACHE:
+        _ENTITY_WORD_RE_CACHE[key] = re.compile(
+            r"(?<!\w)" + re.escape(key) + r"(?!\w)", re.IGNORECASE
+        )
+    return _ENTITY_WORD_RE_CACHE[key]
+
+
 def _entities(data_model: Artifact) -> list[str]:
-    """Entity names = level-3 headings under the data model."""
+    """Entity names from data-model.md: level-3+ headings, skipping structural subsections."""
     names: list[str] = []
     for s in data_model.sections:
         if s.level >= 3 and s.title.strip():
-            names.append(s.title.strip())
+            if s.title.strip().lower() not in _STRUCTURAL_HEADINGS:
+                names.append(s.title.strip())
     return names
