@@ -41,12 +41,11 @@ def _command_text() -> str:
     return template.replace("{{GUIDANCE}}", judge_guidance())
 
 
-def _default_config(integration: str) -> str:
+def _default_config() -> str:
     return (
         "# sddgrade configuration\n"
         "[sddgrade]\n"
-        'tool = "speckit"\n'
-        f'integration = "{integration}"\n'
+        'tool = "auto"\n'
         "fail_under = 70\n"
     )
 
@@ -65,7 +64,7 @@ def scaffold(root: Path, integration: str) -> list[Path]:
 
     config_path = root / ".sddgrade.toml"
     if not config_path.exists():
-        config_path.write_text(_default_config(integration), encoding="utf-8")
+        config_path.write_text(_default_config(), encoding="utf-8")
         written.append(config_path)
 
     return written

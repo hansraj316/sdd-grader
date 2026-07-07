@@ -38,15 +38,12 @@ class Config:
     """Resolved configuration for a run."""
 
     tool: str = "auto"
-    integration: str = "claude"
     # CI gate threshold. None (the default) means no gating: a bare review exits 0
     # regardless of score. Opt in via --fail-under or `fail_under` in .sddgrade.toml.
     fail_under: float | None = None
     weights: dict[Dimension, float] = field(
         default_factory=lambda: dict(DEFAULT_WEIGHTS)
     )
-    # Optional path to a user rubric dir/file that overrides bundled rubrics.
-    rubric_override: str | None = None
     root: Path = field(default_factory=Path.cwd)
 
     def weight(self, dim: Dimension) -> float:
@@ -95,12 +92,8 @@ def load(root: Path | None = None) -> Config:
     section = data.get("sddgrade", data)
     if isinstance(section.get("tool"), str):
         cfg.tool = section["tool"]
-    if isinstance(section.get("integration"), str):
-        cfg.integration = section["integration"]
     if isinstance(section.get("fail_under"), (int, float)):
         cfg.fail_under = float(section["fail_under"])
-    if isinstance(section.get("rubric_override"), str):
-        cfg.rubric_override = section["rubric_override"]
     if isinstance(section.get("weights"), dict):
         cfg.weights = _coerce_weights(section["weights"])
 
