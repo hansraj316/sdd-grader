@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 14
-Last run: 2026-07-07
+Iteration: 15
+Last run: 2026-07-08
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -44,7 +44,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #46 → PR #74 remove-dead-config-keys — delete Config.integration + Config.rubric_override; scaffold tool=auto (2026-07-07; awaiting CI)
+- #49 → PR #75 judge-prompt-injection-guard — wrap artifact content in <artifact_data> blocks; add data-framing instruction to build_prompt() + judge-command.md (2026-07-08; awaiting CI)
 
 ## Merged
 
@@ -59,6 +59,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #69 → PR #71 template-aware-lint — phantom clarification markers + sibling acceptance sections (2026-07-05, CI was green; squash-merged).
 - #31 → PR #72 fix-cli-tool-default — Optional[Tool] default None in cli.py; Config.tool default "speckit"→"auto" (2026-07-06, CI was green; squash-merged).
 - #44 → PR #73 fix-xref-entity-false-positives — _STRUCTURAL_HEADINGS denylist + word-boundary entity matching (2026-07-07, CI was green; squash-merged).
+- #46 → PR #74 remove-dead-config-keys — delete Config.integration + Config.rubric_override; scaffold tool=auto (2026-07-08, CI was green; squash-merged).
 
 ## Blocked
 
@@ -127,3 +128,10 @@ Tessl, and Spec-Kit extensions/presets.)
   _default_config() to emit tool="auto" + drop integration key; 5 regression tests; pytest 169
   green; benchmark good=100 bad=61 PASS; PR #74 opened via MCP (git push 503'd); issue #46
   commented.
+- iter 15 (2026-07-08): Phase 1 merged PR #74 (issue #46 closed, CI was green; converted draft
+  → ready + squash-merged via MCP); Phase 2 found 18 open loop-candidate issues; Phase 4 picked
+  #49 (judge prompt injection — artifact content inlined into prompt with no data/instruction
+  boundary); wrapped each artifact in <artifact_data path="..." type="..."> block + added
+  "DATA only" framing instruction in build_prompt(); added security note to judge-command.md;
+  updated test_judge_fixes.py + 6 new regression tests; pytest 175 green; benchmark good=100
+  bad=61 PASS; PR #75 opened; issue #49 commented.
