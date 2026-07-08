@@ -1,7 +1,8 @@
-"""Regression tests for issue #31: CLI --tool default must not override .sddgrade.toml.
+"""Regression tests for issues #31 and #46.
 
-When the user does not pass --tool, the config file's `tool` setting must be honored.
-Only an explicit --tool flag on the command line should override config.
+#31: CLI --tool default must not override .sddgrade.toml.
+#46: Unused config keys (integration, rubric_override) must be removed; scaffolded
+     .sddgrade.toml must use tool = "auto" and not emit the integration key.
 """
 
 from __future__ import annotations
@@ -110,4 +111,53 @@ def test_cli_explicit_tool_flag_overrides_toml(tmp_path: Path):
     data = json.loads(proc.stdout)
     assert data.get("tool") == "speckit", (
         f"Expected explicit --tool speckit to win, got {data.get('tool')!r}"
+    )
+
+
+# ----------------------------------------------------------------- issue #46 tests
+
+
+def test_config_has_no_integration_field():
+    """Config must not expose an .integration attribute (issue #46)."""
+    cfg = config_mod.Config()
+    assert not hasattr(cfg, "integration"), (
+        "Config.integration was removed but is still present"
+    )
+
+
+def test_config_has_no_rubric_override_field():
+    """Config must not expose a .rubric_override attribute (issue #46)."""
+    cfg = config_mod.Config()
+    assert not hasattr(cfg, "rubric_override"), (
+        "Config.rubric_override was removed but is still present"
+    )
+
+
+def test_integration_key_in_toml_is_silently_ignored(tmp_path: Path):
+    """A .sddgrade.toml that still has 'integration = ...' must not crash load()."""
+    toml = tmp_path / ".sddgrade.toml"
+    toml.write_text('[sddgrade]\nintegration = "claude"\nfail_under = 65\n')
+    cfg = config_mod.load(tmp_path)
+    assert cfg.fail_under == 65.0
+    assert not hasattr(cfg, "integration")
+
+
+def test_scaffolded_config_uses_auto_tool(tmp_path: Path):
+    """sddgrade init must write tool = 'auto', not 'speckit' (issue #46)."""
+    from sddgrade.integrations.agent import scaffold
+
+    scaffold(tmp_path, "claude")
+    toml_text = (tmp_path / ".sddgrade.toml").read_text()
+    assert 'tool = "auto"' in toml_text, f"Expected tool = auto in scaffolded config:\n{toml_text}"
+    assert "speckit" not in toml_text, f"Scaffolded config must not contain 'speckit':\n{toml_text}"
+
+
+def test_scaffolded_config_has_no_integration_key(tmp_path: Path):
+    """sddgrade init must not write an 'integration' key into .sddgrade.toml (issue #46)."""
+    from sddgrade.integrations.agent import scaffold
+
+    scaffold(tmp_path, "copilot")
+    toml_text = (tmp_path / ".sddgrade.toml").read_text()
+    assert "integration" not in toml_text, (
+        f"Scaffolded config must not emit integration key:\n{toml_text}"
     )
