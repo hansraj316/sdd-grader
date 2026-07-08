@@ -58,10 +58,10 @@ def _item(**overrides) -> dict:
 def test_prompt_labels_artifacts_with_relative_paths(multi_repo: Path):
     arts = discover_artifacts(multi_repo)
     prompt = build_prompt(arts, multi_repo)
-    assert "----- specs/001-task-export/spec.md (spec) -----" in prompt
-    assert "----- specs/002-task-import/spec.md (spec) -----" in prompt
-    # No ambiguous bare-filename headers.
-    assert "----- spec.md" not in prompt
+    assert '<artifact_data path="specs/001-task-export/spec.md"' in prompt
+    assert '<artifact_data path="specs/002-task-import/spec.md"' in prompt
+    # No ambiguous bare-filename openers.
+    assert '<artifact_data path="spec.md"' not in prompt
 
 
 def test_multi_feature_findings_attributed_to_right_feature(multi_repo: Path):
