@@ -28,3 +28,27 @@ jobs:
 
       - name: Benchmark regression gate
         run: uv run python scripts/benchmark.py
+
+  # Exercises the packaging/install path (#60): build the wheel, install it into
+  # a fresh venv (no editable install, no dev deps), and prove the entry point
+  # and the bundled package data (rubric catalog etc.) actually work.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build wheel + sdist
+        run: uv build
+
+      - name: Install built wheel into a fresh venv
+        run: |
+          uv venv wheel-venv --python 3.11
+          VIRTUAL_ENV="$PWD/wheel-venv" uv pip install dist/*.whl
+
+      - name: Smoke-test the installed wheel
+        run: |
+          ./wheel-venv/bin/sddgrade --version
+          ./wheel-venv/bin/sddgrade review --rules tests/fixtures/speckit_good

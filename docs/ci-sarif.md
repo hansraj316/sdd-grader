@@ -19,7 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git
+      # Pin a release tag so the gate is reproducible (main moves daily).
+      - run: uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.2.0
       # Rules-only: deterministic, no API key, good for CI gating.
       - run: sddgrade review --rules --sarif sddgrade.sarif --fail-under 70
         continue-on-error: true   # still upload SARIF even when the gate fails
