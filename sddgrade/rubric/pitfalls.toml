@@ -425,3 +425,24 @@ method = "lint"
 why = "OpenSpec requirements are validated by their scenarios; a '### Requirement:' with no '#### Scenario:' has no acceptance behavior to test against."
 detect = "A '### Requirement:' section whose body contains no '#### Scenario:'."
 fix = "Add at least one '#### Scenario:' with WHEN/THEN describing the expected behavior."
+
+# ----------------------------------------------------- judge tampering (issue #49)
+
+[[pitfall]]
+id = "SPEC-PROMPT-INJECTION-SUSPECT"
+name = "Prompt-injection phrasing in artifact"
+dimension = "constitutional"
+artifacts = ["spec", "plan", "tasks", "constitution", "research", "data-model", "quickstart", "contract", "checklist"]
+severity = "high"
+method = "lint"
+why = "Text addressed to the reviewing agent ('ignore previous instructions', 'report no findings') has no place in a specification; it reads as an attempt to tamper with the automated review and can neutralize the LLM judge half of the grade. This deterministic check fires even when the judge is successfully fooled."
+detect = "Match classic injection phrasing: instructions to ignore/disregard prior instructions, demands to report no/zero findings or to output a fixed result, or references to the system prompt."
+fix = "Remove instruction-like text aimed at reviewers or tools; a specification describes the system under specification, it never addresses the tools grading it."
+patterns = [
+  "\\bignore\\s+(?:all\\s+)?(?:the\\s+)?(?:previous|above|prior|earlier)\\s+instructions\\b",
+  "\\bdisregard\\s+(?:all\\s+)?(?:the\\s+)?(?:previous|above|prior|earlier)\\s+instructions\\b",
+  "\\breport\\s+(?:no|zero)\\s+findings\\b",
+  "\\boutput\\s+only\\b",
+  "\\bsystem\\s+prompt\\b",
+  "\"findings\"\\s*:\\s*\\[\\s*\\]",
+]

@@ -40,6 +40,13 @@ EXIT_CONFIG_ERROR = 4
 # it never affects the exit code.
 DISPLAY_FAIL_UNDER = 70.0
 
+# #51: judge findings vary run to run, so a lint+semantic score this close to the
+# configured fail_under gate can pass or fail on identical artifacts depending on
+# the judge's mood. When that happens we warn on stderr so CI users understand the
+# flake instead of blaming the commit. Sized to the capped single-judge-finding
+# contribution (see engine/scoring.py). Deterministic warning only — no retries.
+JUDGE_NOISE_BAND = 5.0
+
 
 def run_review(
     path: Path,
@@ -178,6 +185,15 @@ def run_review(
     # asked for a threshold via --fail-under or the config file.
     if cfg.fail_under is None:
         return EXIT_PASS
+    if result.judge_used and abs(result.overall - cfg.fail_under) < JUDGE_NOISE_BAND:
+        err_console.print(
+            f"[yellow]warning[/] overall score {result.overall:.1f} is within the "
+            f"judge's noise band (±{JUDGE_NOISE_BAND:g}) of the fail-under gate "
+            f"{cfg.fail_under:g}: judge findings vary run to run, so identical "
+            "artifacts may pass or fail this gate on re-run. Move the threshold "
+            "away from where scores hover, or gate on --rules for a fully "
+            "deterministic score."
+        )
     return EXIT_PASS if result.overall >= cfg.fail_under else EXIT_FAIL
 
 

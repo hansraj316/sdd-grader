@@ -212,9 +212,11 @@ def test_init_scaffolds_agent_command(good_repo: Path):
     assert (good_repo / ".claude/commands/sddgrade.md").is_file()
     assert (good_repo / ".sddgrade.toml").is_file()
     assert any("sddgrade.md" in str(p) for p in written)
-    # The command embeds the pitfall guidance.
+    # #50: the command is a thin shim deferring to `sddgrade judge-prompt` so
+    # guidance is always live — pitfall ids are never baked in at init time.
     text = (good_repo / ".claude/commands/sddgrade.md").read_text()
-    assert "PLAN-OVER-ENGINEERING" in text
+    assert "sddgrade judge-prompt" in text
+    assert "PLAN-OVER-ENGINEERING" not in text
 
 
 def test_supported_agents_listed():
