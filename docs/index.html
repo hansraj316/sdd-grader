@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23C15F3C'/%3E%3Ctext x='50' y='71' font-size='62' font-family='Georgia' text-anchor='middle' fill='%23FAF9F5'%3EG%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SDD-Grader &mdash; grade specs like code</title>
+<meta name="description" content="A CI-grade reviewer for Spec-Kit and OpenSpec artifacts: deterministic lint plus a semantic judge that runs in the AI agent you already use. Scores 0&ndash;100, a fix for every finding, gates for CI.">
+<style>
+  :root {
+    --ivory:#FAF9F5; --panel:#F0EEE6; --ink:#141413; --ink2:#6E6A61;
+    --clay:#C15F3C; --clay-dark:#A64E2F; --hair:#E5E1D8;
+    --term-bg:#1F1E1B; --term-ink:#E8E4DA; --term-dim:#8F8B80;
+    --good:#2A7E4F; --warn:#B4540A; --bad:#B3372B;
+    --serif:"Iowan Old Style","Tiempos Text",Charter,Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  html { background:var(--ivory); scroll-behavior:smooth; }
+  @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  body { margin:0; font-family:var(--sans); color:var(--ink); line-height:1.6; font-size:16px; }
+  a { color:var(--clay-dark); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  a:focus-visible, button:focus-visible { outline:2px solid var(--clay); outline-offset:2px; }
+  .shell { max-width:1080px; margin:0 auto; padding:0 24px; }
+  code { font-family:var(--mono); font-size:.92em; }
+
+  /* header */
+  header { border-bottom:1px solid var(--hair); }
+  .nav { display:flex; align-items:baseline; gap:28px; padding:20px 0; }
+  .wordmark { font-family:var(--serif); font-size:19px; font-weight:600; color:var(--ink); letter-spacing:-.01em; }
+  .nav a.plain { color:var(--ink2); font-size:14px; }
+  .nav .gh { margin-left:auto; }
+
+  /* hero */
+  .hero { padding:76px 0 24px; }
+  .eyebrow { font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink2); margin:0 0 20px; }
+  h1 { font-family:var(--serif); font-weight:500; letter-spacing:-.015em;
+       font-size:clamp(38px,6vw,64px); line-height:1.06; margin:0 0 22px; max-width:17ch; text-wrap:balance; }
+  .dek { font-size:19px; line-height:1.55; color:var(--ink2); max-width:60ch; margin:0 0 34px; }
+  .dek strong { color:var(--ink); font-weight:600; }
+  .cta-row { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-bottom:64px; }
+  .install { display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--hair);
+             border-radius:10px; padding:12px 16px; font-family:var(--mono); font-size:13.5px; max-width:100%; overflow-x:auto; }
+  .install .p { color:var(--clay-dark); user-select:none; }
+  .copybtn { border:0; background:none; color:var(--ink2); cursor:pointer; font-family:var(--sans); font-size:12.5px; padding:4px 6px; border-radius:6px; flex:none; }
+  .copybtn:hover { color:var(--ink); background:var(--hair); }
+  .btn { display:inline-block; border-radius:10px; padding:12px 22px; font-size:15px; font-weight:600; }
+  .btn.primary { background:var(--ink); color:var(--ivory); }
+  .btn.primary:hover { background:#000; text-decoration:none; }
+
+  /* terminal */
+  .term { background:var(--term-bg); border-radius:14px; padding:0 0 22px; box-shadow:0 24px 60px -30px rgba(20,20,19,.35);
+          font-family:var(--mono); font-size:13.5px; line-height:1.65; color:var(--term-ink); overflow:hidden; }
+  .term-bar { display:flex; align-items:center; gap:8px; padding:13px 18px; border-bottom:1px solid #33312C; }
+  .dot { width:11px; height:11px; border-radius:50%; background:#4A4740; }
+  .term-title { color:var(--term-dim); font-size:12px; margin-left:8px; }
+  .toggle { margin-left:auto; display:flex; background:#33312C; border-radius:8px; padding:3px; }
+  .toggle button { border:0; background:none; color:var(--term-dim); font-family:var(--mono); font-size:12px;
+                   padding:4px 14px; border-radius:6px; cursor:pointer; }
+  .toggle button[aria-pressed="true"] { background:var(--ivory); color:var(--ink); }
+  .term pre { margin:0; padding:18px 22px 0; overflow-x:auto; }
+  .t-dim { color:var(--term-dim); } .t-good { color:#63B98A; } .t-warn { color:#E09B58; }
+  .t-bad { color:#E07A6B; } .t-head { color:#D6D2C6; font-weight:700; }
+  .scorebig { font-size:21px; font-weight:700; }
+
+  /* sections */
+  section { padding:72px 0 8px; }
+  .kicker { font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--clay-dark); margin:0 0 14px; }
+  h2 { font-family:var(--serif); font-weight:500; font-size:clamp(26px,3.4vw,36px); line-height:1.15;
+       letter-spacing:-.01em; margin:0 0 16px; max-width:24ch; text-wrap:balance; }
+  .lede { color:var(--ink2); font-size:17px; max-width:62ch; margin:0 0 36px; }
+  .lede strong { color:var(--ink); }
+
+  .cols3 { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  @media (max-width:860px) { .cols3 { grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--hair); border-radius:14px; padding:26px 26px 22px; }
+  .card h3 { font-family:var(--serif); font-weight:600; font-size:20px; margin:0 0 10px; }
+  .card p { color:var(--ink2); font-size:14.5px; margin:0; }
+  .card .tag { font-family:var(--mono); font-size:11.5px; color:var(--clay-dark); display:block; margin-bottom:14px; }
+
+  /* case study band */
+  .band { background:var(--panel); border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); padding:64px 0 72px; margin-top:72px; }
+  .band .grid { display:grid; grid-template-columns:1.05fr .95fr; gap:56px; align-items:center; }
+  @media (max-width:860px) { .band .grid { grid-template-columns:1fr; gap:32px; } }
+  .stat-row { display:flex; gap:30px; margin:26px 0 22px; flex-wrap:wrap; }
+  .stat .n { font-family:var(--serif); font-size:37px; font-weight:500; letter-spacing:-.02em; }
+  .stat .n .up { color:var(--good); }
+  .stat .l { font-size:13px; color:var(--ink2); }
+  blockquote { margin:0; border-left:3px solid var(--clay); padding-left:18px; font-family:var(--serif); font-size:19px; line-height:1.5; }
+  blockquote footer { font-family:var(--sans); font-size:13px; color:var(--ink2); margin-top:10px; }
+
+  /* honesty */
+  .honest { border:1px solid var(--hair); border-radius:14px; padding:30px 32px; background:#fff; max-width:820px; }
+  .honest h3 { font-family:var(--serif); font-size:21px; font-weight:600; margin:0 0 12px; }
+  .honest p { color:var(--ink2); font-size:15px; margin:0 0 12px; }
+  .honest p:last-child { margin:0; }
+  .honest strong { color:var(--ink); }
+
+  /* steps */
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  @media (max-width:860px) { .steps { grid-template-columns:1fr; } }
+  .step h3 { font-size:15px; font-weight:600; margin:0 0 10px; }
+  .step h3 .no { color:var(--clay-dark); font-family:var(--mono); font-weight:400; margin-right:8px; }
+  .step pre { background:var(--term-bg); color:var(--term-ink); border-radius:10px; padding:14px 16px;
+              font-family:var(--mono); font-size:12.5px; line-height:1.7; overflow-x:auto; margin:0 0 8px; }
+  .step p { font-size:13.5px; color:var(--ink2); margin:0; }
+
+  .ci-snip { margin-top:34px; }
+  .ci-snip pre { background:var(--term-bg); color:var(--term-ink); border-radius:12px; padding:18px 20px;
+                 font-family:var(--mono); font-size:12.5px; line-height:1.7; overflow-x:auto; }
+  .ci-snip .t-dim { color:var(--term-dim); }
+
+  footer.site { border-top:1px solid var(--hair); margin-top:84px; padding:34px 0 56px; color:var(--ink2); font-size:14px; }
+  footer.site .row { display:flex; gap:26px; flex-wrap:wrap; }
+  footer.site .row .right { margin-left:auto; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="shell nav">
+    <span class="wordmark">SDD-Grader</span>
+    <a class="plain" href="#how">How it works</a>
+    <a class="plain" href="#case">Case study</a>
+    <a class="plain" href="#start">Get started</a>
+    <a class="plain gh" href="https://github.com/hansraj316/sdd-grader">GitHub &#8599;</a>
+  </div>
+</header>
+
+<main>
+<div class="shell">
+  <div class="hero">
+    <p class="eyebrow">Announcement</p>
+    <h1>Grade specs the way you grade code.</h1>
+    <p class="dek">In spec-driven development, <strong>the spec is the program</strong> — yet nothing
+    in the pipeline checks whether it's good enough to build from. SDD-Grader reviews
+    <a href="https://github.com/github/spec-kit">Spec-Kit</a> and
+    <a href="https://github.com/Fission-AI/OpenSpec">OpenSpec</a> artifacts with a hybrid engine:
+    a deterministic linter plus a semantic judge that runs in the AI agent you already use.
+    Every artifact gets a 0&ndash;100 score, every finding gets a fix, and your CI gets a gate.</p>
+    <div class="cta-row">
+      <span class="install"><span class="p">$</span><span id="cmd">uvx --from git+https://github.com/hansraj316/sdd-grader.git sddgrade review</span><button class="copybtn" onclick="navigator.clipboard.writeText(document.getElementById('cmd').textContent).then(()=>{this.textContent='Copied'})">Copy</button></span>
+      <a class="btn primary" href="#start">Get started</a>
+    </div>
+  </div>
+
+  <div class="term" id="case-term">
+    <div class="term-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="term-title">sddgrade review &mdash; polymarket-kit (a real Spec-Kit repo)</span>
+      <div class="toggle" role="group" aria-label="Before or after applying the grader's fixes">
+        <button id="tb-before" aria-pressed="true" onclick="showTerm('before')">before</button>
+        <button id="tb-after" aria-pressed="false" onclick="showTerm('after')">after</button>
+      </div>
+    </div>
+    <pre id="term-before">
+<span class="t-dim">╭──────────────── SDD Review — overall ────────────────╮</span>
+<span class="t-dim">│</span>  <span class="scorebig t-warn">69.4/100</span>   <span class="t-dim">engine=lint+judge · artifacts=8 · findings=22</span>  <span class="t-dim">│</span>
+<span class="t-dim">╰───────────────────────────────────────────────────────╯</span>
+  <span class="t-head">Artifact</span>          <span class="t-head">Score</span>   <span class="t-head">Findings</span>
+  spec.md           <span class="t-bad"> 34</span>      9
+  plan.md           <span class="t-warn"> 50</span>      6
+  tasks.md          <span class="t-warn"> 58</span>      7
+  research.md       <span class="t-good">100</span>      0
+
+  <span class="t-bad">HIGH</span>  completeness  <span class="t-dim">spec.md</span>  5 unresolved [NEEDS CLARIFICATION] marker(s)
+        <span class="t-dim">fix</span> Resolve each marker with a concrete decision; remove the marker.
+  <span class="t-bad">HIGH</span>  testability   <span class="t-dim">spec.md</span>  User story has no acceptance criteria
+        <span class="t-dim">fix</span> Add explicit acceptance criteria per story, ideally Given/When/Then.</pre>
+    <pre id="term-after" hidden>
+<span class="t-dim">╭──────────────── SDD Review — overall ────────────────╮</span>
+<span class="t-dim">│</span>  <span class="scorebig t-good">83.6/100</span>   <span class="t-dim">engine=lint+judge · artifacts=8 · findings=13</span>  <span class="t-dim">│</span>
+<span class="t-dim">╰───────────────────────────────────────────────────────╯</span>
+  <span class="t-head">Artifact</span>          <span class="t-head">Score</span>   <span class="t-head">Findings</span>
+  spec.md           <span class="t-good">100</span>      0   <span class="t-good">▲ +66 — every fix applied</span>
+  plan.md           <span class="t-warn"> 50</span>      6   <span class="t-dim">(left untouched as control)</span>
+  tasks.md          <span class="t-warn"> 58</span>      7   <span class="t-dim">(left untouched as control)</span>
+  research.md       <span class="t-good">100</span>      0
+
+  <span class="t-good">✓</span> spec.md — clarifications resolved, scenarios testable, NFRs quantified,
+    implementation details moved to plan, checklist honest. <span class="t-dim">Judged fresh:
+    judgment hash-pinned to this exact content.</span></pre>
+  </div>
+
+  <section id="why">
+    <p class="kicker">Why this exists</p>
+    <h2>AI writes your specs now. Nothing checks them.</h2>
+    <p class="lede">Spec-Kit and OpenSpec made the spec the source of truth: agents plan and build
+    directly from it. But a plausible spec is not a buildable one — unresolved clarifications,
+    untestable stories, quietly contradictory plans, and template boilerplate all flow straight into
+    code generation. Code gets review, tests, and CI. <strong>The document that generates the code
+    gets nothing.</strong> SDD-Grader is that missing check.</p>
+  </section>
+
+  <section id="how">
+    <p class="kicker">How it works</p>
+    <h2>A linter that proves, a judge that reads.</h2>
+    <p class="lede">Two layers, honestly labeled. Every report states which layers ran, so a green
+    check is never mistaken for more than it is.</p>
+    <div class="cols3">
+      <div class="card">
+        <span class="tag">deterministic &middot; free &middot; offline</span>
+        <h3>Lint what's provable</h3>
+        <p>Unresolved <code>[NEEDS&nbsp;CLARIFICATION]</code> markers, broken traceability
+        (story&rarr;task, entity&rarr;task, contract&rarr;test), constitutional gates, and a
+        research-backed catalog of requirement smells — ambiguity, escape clauses, passive voice,
+        unquantified NFRs, ISO&nbsp;29148 per-requirement checks. Reproducible, so it can gate CI.</p>
+      </div>
+      <div class="card">
+        <span class="tag">semantic &middot; no api key</span>
+        <h3>Your agent is the judge</h3>
+        <p>The judge runs <em>inside</em> the AI agent you already pay for — Claude Code, Copilot,
+        Cursor, Gemini. <code>sddgrade init</code> scaffolds a slash command; your agent reviews for
+        genuine ambiguity, cross-artifact contradictions, and over-engineering, and writes a judgment
+        back. Judgments are <strong>hash-pinned</strong> to the exact content they reviewed — stale
+        opinions are refused, never silently reused. A key-based <code>--api</code> backend covers headless CI.</p>
+      </div>
+      <div class="card">
+        <span class="tag">scores &middot; gates &middot; history</span>
+        <h3>Numbers CI can act on</h3>
+        <p>0&ndash;100 per artifact across seven dimensions, a concrete fix attached to every finding,
+        <code>--fail-under</code> exit codes, SARIF for GitHub code scanning, JSON, Markdown, a
+        self-contained HTML report, and score history with a terminal dashboard.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+  <div class="band" id="case">
+    <div class="shell grid">
+      <div>
+        <p class="kicker">Case study</p>
+        <h2>A real spec, graded and repaired.</h2>
+        <p class="lede">We pointed SDD-Grader at an open-source Spec-Kit project and rewrote one file —
+        its <code>spec.md</code> — using only the grader's own fix suggestions. Same rubric before and
+        after. The two documents we left alone didn't move: the instrument responds to the document,
+        not to wishful thinking.</p>
+        <div class="stat-row">
+          <div class="stat"><div class="n">34 <span class="up">&rarr; 100</span></div><div class="l">spec.md, hybrid score</div></div>
+          <div class="stat"><div class="n">9 <span class="up">&rarr; 0</span></div><div class="l">findings on spec.md</div></div>
+          <div class="stat"><div class="n">3</div><div class="l">grader bugs found by grading — and fixed</div></div>
+        </div>
+        <a href="./eval.html">Read the full evaluation report &rarr;</a>
+      </div>
+      <div>
+        <blockquote>
+          "The plan claimed every clarification was resolved while three were still open, and it
+          designed an LLM into a server whose client already is one. The linter can't see that.
+          The judge did."
+          <footer>&mdash; from the evaluation of polymarket-kit's MCP-server spec</footer>
+        </blockquote>
+      </div>
+    </div>
+  </div>
+
+<div class="shell">
+  <section>
+    <p class="kicker">What a score means</p>
+    <h2>Honest about what it can prove.</h2>
+    <div class="honest">
+      <h3>Read the coverage line before you trust the number.</h3>
+      <p><strong>Lint-only</strong> means no known deterministic findings — required sections present,
+      traceability intact, no lexical pitfalls. It is not a semantic guarantee, and the report says so
+      on every run.</p>
+      <p><strong>Lint + semantic</strong> adds the judge's reading: real ambiguity, contradictions
+      across artifacts, over-engineering. Judges are language models — scores near your CI threshold
+      carry noise, and the tool warns you when a run lands inside that band.</p>
+      <p>SDD-Grader complements Spec-Kit's own in-agent <code>/speckit.analyze</code> — it is the
+      external, scored, history-tracking gate, not a replacement for it or for human review.</p>
+    </div>
+  </section>
+
+  <section id="start">
+    <p class="kicker">Get started</p>
+    <h2>Three commands to a graded spec.</h2>
+    <div class="steps">
+      <div class="step">
+        <h3><span class="no">1</span>Install</h3>
+        <pre>uvx --from git+https://github.com/\
+hansraj316/sdd-grader.git sddgrade review</pre>
+        <p>Zero-install run with uv. <code>pip install sddgrade</code> lands with v0.2.0 on PyPI.</p>
+      </div>
+      <div class="step">
+        <h3><span class="no">2</span>Wire up your agent</h3>
+        <pre>sddgrade init --integration claude</pre>
+        <p>Scaffolds config plus the judge slash command for Claude Code (or Copilot, Cursor, Gemini).</p>
+      </div>
+      <div class="step">
+        <h3><span class="no">3</span>Review &amp; gate</h3>
+        <pre>sddgrade review --fail-under 70</pre>
+        <p>Grades every artifact; non-zero exit below your threshold. Add <code>--sarif</code> for code scanning.</p>
+      </div>
+    </div>
+    <div class="ci-snip">
+      <pre><span class="t-dim"># .github/workflows/specs.yml — gate every PR that touches specs/</span>
+- name: Grade the specs
+  run: uvx --from git+https://github.com/hansraj316/sdd-grader.git \
+       sddgrade review --rules --fail-under 70 --sarif specs.sarif</pre>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer class="site">
+  <div class="shell row">
+    <span>SDD-Grader &middot; MIT license</span>
+    <a href="https://github.com/hansraj316/sdd-grader">GitHub</a>
+    <a href="https://github.com/hansraj316/sdd-grader/issues">Issues</a>
+    <a href="./eval.html">Evaluation report</a>
+    <span class="right">Built for the Spec-Kit &amp; OpenSpec community</span>
+  </div>
+</footer>
+
+<script>
+  function showTerm(which) {
+    document.getElementById('term-before').hidden = which !== 'before';
+    document.getElementById('term-after').hidden = which !== 'after';
+    document.getElementById('tb-before').setAttribute('aria-pressed', String(which === 'before'));
+    document.getElementById('tb-after').setAttribute('aria-pressed', String(which === 'after'));
+  }
+</script>
+</body>
+</html>
