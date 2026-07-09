@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-07-02T22:58:00.535441+00:00",
+  "timestamp": "2026-07-02T23:29:40.133448+00:00",
   "good": {
-    "path": "/Users/hansraj/projects/SDD-Reviewer/.claude/worktrees/agent-a9573494330bf3e38/tests/fixtures/speckit_good",
+    "path": "/Users/hansraj/projects/SDD-Reviewer/tests/fixtures/speckit_good",
     "overall": 100.0,
     "artifacts": [
       {
@@ -39,7 +39,7 @@
     "finding_count": 0
   },
   "bad": {
-    "path": "/Users/hansraj/projects/SDD-Reviewer/.claude/worktrees/agent-a9573494330bf3e38/tests/fixtures/speckit_bad",
+    "path": "/Users/hansraj/projects/SDD-Reviewer/tests/fixtures/speckit_bad",
     "overall": 61.0,
     "artifacts": [
       {

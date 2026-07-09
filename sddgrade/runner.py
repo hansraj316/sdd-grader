@@ -141,7 +141,9 @@ def run_review(
                 render_json(scoring.score(artifacts, findings, cfg, engine="rules"))
             )
             sys.stdout.write("\n")
-        err_console.print(f"[bold red]ERROR[/] {escape(msg)}")
+        # highlight=False: rich's number-highlighting would inject color codes into
+        # the middle of tokens like "HTTP 401", breaking grep/CI log matching.
+        err_console.print(f"[bold red]ERROR[/] {escape(msg)}", highlight=False)
         return EXIT_JUDGE_REQUIRED
 
     result: ReviewResult = scoring.score(artifacts, findings, cfg, engine=engine_label)
