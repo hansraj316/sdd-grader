@@ -42,6 +42,24 @@ def finding_penalty(f: Finding) -> float:
     return f.severity.penalty
 
 
+def dedup_judge_findings(
+    lint_findings: list[Finding], judge_findings: list[Finding]
+) -> list[Finding]:
+    """Judge findings minus those already covered by a lint finding (#43).
+
+    method="both" pitfalls are detected deterministically by lint; a judge finding
+    with the same (pitfall_id, artifact_path) is the same defect seen twice, and
+    scoring both would systematically penalise hybrid runs vs rules-only runs for
+    identical artifacts. Lint wins: it is reproducible.
+    """
+    lint_keys: set[tuple[str | None, str | None]] = {
+        (f.pitfall_id, f.artifact_path) for f in lint_findings
+    }
+    return [
+        f for f in judge_findings if (f.pitfall_id, f.artifact_path) not in lint_keys
+    ]
+
+
 def _dimension_scores(art_findings: list[Finding], config: Config) -> list[DimensionScore]:
     dim_scores: list[DimensionScore] = []
     for dim in ALL_DIMENSIONS:

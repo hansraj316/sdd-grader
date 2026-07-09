@@ -107,18 +107,9 @@ def run_review(
         judge_findings, judge_notes, judge_model, engine_label, judge_error = _run_judge(
             artifacts, backend, root, cfg, err_console
         )
-        # Drop judge findings whose (pitfall_id, artifact_path) is already covered by
-        # a lint finding. method="both" pitfalls are linted deterministically; without
-        # dedup the same defect is double-penalised, making hybrid scores systematically
-        # lower than rules-only scores for identical artifacts.
-        lint_keys: set[tuple[str | None, str | None]] = {
-            (f.pitfall_id, f.artifact_path) for f in findings
-        }
-        deduplicated = [
-            f for f in judge_findings
-            if (f.pitfall_id, f.artifact_path) not in lint_keys
-        ]
-        findings.extend(deduplicated)
+        # Drop judge findings already covered by a lint finding on the same
+        # (pitfall_id, artifact_path) — see scoring.dedup_judge_findings (#43).
+        findings.extend(scoring.dedup_judge_findings(findings, judge_findings))
 
     # Attach machine-applicable fix data (resolve-marker / insert-section) where it
     # can be derived deterministically — surfaced in JSON for a future --fix (#63).
