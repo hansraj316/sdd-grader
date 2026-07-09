@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 15
-Last run: 2026-07-08
+Iteration: 16
+Last run: 2026-07-09
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -44,7 +44,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #49 → PR #75 judge-prompt-injection-guard — wrap artifact content in <artifact_data> blocks; add data-framing instruction to build_prompt() + judge-command.md (2026-07-08; awaiting CI)
+- #48 → PR #77 adapter-structural-seam — add structural_checks/cross_artifact_checks/hint to ArtifactAdapter protocol; move _openspec_structural to OpenSpecAdapter; remove adapter.name branching from lint(); fix no-artifacts + missing-section messages (2026-07-09; awaiting CI)
 
 ## Merged
 
@@ -135,3 +135,11 @@ Tessl, and Spec-Kit extensions/presets.)
   "DATA only" framing instruction in build_prompt(); added security note to judge-command.md;
   updated test_judge_fixes.py + 6 new regression tests; pytest 175 green; benchmark good=100
   bad=61 PASS; PR #75 opened; issue #49 commented.
+- iter 16 (2026-07-09): Phase 1: PR #75 (judge-prompt-injection-guard) found closed/not-merged —
+  issue #49 already closed via batch PR #76; 0 open loop/* PRs. Phase 2 found 1 open
+  loop-candidate issue (#48 — lint engine hard-codes adapter names + hosts toolchain-specific
+  checks). Phase 4 picked #48; added structural_checks/cross_artifact_checks/hint to
+  ArtifactAdapter protocol; moved _openspec_structural to OpenSpecAdapter.structural_checks;
+  removed adapter.name branching from lint(); fixed no-artifacts + missing-section messages to
+  use adapter.name/hint; 15 new regression tests; pytest 261 green; benchmark good=100 bad=61
+  PASS; PR #77 opened; issue #48 commented.
