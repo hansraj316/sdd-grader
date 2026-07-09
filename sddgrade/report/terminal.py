@@ -8,26 +8,24 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from ..model import ReviewResult, Severity
+from ..model import Finding, ReviewResult
+from . import common
 
-_SEV_STYLE = {
-    Severity.CRITICAL: "bold red",
-    Severity.HIGH: "red",
-    Severity.MEDIUM: "yellow",
-    Severity.LOW: "cyan",
-    Severity.INFO: "dim",
-}
-_SEV_ORDER = {s: i for i, s in enumerate([
-    Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO
-])}
+_BAND_STYLE = {"fail": "bold red", "warn": "yellow", "pass": "green"}
 
 
 def _score_style(score: float, fail_under: float) -> str:
-    if score < fail_under:
-        return "bold red"
-    if score < 85:
-        return "yellow"
-    return "green"
+    return _BAND_STYLE[common.score_band(score, fail_under)]
+
+
+def _print_fix_line(console: Console, f: Finding, index: int) -> None:
+    sev_style = common.SEV_STYLE.get(f.severity, "white")
+    tag = f" [dim]{f.pitfall_id}[/]" if f.pitfall_id else ""
+    console.print(
+        f"  [bold]{index}.[/] [{sev_style}]{f.severity.value.upper()}[/] "
+        f"[dim]{common.finding_location(f)}{tag}[/] {f.message}"
+    )
+    console.print(f"     [green]fix[/] {f.suggestion}")
 
 
 def render(
@@ -41,7 +39,7 @@ def render(
     style = _score_style(result.overall, fail_under)
     console.print(
         Panel(
-            f"[{style}]{result.overall:.1f}/100[/]   "
+            f"[{style}]{common.format_score(result.overall)}/100[/]   "
             f"[dim]tool={result.tool} engine={result.engine} "
             f"artifacts={len(result.artifacts)} "
             f"findings={len(result.all_findings)}[/]",
@@ -74,34 +72,26 @@ def render(
         table.add_row(
             Path(a.path).name,
             a.type.value,
-            f"[{s}]{a.overall:.0f}[/]",
+            f"[{s}]{common.format_score(a.overall)}[/]",
             str(len(a.findings)),
         )
     console.print(table)
 
     # Prioritized "top fixes" — highest impact (severity × artifact weight) first.
     if top_fixes > 0:
-        top = result.prioritized_findings()[:top_fixes]
+        top = common.top_fixes(result, top_fixes)
         if top:
             console.print(f"\n[bold]Top {len(top)} fixes[/] [dim](highest impact first)[/]")
             for i, f in enumerate(top, start=1):
-                sev_style = _SEV_STYLE.get(f.severity, "white")
-                tag = f" [dim]{f.pitfall_id}[/]" if f.pitfall_id else ""
-                loc = f":{f.line}" if f.line else ""
-                name = Path(f.artifact_path).name if f.artifact_path else "?"
-                console.print(
-                    f"  [bold]{i}.[/] [{sev_style}]{f.severity.value.upper()}[/] "
-                    f"[dim]{name}{loc}{tag}[/] {f.message}"
-                )
-                console.print(f"     [green]fix[/] {f.suggestion}")
+                _print_fix_line(console, f, i)
 
     # Findings grouped by artifact, severity-ordered, with fix suggestions.
     for a in result.artifacts:
         if not a.findings:
             continue
-        console.print(f"\n[bold]{a.path}[/] [dim]({a.overall:.0f}/100)[/]")
-        for f in sorted(a.findings, key=lambda x: _SEV_ORDER.get(x.severity, 9)):
-            sev_style = _SEV_STYLE.get(f.severity, "white")
+        console.print(f"\n[bold]{a.path}[/] [dim]({common.format_score(a.overall)}/100)[/]")
+        for f in common.sort_findings(a.findings):
+            sev_style = common.SEV_STYLE.get(f.severity, "white")
             tag = f" [dim]{f.pitfall_id}[/]" if f.pitfall_id else ""
             loc = f" [dim]:{f.line}[/]" if f.line else ""
             console.print(
@@ -110,9 +100,11 @@ def render(
             )
             console.print(f"           [green]fix[/] {f.suggestion}")
 
-    if result.overall < fail_under:
+    label = common.pass_label(result.overall, fail_under)
+    score = common.format_score(result.overall)
+    if label == "FAIL":
         console.print(
-            f"\n[bold red]FAIL[/] overall {result.overall:.1f} < threshold {fail_under:.0f}"
+            f"\n[bold red]FAIL[/] overall {score} < threshold {fail_under:.0f}"
         )
     else:
-        console.print(f"\n[green]PASS[/] overall {result.overall:.1f} ≥ {fail_under:.0f}")
+        console.print(f"\n[green]PASS[/] overall {score} ≥ {fail_under:.0f}")

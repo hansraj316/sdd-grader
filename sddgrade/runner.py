@@ -20,6 +20,7 @@ from rich.markup import escape
 from . import config as config_mod
 from . import history
 from .discovery import discover_artifacts, resolve_adapter
+from . import model as model_mod
 from .engine import lint as lint_mod
 from .engine import scoring
 from .model import Finding, ReviewResult
@@ -106,6 +107,10 @@ def run_review(
             artifacts, backend, root, cfg, err_console
         )
         findings.extend(judge_findings)
+
+    # Attach machine-applicable fix data (resolve-marker / insert-section) where it
+    # can be derived deterministically — surfaced in JSON for a future --fix (#63).
+    model_mod.enrich_structured_fixes(findings, artifacts)
 
     # Explicitly requesting the API judge (`--api`) implies --require-judge: someone
     # gating CI on the key-based backend wants a hard failure when it can't run, not a

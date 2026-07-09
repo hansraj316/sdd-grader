@@ -33,10 +33,11 @@ def _trend_arrow(values: list[float]) -> str:
     if len(values) < 2:
         return "[dim]—[/]"
     delta = values[-1] - values[-2]
+    # Integer deltas: sub-point movement is judge noise, not signal (#59).
     if delta > 0.5:
-        return f"[green]▲ +{delta:.1f}[/]"
+        return f"[green]▲ +{max(1, round(delta))}[/]"
     if delta < -0.5:
-        return f"[red]▼ {delta:.1f}[/]"
+        return f"[red]▼ {min(-1, round(delta))}[/]"
     return "[dim]≈[/]"
 
 
@@ -57,7 +58,7 @@ def show(path: Path, console: Console | None = None) -> int:
 
     console.print(
         Panel(
-            f"runs=[bold]{len(runs)}[/]  latest=[bold]{overalls[-1]:.1f}[/]  "
+            f"runs=[bold]{len(runs)}[/]  latest=[bold]{overalls[-1]:.0f}[/]  "
             f"{_trend_arrow(overalls)}\n"
             f"trend {sparkline(overalls)}  "
             f"[dim](min {min(overalls):.0f} / max {max(overalls):.0f})[/]",

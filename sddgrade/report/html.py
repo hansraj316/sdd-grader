@@ -11,30 +11,18 @@ from html import escape
 from pathlib import Path
 
 from ..model import ReviewResult, Severity
+from . import common
 
-_SEV_COLOR = {
-    Severity.CRITICAL: "#b00020",
-    Severity.HIGH: "#d32f2f",
-    Severity.MEDIUM: "#f9a825",
-    Severity.LOW: "#0288d1",
-    Severity.INFO: "#757575",
-}
-_SEV_ORDER = {s: i for i, s in enumerate([
-    Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO
-])}
+_BAND_COLOR = {"fail": "#d32f2f", "warn": "#f9a825", "pass": "#2e7d32"}
 
 
 def _score_color(score: float, fail_under: float) -> str:
-    if score < fail_under:
-        return "#d32f2f"
-    if score < 85:
-        return "#f9a825"
-    return "#2e7d32"
+    return _BAND_COLOR[common.score_band(score, fail_under)]
 
 
 def _badge(sev: Severity) -> str:
     return (
-        f'<span class="badge" style="background:{_SEV_COLOR[sev]}">'
+        f'<span class="badge" style="background:{common.SEV_COLOR[sev]}">'
         f'{escape(sev.value.upper())}</span>'
     )
 
@@ -56,7 +44,7 @@ def _finding_row(f, name: str) -> str:
 def render(result: ReviewResult, fail_under: float = 70.0) -> str:
     overall = result.overall
     color = _score_color(overall, fail_under)
-    status = "PASS" if overall >= fail_under else "FAIL"
+    status = common.pass_label(overall, fail_under)
 
     parts: list[str] = []
     parts.append("<!doctype html><html lang='en'><head><meta charset='utf-8'>")
@@ -100,7 +88,7 @@ ol{padding-left:20px}ol li{margin:6px 0}
     )
     parts.append(
         f"<div style='margin-top:14px'><span class='score' style='color:{color}'>"
-        f"{overall:.1f}</span> <span class='muted'>/100 · {status} "
+        f"{common.format_score(overall)}</span> <span class='muted'>/100 · {status} "
         f"(threshold {fail_under:.0f})</span></div>"
     )
     cov_cls = "coverage ok" if result.judge_used else "coverage"
@@ -114,19 +102,18 @@ ol{padding-left:20px}ol li{margin:6px 0}
     for a in result.artifacts:
         parts.append(
             f"<tr><td>{escape(Path(a.path).name)}</td><td>{escape(a.type.value)}</td>"
-            f"<td class='num'>{a.overall:.0f}</td><td class='num'>{len(a.findings)}</td></tr>"
+            f"<td class='num'>{common.format_score(a.overall)}</td>"
+            f"<td class='num'>{len(a.findings)}</td></tr>"
         )
     parts.append("</table></div>")
 
     # Top fixes.
-    top = result.prioritized_findings()[:5]
+    top = common.top_fixes(result)
     if top:
         parts.append("<div class='card'><h2 style='margin-top:0'>Top fixes</h2><ol>")
         for f in top:
-            name = Path(f.artifact_path).name if f.artifact_path else "?"
-            loc = f":{f.line}" if f.line else ""
             parts.append(
-                f"<li>{_badge(f.severity)} <b>{escape(name)}{loc}</b> — "
+                f"<li>{_badge(f.severity)} <b>{escape(common.finding_location(f))}</b> — "
                 f"{escape(f.message)}<br><span class='fix'>{escape(f.suggestion)}</span></li>"
             )
         parts.append("</ol></div>")
@@ -136,8 +123,8 @@ ol{padding-left:20px}ol li{margin:6px 0}
         if not a.findings:
             continue
         parts.append(f"<div class='card'><h2 style='margin-top:0'>{escape(Path(a.path).name)} "
-                     f"<span class='muted'>({a.overall:.0f}/100)</span></h2>")
-        for f in sorted(a.findings, key=lambda x: _SEV_ORDER.get(x.severity, 9)):
+                     f"<span class='muted'>({common.format_score(a.overall)}/100)</span></h2>")
+        for f in common.sort_findings(a.findings):
             parts.append(_finding_row(f, Path(a.path).name))
         parts.append("</div>")
 
