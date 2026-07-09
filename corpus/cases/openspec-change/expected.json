@@ -1,0 +1,10 @@
+{
+  "quality": "medium",
+  "score_band": [86, 97],
+  "band_rationale": "Medium: localized defects — one OpenSpec requirement with no scenario, vague wording ('simple') inside a requirement, and a proposal missing its Impact section (the latter costs score via a required-section finding that carries no pitfall id). Ceiling 97 requires the defects to keep costing at least 3 overall points; floor 86 leaves room for severity re-tuning. Engine output at labeling time: 93.6.",
+  "expect_pitfalls": [
+    "OPENSPEC-REQ-NO-SCENARIO",
+    "SPEC-AMBIGUOUS-WORDING"
+  ],
+  "note": "OpenSpec-layout case (#57): a change directory (proposal + tasks + delta spec) auto-detected by the OpenSpec adapter through the same discovery path the CLI uses. The 'Digest opt-out' requirement has no #### Scenario; the proposal omits '## Impact' (scored, but reported without a pitfall id, so it is asserted via the score band rather than expect_pitfalls)."
+}

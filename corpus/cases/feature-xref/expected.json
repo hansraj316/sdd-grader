@@ -1,0 +1,11 @@
+{
+  "quality": "medium",
+  "score_band": [84, 96],
+  "band_rationale": "Medium: the spec itself is clean, but the feature has broken traceability (User Story 2 has no task, the Invoice entity is built nowhere) and an unresolved plan decision — real defects diluted by the artifact-weighted mean because spec/data-model score 100. Ceiling 96 requires the three defects to keep costing at least 4 overall points; floor 84 leaves room for severity re-tuning of the traceability findings. Engine output at labeling time: 91.7.",
+  "expect_pitfalls": [
+    "SPEC-UNRESOLVED-CLARIFICATION",
+    "XREF-STORY-NO-TASK",
+    "XREF-ENTITY-NO-TASK"
+  ],
+  "note": "Multi-artifact Spec-Kit case (#57): spec + plan + tasks + data-model routed through the same discovery the CLI uses. Exercises the cross-artifact layer (story->task, entity->task) and plan checks (unresolved marker in Technical Context); the plan's Constitution Check passes so PLAN-CONSTITUTION-UNCHECKED must NOT fire."
+}

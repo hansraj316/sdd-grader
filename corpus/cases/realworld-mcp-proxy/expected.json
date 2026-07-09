@@ -1,0 +1,12 @@
+{
+  "quality": "low",
+  "score_band": [50, 70],
+  "band_rationale": "Low-medium: a Draft spec with an unresolved decision inside an FR, retained template header ('$ARGUMENTS'), a leaked API style, and no edge cases must fail the default 70 gate, so the ceiling is 70; floor 50 asserts the engine still credits the real user story and measurable success criterion. Engine output at labeling time: 64.",
+  "expect_pitfalls": [
+    "SPEC-UNRESOLVED-CLARIFICATION",
+    "SPEC-LEFTOVER-PLACEHOLDER",
+    "SPEC-IMPL-DETAIL-LEAK",
+    "SPEC-MISSING-EDGE-CASES"
+  ],
+  "note": "Real-world-derived case (#53c): adapts the flawed spec shape seen in real Spec-Kit repos (e.g. the polymarket-kit MCP-server spec pattern) — a [NEEDS CLARIFICATION] marker left inside FR-003, the template's '$ARGUMENTS' input line retained, 'REST API' leaked into an FR, and the Review & Acceptance Checklist kept with every box unchecked. Known gap (not a labeled miss because no catalog rule covers it): lint does not flag a retained, fully-unchecked review checklist — SPEC-LEFTOVER-PLACEHOLDER only fires here because of '$ARGUMENTS'."
+}

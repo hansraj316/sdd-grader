@@ -1,0 +1,8 @@
+{
+  "quality": "high",
+  "score_band": [90, 100],
+  "band_rationale": "High: a genuinely good spec that deliberately contains trigger-adjacent wording in benign contexts ('simple'/'quick-add'/'faster' in Out of Scope, 'latency' with a threshold, 'scalable' bounded to 250k rows/day). Ceiling 100 so that FIXING the labeled false positive passes the gate; floor 90 tolerates only that one labeled FP (94) — a second unlabeled finding also trips the unlabeled-unexpected gate. Engine output at labeling time: 94.",
+  "expect_pitfalls": [],
+  "known_false_positives": ["SPEC-AMBIGUOUS-WORDING"],
+  "note": "Precision guard (#53b/#56): prose that superficially resembles trigger words but is fine. SPEC-AMBIGUOUS-WORDING fires on 'scalable' in FR-003 even though the requirement is fully quantified (250,000 rows/day, 10-minute window) — a labeled known false positive: it counts in the precision denominator but not the numerator, keeping the metric honest while the gate passes."
+}
