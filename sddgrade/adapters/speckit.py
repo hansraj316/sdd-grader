@@ -49,6 +49,7 @@ class SpecKitAdapter:
     """ArtifactAdapter implementation for GitHub Spec-Kit."""
 
     name = "speckit"
+    hint = "run `specify init` first (expected specs/<feature>/spec.md)"
 
     def detect(self, root: Path) -> bool:
         if (root / ".specify").is_dir():
@@ -136,3 +137,11 @@ class SpecKitAdapter:
                 if derived:
                     return derived
         return _DEFAULT_REQUIRED.get(artifact_type, [])
+
+    def structural_checks(self, artifact, catalog) -> list:
+        from ..engine.lint import _structural
+        return _structural(artifact, catalog)
+
+    def cross_artifact_checks(self, artifacts, catalog) -> list:
+        from ..engine.lint import _cross_artifact
+        return _cross_artifact(artifacts, catalog)

@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from ..model import Artifact, ArtifactType, Section
+from ..model import Artifact, ArtifactType, Finding, Section
+
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
@@ -89,6 +90,7 @@ class ArtifactAdapter(Protocol):
     """The seam every SDD toolchain plugs into."""
 
     name: str
+    hint: str  # short phrase for "no artifacts found" messages, e.g. "run `specify init` first"
 
     def detect(self, root: Path) -> bool:
         """True if this toolchain's layout is present under ``root``."""
@@ -108,4 +110,12 @@ class ArtifactAdapter(Protocol):
 
     def required_sections(self, artifact_type: ArtifactType, root: Path) -> list[str]:
         """Expected section titles for a type (template-derived when available)."""
+        ...
+
+    def structural_checks(self, artifact: Artifact, catalog: dict) -> list[Finding]:
+        """Toolchain-specific per-artifact structural checks."""
+        ...
+
+    def cross_artifact_checks(self, artifacts: list[Artifact], catalog: dict) -> list[Finding]:
+        """Toolchain-specific cross-artifact consistency checks."""
         ...

@@ -85,18 +85,18 @@ def run_review(
     if tool is not None:
         cfg.tool = tool
 
+    adapter = resolve_adapter(root, cfg.tool)
     artifacts = discover_artifacts(root, cfg.tool)
     if not artifacts:
         if json_out:
             console.print_json(data={"error": "no artifacts found", "root": str(root)})
         else:
+            hint = getattr(adapter, "hint", "check your toolchain setup")
             console.print(
-                f"[yellow]No Spec-Kit artifacts found under[/] {root}. "
-                "Expected specs/<feature>/spec.md (run `specify init` first)."
+                f"[yellow]No {adapter.name} artifacts found under[/] {root}. {hint}."
             )
         return EXIT_NO_ARTIFACTS
 
-    adapter = resolve_adapter(root, cfg.tool)
     findings: list[Finding] = lint_mod.lint(artifacts, adapter, root)
 
     engine_label = "rules"
