@@ -142,6 +142,11 @@ def artifact_manifest(artifacts, root: Path) -> dict[str, str]:
 class AgentJudge:
     """Reads the judgment JSON the user's agent produced."""
 
+    def __init__(self) -> None:
+        # The model the agent recorded in judge.json ("model" key), for report
+        # provenance. None until read_judgment sees one.
+        self.model: str | None = None
+
     def read_judgment(self, root: Path, artifacts: list | None = None) -> list[dict]:
         path = Path(root) / JUDGMENT_FILE
         if not path.is_file():
@@ -157,6 +162,8 @@ class AgentJudge:
             findings = data.get("findings", [])
             if not isinstance(findings, list):
                 raise JudgeUnavailable("judge.json 'findings' value is not an array")
+            raw_model = data.get("model")
+            self.model = str(raw_model).strip() or None if raw_model else None
         elif isinstance(data, list):
             # Legacy bare-array format: carries no hash manifest, so with artifacts
             # to verify it fails the freshness check below rather than crashing.

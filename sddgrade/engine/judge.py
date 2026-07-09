@@ -274,24 +274,30 @@ def to_findings(
     return out
 
 
-def judge(artifacts, backend, root: Path, cfg, console=None) -> tuple[list[Finding], list[str]]:
+def judge(
+    artifacts, backend, root: Path, cfg, console=None
+) -> tuple[list[Finding], list[str], str | None]:
     """Dispatch to the configured backend.
 
-    Returns ``(findings, notes)`` — notes are coverage caveats the backend wants
-    surfaced on the ReviewResult (e.g. the --api input budget truncated artifacts),
-    so partial judge coverage is never silent in reports.
+    Returns ``(findings, notes, model)`` — notes are coverage caveats the backend
+    wants surfaced on the ReviewResult (e.g. the --api input budget truncated
+    artifacts), so partial judge coverage is never silent in reports. ``model`` is
+    the model that produced the judgment (None when the agent didn't record one).
     """
     if backend == "agent":
         from ..integrations.agent import AgentJudge
 
-        raw = AgentJudge().read_judgment(root, artifacts)
+        agent_judge = AgentJudge()
+        raw = agent_judge.read_judgment(root, artifacts)
         notes: list[str] = []
+        model = agent_judge.model
     elif backend == "api":
         from ..integrations.api import ApiJudge
 
         backend_judge = ApiJudge(cfg)
         raw = backend_judge.judge(artifacts, root)
         notes = list(backend_judge.notes)
+        model = backend_judge.model
     else:
-        return [], []
-    return to_findings(raw, artifacts, root), notes
+        return [], [], None
+    return to_findings(raw, artifacts, root), notes, model

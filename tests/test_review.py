@@ -240,6 +240,7 @@ def test_agent_judgment_merges(good_repo: Path):
     judge_dir = good_repo / ".sddgrade"
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / "judge.json").write_text(json.dumps({
+        "model": "claude-fable-5",
         "artifacts": artifact_manifest(arts, good_repo),
         "findings": [{
             "artifact": "plan.md",
@@ -253,8 +254,11 @@ def test_agent_judgment_merges(good_repo: Path):
     # Use the lower-level judge to confirm merge without needing the agent.
     from sddgrade.engine import judge as judge_mod
 
-    raw, notes = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
+    raw, notes, model = judge_mod.judge(
+        arts, "agent", good_repo, config_mod.Config(), console=_quiet()
+    )
     assert notes == []
+    assert model == "claude-fable-5"  # provenance: which model judged
     assert len(raw) == 1
     assert raw[0].source.value == "judge"
     assert raw[0].pitfall_id == "PLAN-OVER-ENGINEERING"
@@ -291,7 +295,9 @@ def test_agent_judge_findings_list_with_non_dict_items(good_repo: Path):
             {"artifacts": artifact_manifest(arts, good_repo), "findings": ["bad", 42, None]}
         )
     )
-    raw, _notes = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
+    raw, _notes, _model = judge_mod.judge(
+        arts, "agent", good_repo, config_mod.Config(), console=_quiet()
+    )
     assert raw == []
 
 

@@ -37,10 +37,11 @@ def render(
     console = console or Console()
 
     style = _score_style(result.overall, fail_under)
+    judge_model = f" model={result.judge_model}" if result.judge_model else ""
     console.print(
         Panel(
             f"[{style}]{common.format_score(result.overall)}/100[/]   "
-            f"[dim]tool={result.tool} engine={result.engine} "
+            f"[dim]tool={result.tool} engine={result.engine}{judge_model} "
             f"artifacts={len(result.artifacts)} "
             f"findings={len(result.all_findings)}[/]",
             title="SDD Review — overall",

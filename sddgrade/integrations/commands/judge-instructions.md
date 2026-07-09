@@ -30,6 +30,7 @@ artifacts in this repository and write a structured judgment.
 
    ```json
    {
+     "model": "<the model you are running as, e.g. claude-fable-5>",
      "artifacts": {
        "specs/001-example/spec.md": "<sha256 hex of that file's content>"
      },
@@ -49,7 +50,8 @@ artifacts in this repository and write a structured judgment.
    The `artifacts` map must contain an entry for every file you judged. Both its keys
    and each finding's `artifact` must be the file's path relative to the repository
    root (e.g. `specs/001-example/spec.md`, never a bare `spec.md`) so findings land on
-   the right file in multi-feature repos.
+   the right file in multi-feature repos. `model` is your own model id/name — it is
+   shown in the report so readers know which model produced the judgment.
 
 5. Tell the user to run `sddgrade review` to merge your judgment with the lint results,
    produce the scored report, and record history.

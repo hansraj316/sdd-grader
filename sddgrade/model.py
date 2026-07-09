@@ -299,6 +299,11 @@ class ReviewResult:
     # oversized artifacts to fit its input budget). Rendered in every report so
     # partial judge coverage is never silent.
     notes: list[str] = field(default_factory=list)
+    # Which model produced the semantic judgment (api backend: the configured model;
+    # agent backend: the "model" the agent recorded in judge.json). None when the
+    # judge didn't run or the agent didn't say — a judged score without provenance
+    # is still labeled, just not attributed.
+    judge_model: str | None = None
 
     @property
     def overall(self) -> float:
@@ -372,6 +377,7 @@ class ReviewResult:
             "engine": self.engine,
             "coverage": self.coverage,
             "judge_used": self.judge_used,
+            "judge_model": self.judge_model,
             "coverage_note": self.coverage_note,
             "notes": self.notes,
             "timestamp": self.timestamp,
