@@ -1,0 +1,632 @@
+<title>SDD-Grader eval &#8212; polymarket-kit spec, before &amp; after</title>
+<style>
+  :root {
+    --paper:#FAFAF7; --ink:#22302C; --ink2:#5B6B64; --hair:#E3E4DC;
+    --accent:#0E7D4E; --before:#A96A2C; --after:#0E7D4E;
+    --sev-high:#B42318; --sev-medium:#B54708; --sev-low:#5B6B64;
+    --before-bg:#FBF3EA; --after-bg:#EEF6F0;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    --sans:Seravek,'Avenir Next','Segoe UI',system-ui,sans-serif;
+  }
+  html { background:var(--paper); }
+  body { font-family:var(--sans); color:var(--ink); line-height:1.55; margin:0; }
+  .wrap { max-width:920px; margin:0 auto; padding:48px 24px 96px; }
+  .eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 10px; }
+  h1 { font-size:clamp(26px,4vw,38px); line-height:1.15; margin:0 0 6px; text-wrap:balance; font-weight:700; }
+  .sub { color:var(--ink2); max-width:64ch; margin:0 0 34px; }
+  h2 { font-size:19px; margin:52px 0 6px; }
+  h2 + p.lede { color:var(--ink2); margin:0 0 20px; max-width:68ch; }
+  a { color:var(--accent); }
+  code { font-family:var(--mono); font-size:.9em; background:#EFF0E9; padding:1px 4px; border-radius:3px; }
+  .mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+
+  .hero { display:flex; gap:14px; flex-wrap:wrap; margin:0 0 8px; }
+  .tile { border:1px solid var(--hair); background:#fff; padding:18px 22px; flex:1 1 200px; }
+  .tile .t-label { font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); }
+  .tile .t-num { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:34px; font-weight:700; margin-top:6px; }
+  .tile .t-num .from { color:var(--ink2); font-weight:400; font-size:22px; }
+  .tile .t-num .delta { color:var(--after); font-size:16px; font-weight:600; margin-left:8px; }
+  .tile .t-note { font-size:13px; color:var(--ink2); margin-top:4px; }
+  .method { font-size:13.5px; color:var(--ink2); border-left:3px solid var(--hair); padding:2px 0 2px 14px; margin:18px 0 0; max-width:75ch; }
+
+  .legend { display:flex; gap:18px; font-size:13px; color:var(--ink2); margin:14px 0 10px; }
+  .legend .key { display:inline-block; width:14px; height:8px; margin-right:6px; vertical-align:baseline; }
+  .brow { display:grid; grid-template-columns:150px 1fr 110px; gap:12px; align-items:center; padding:7px 0; }
+  .blabel { font-size:12.5px; color:var(--ink); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .btrack { background:#F1F2EB; height:24px; position:relative; }
+  .bpair { display:flex; flex-direction:column; gap:2px; height:100%; justify-content:center; }
+  .bar { height:9px; border-radius:0 4px 4px 0; transition:opacity .15s; }
+  .bar.before { background:var(--before); }
+  .bar.after { background:var(--after); }
+  .bar:hover { opacity:.75; }
+  .bvals { font-size:12.5px; } .v-after { font-weight:700; } .arrow { color:var(--ink2); }
+  #tip { position:fixed; pointer-events:none; background:var(--ink); color:#fff; font:12px var(--mono); padding:5px 8px; border-radius:3px; opacity:0; z-index:9; }
+
+  .chip { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:2.5px 8px; border-radius:999px; color:#fff; flex:none; }
+  .chip.high { background:var(--sev-high); } .chip.medium { background:var(--sev-medium); } .chip.low { background:var(--sev-low); }
+  .card { border:1px solid var(--hair); background:#fff; padding:20px 22px; margin:0 0 18px; }
+  .card-head { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .card h3 { margin:0; font-size:16px; }
+  .card p { margin:0 0 14px; font-size:14.5px; color:var(--ink2); max-width:72ch; }
+  .ba { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:720px) { .ba { grid-template-columns:1fr; } .brow { grid-template-columns:90px 1fr 96px; } }
+  .pane { border:1px solid var(--hair); min-width:0; }
+  .pane-before { background:var(--before-bg); } .pane-after { background:var(--after-bg); }
+  .pane-label { font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; padding:6px 12px 0; }
+  .pane-before .pane-label { color:var(--before); } .pane-after .pane-label { color:var(--after); }
+  .pane pre { margin:4px 0 0; padding:6px 12px 12px; font:12px/1.6 var(--mono); white-space:pre-wrap; overflow-x:auto; }
+
+  details { border:1px solid var(--hair); background:#fff; margin:0 0 12px; }
+  summary { cursor:pointer; padding:12px 16px; font-weight:600; font-size:14px; }
+  details pre { margin:0; padding:16px; font:12px/1.65 var(--mono); white-space:pre-wrap; border-top:1px solid var(--hair); overflow-x:auto; }
+
+  .note { border:1px solid var(--hair); border-left:3px solid var(--accent); background:#fff; padding:16px 20px; font-size:14.5px; max-width:78ch; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th,td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--hair); vertical-align:top; }
+  th { font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2); }
+  .tblwrap { overflow-x:auto; }
+  @media (prefers-reduced-motion:reduce) { .bar { transition:none; } }
+  .dim-low { background:#FBF3EA; font-weight:600; }
+  .fixhint { color:var(--ink2); font-size:12.5px; margin-top:3px; }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">sdd-grader &middot; evaluation report &middot; 2026-07-02</p>
+  <h1>One graded spec, before and after</h1>
+  <p class="sub">We pointed <strong>sddgrade</strong> (the hybrid lint + AI-judge grader) at a real
+  open-source Spec-Kit project &#8212; <a href="https://github.com/HuakunShen/polymarket-kit">HuakunShen/polymarket-kit</a>,
+  a Polymarket SDK whose <code>specs/001-write-a-mcp/spec.md</code> ships with genuine flaws &#8212; then rewrote that one file
+  by applying the grader's own fix suggestions, and graded again with the identical ruler.</p>
+
+  <div class="hero">
+    <div class="tile">
+      <div class="t-label">spec.md &middot; hybrid score</div>
+      <div class="t-num"><span class="from">34.0 &rarr;</span> 100.0<span class="delta">+66.0</span></div>
+      <div class="t-note">lint + semantic judge, same rubric both runs</div>
+    </div>
+    <div class="tile">
+      <div class="t-label">repo overall</div>
+      <div class="t-num"><span class="from">69.4 &rarr;</span> 83.6<span class="delta">+14.2</span></div>
+      <div class="t-note">only spec.md was edited &#8212; everything else held still</div>
+    </div>
+    <div class="tile">
+      <div class="t-label">findings on spec.md</div>
+      <div class="t-num"><span class="from">9 &rarr;</span> 0</div>
+      <div class="t-note">5 deterministic lint + 4 semantic judge findings resolved</div>
+    </div>
+  </div>
+  <p class="method"><strong>Method.</strong> Both runs use the same build of sddgrade (the critical-review fixes, now merged to main via PR&nbsp;#68) in full hybrid mode: deterministic lint merged with a semantic
+  judgment produced by the agent-judge workflow, hash-pinned to the exact artifact content it reviewed.
+  plan.md and tasks.md were deliberately left untouched as controls &#8212; their scores don't move.</p>
+
+  <h2>Scores by artifact</h2>
+  <p class="lede">The instrument moves only where the document changed. That's the property that makes the score trustworthy in CI.</p>
+  <div class="legend">
+    <span><span class="key" style="background:var(--before)"></span>before</span>
+    <span><span class="key" style="background:var(--after)"></span>after</span>
+    <span class="mono" style="margin-left:auto">0&ndash;100</span>
+  </div>
+
+      <div class="brow">
+        <div class="blabel mono">spec.md</div>
+        <div class="btrack" role="img" aria-label="spec.md: before 34, after 100">
+          <div class="bpair">
+            <div class="bar before" data-tip="spec.md &#8212; before: 34/100" style="width:34.0%"></div>
+            <div class="bar after"  data-tip="spec.md &#8212; after: 100/100" style="width:100.0%"></div>
+          </div>
+        </div>
+        <div class="bvals mono"><span class="v-before">34</span> <span class="arrow">&rarr;</span> <span class="v-after">100</span></div>
+      </div>
+
+      <div class="brow">
+        <div class="blabel mono">plan.md</div>
+        <div class="btrack" role="img" aria-label="plan.md: before 50, after 50">
+          <div class="bpair">
+            <div class="bar before" data-tip="plan.md &#8212; before: 50/100" style="width:50.0%"></div>
+            <div class="bar after"  data-tip="plan.md &#8212; after: 50/100" style="width:50.0%"></div>
+          </div>
+        </div>
+        <div class="bvals mono"><span class="v-before">50</span> <span class="arrow">&rarr;</span> <span class="v-after">50</span></div>
+      </div>
+
+      <div class="brow">
+        <div class="blabel mono">tasks.md</div>
+        <div class="btrack" role="img" aria-label="tasks.md: before 58, after 58">
+          <div class="bpair">
+            <div class="bar before" data-tip="tasks.md &#8212; before: 58/100" style="width:58.0%"></div>
+            <div class="bar after"  data-tip="tasks.md &#8212; after: 58/100" style="width:58.0%"></div>
+          </div>
+        </div>
+        <div class="bvals mono"><span class="v-before">58</span> <span class="arrow">&rarr;</span> <span class="v-after">58</span></div>
+      </div>
+
+      <div class="brow">
+        <div class="blabel mono">research.md</div>
+        <div class="btrack" role="img" aria-label="research.md: before 100, after 100">
+          <div class="bpair">
+            <div class="bar before" data-tip="research.md &#8212; before: 100/100" style="width:100.0%"></div>
+            <div class="bar after"  data-tip="research.md &#8212; after: 100/100" style="width:100.0%"></div>
+          </div>
+        </div>
+        <div class="bvals mono"><span class="v-before">100</span> <span class="arrow">&rarr;</span> <span class="v-after">100</span></div>
+      </div>
+
+      <div class="brow">
+        <div class="blabel mono">data-model.md</div>
+        <div class="btrack" role="img" aria-label="data-model.md: before 100, after 100">
+          <div class="bpair">
+            <div class="bar before" data-tip="data-model.md &#8212; before: 100/100" style="width:100.0%"></div>
+            <div class="bar after"  data-tip="data-model.md &#8212; after: 100/100" style="width:100.0%"></div>
+          </div>
+        </div>
+        <div class="bvals mono"><span class="v-before">100</span> <span class="arrow">&rarr;</span> <span class="v-after">100</span></div>
+      </div>
+
+      <div class="brow">
+        <div class="blabel mono">quickstart.md</div>
+        <div class="btrack" role="img" aria-label="quickstart.md: before 100, after 100">
+          <div class="bpair">
+            <div class="bar before" data-tip="quickstart.md &#8212; before: 100/100" style="width:100.0%"></div>
+            <div class="bar after"  data-tip="quickstart.md &#8212; after: 100/100" style="width:100.0%"></div>
+          </div>
+        </div>
+        <div class="bvals mono"><span class="v-before">100</span> <span class="arrow">&rarr;</span> <span class="v-after">100</span></div>
+      </div>
+
+      <div class="brow">
+        <div class="blabel mono">polymarket-mcp.yml</div>
+        <div class="btrack" role="img" aria-label="polymarket-mcp.yml: before 100, after 100">
+          <div class="bpair">
+            <div class="bar before" data-tip="polymarket-mcp.yml &#8212; before: 100/100" style="width:100.0%"></div>
+            <div class="bar after"  data-tip="polymarket-mcp.yml &#8212; after: 100/100" style="width:100.0%"></div>
+          </div>
+        </div>
+        <div class="bvals mono"><span class="v-before">100</span> <span class="arrow">&rarr;</span> <span class="v-after">100</span></div>
+      </div>
+
+      <div class="brow">
+        <div class="blabel mono">constitution.md</div>
+        <div class="btrack" role="img" aria-label="constitution.md: before 100, after 100">
+          <div class="bpair">
+            <div class="bar before" data-tip="constitution.md &#8212; before: 100/100" style="width:100.0%"></div>
+            <div class="bar after"  data-tip="constitution.md &#8212; after: 100/100" style="width:100.0%"></div>
+          </div>
+        </div>
+        <div class="bvals mono"><span class="v-before">100</span> <span class="arrow">&rarr;</span> <span class="v-after">100</span></div>
+      </div>
+  <div id="tip" role="presentation"></div>
+
+  <h2>What changed in spec.md &#8212; finding by finding</h2>
+  <p class="lede">Each card is one grader finding and the rewrite that resolved it. Severity chips are the grader's.</p>
+
+      <article class="card">
+        <div class="card-head"><span class="chip high">high</span><h3>Unresolved clarification blocked planning</h3></div>
+        <p>FR-001 carried a live <code>[NEEDS CLARIFICATION]</code> asking what kind of interface to build &#8212; a question the feature had already answered (an MCP server <em>is</em> the interface).</p>
+        <div class="ba">
+          <div class="pane pane-before"><div class="pane-label">before</div><pre>FR-001: The system MUST provide a natural language interface for users to ask questions. [NEEDS CLARIFICATION: What kind of interface? A chat window in a web UI? A CLI?]</pre></div>
+          <div class="pane pane-after"><div class="pane-label">after</div><pre>FR-001: The system MUST expose Polymarket market search and analysis as tools that any MCP-capable assistant can call, so the analyst&#x27;s existing assistant serves as the natural-language interface. No bespoke chat window or command-line interface is in scope.</pre></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="chip high">high</span><h3>User story had no attached acceptance criteria</h3></div>
+        <p>The scenarios lived in a sibling section the story never referenced, and scenario 2 was circular &#8212; &#8220;fetches the data and provides an answer&#8221; restates the requirement without an observable outcome.</p>
+        <div class="ba">
+          <div class="pane pane-before"><div class="pane-label">before</div><pre>Given the MCP server is running, When I ask a question that requires fetching data from the Polymarket API, Then the server uses the existing REST API to fetch the data and provides an answer.</pre></div>
+          <div class="pane pane-after"><div class="pane-label">after</div><pre>Given market data exists for a named market, When the analyst asks for that market&#x27;s details, Then the answer presents the market question, end date, outcome prices, and volume, and every value matches the Polymarket data source as of the answer&#x27;s stated timestamp.</pre></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="chip medium">medium</span><h3>Zero quantified non-functional requirements</h3></div>
+        <p>Performance and scale were deferred to the plan, where they sat as two more unresolved markers. The spec now owns them with numbers.</p>
+        <div class="ba">
+          <div class="pane pane-before"><div class="pane-label">before</div><pre>(no NFR section existed; plan.md: Performance Goals: [NEEDS CLARIFICATION: What are the expected response times?] / Scale/Scope: [NEEDS CLARIFICATION: How many concurrent users?])</pre></div>
+          <div class="pane pane-after"><div class="pane-label">after</div><pre>NFR-001: Single-market lookups complete within 3 seconds and multi-market scans over up to 1,000 markets within 10 seconds, at the 95th percentile&#8230; NFR-002: at least 20 concurrent analyst sessions&#8230; NFR-003: data no older than 60 seconds, each answer states its as-of timestamp.</pre></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="chip medium">medium</span><h3>Edge cases were open questions, not requirements</h3></div>
+        <p>Three &#8220;what happens when&#8230;?&#8221; questions had no owning requirement. Each is now a requirement plus a testable scenario, cross-referenced.</p>
+        <div class="ba">
+          <div class="pane pane-before"><div class="pane-label">before</div><pre>- What happens when the underlying Polymarket API is unavailable?
+- How does the system handle ambiguous natural language questions?</pre></div>
+          <div class="pane pane-after"><div class="pane-label">after</div><pre>- Polymarket data source unavailable &#8594; failure reported, dependency named, within 5 seconds (FR-006, Scenario 4).
+- Ambiguous question &#8594; one clarifying question or a stated default assumption (FR-008, Scenario 5).</pre></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="chip medium">medium</span><h3>Implementation detail leaked into the WHAT</h3></div>
+        <p>&#8220;REST API&#8221; is a technology choice; the spec now names the capability (&#8220;the Polymarket data source&#8221;) and explicitly scopes out an embedded language model &#8212; resolving a contradiction the judge found with the plan, which had a Gemini API integration task inside the MCP server.</p>
+        <div class="ba">
+          <div class="pane pane-before"><div class="pane-label">before</div><pre>FR-002: The system MUST be able to fetch data from the existing Polymarket REST API.</pre></div>
+          <div class="pane pane-after"><div class="pane-label">after</div><pre>FR-002: The system MUST retrieve current market, event, and trade data from the existing Polymarket data source.
+
+Out of Scope: Language understanding inside the system itself &#8212; interpreting the analyst&#x27;s natural language is the assistant&#x27;s job.</pre></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="chip medium">medium</span><h3>Vague wording and passive constructions</h3></div>
+        <p>&#8220;Quickly get insights&#8221; and actor-less phrasing gave testers nothing to verify. Every scenario now names the actor and a checkable outcome.</p>
+        <div class="ba">
+          <div class="pane pane-before"><div class="pane-label">before</div><pre>As a data analyst, I want to use a natural language interface to ask questions about Polymarket data, so that I can quickly get insights without writing code.</pre></div>
+          <div class="pane pane-after"><div class="pane-label">after</div><pre>As a data analyst, I want to ask questions about Polymarket markets in natural language from the AI assistant I already use, so that I can get market insights without writing code. (+ 5 scenarios with exact row counts, named fields, and time bounds)</pre></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><span class="chip low">low</span><h3>Checklist theater</h3></div>
+        <p>Every Review &amp; Acceptance and Execution Status box was unchecked while the status said Draft &#8212; the gates carried no information. They are now checked because each one is actually true, and the status advanced to &#8220;Ready for planning&#8221;.</p>
+        <div class="ba">
+          <div class="pane pane-before"><div class="pane-label">before</div><pre>- [ ] No [NEEDS CLARIFICATION] markers remain
+- [ ] Requirements are testable and unambiguous
+(status: Draft)</pre></div>
+          <div class="pane pane-after"><div class="pane-label">after</div><pre>- [x] No open clarification markers remain
+- [x] Requirements are testable and unambiguous
+(status: Ready for planning)</pre></div>
+        </div>
+      </article>
+
+  <h2>The full documents</h2>
+  <details><summary>spec.md &#8212; before (118 lines, scored 34.0)</summary><pre># Feature Specification: MCP Server for Polymarket Analysis
+
+**Feature Branch**: `001-write-a-mcp`  
+**Created**: 2025-09-15  
+**Status**: Draft  
+**Input**: User description: &quot;write a MCP server for this polymarket wrapper package. This polymarket sdk contains more utilities for data analysis such as transforming data to markdown, also provides full type safety. A rest API with openapi is written already. I also need a MCP server to fetch data and analyze with natural language&quot;
+
+## Execution Flow (main)
+```
+1. Parse user description from Input
+   &#8594; If empty: ERROR &quot;No feature description provided&quot;
+2. Extract key concepts from description
+   &#8594; Identify: actors, actions, data, constraints
+3. For each unclear aspect:
+   &#8594; Mark with [NEEDS CLARIFICATION: specific question]
+4. Fill User Scenarios &amp; Testing section
+   &#8594; If no clear user flow: ERROR &quot;Cannot determine user scenarios&quot;
+5. Generate Functional Requirements
+   &#8594; Each requirement must be testable
+   &#8594; Mark ambiguous requirements
+6. Identify Key Entities (if data involved)
+7. Run Review Checklist
+   &#8594; If any [NEEDS CLARIFICATION]: WARN &quot;Spec has uncertainties&quot;
+   &#8594; If implementation details found: ERROR &quot;Remove tech details&quot;
+8. Return: SUCCESS (spec ready for planning)
+```
+
+---
+
+## &#9889; Quick Guidelines
+- &#9989; Focus on WHAT users need and WHY
+- &#10060; Avoid HOW to implement (no tech stack, APIs, code structure)
+- &#128101; Written for business stakeholders, not developers
+
+### Section Requirements
+- **Mandatory sections**: Must be completed for every feature
+- **Optional sections**: Include only when relevant to the feature
+- When a section doesn&#x27;t apply, remove it entirely (don&#x27;t leave as &quot;N/A&quot;)
+
+### For AI Generation
+When creating this spec from a user prompt:
+1. **Mark all ambiguities**: Use [NEEDS CLARIFICATION: specific question] for any assumption you&#x27;d need to make
+2. **Don&#x27;t guess**: If the prompt doesn&#x27;t specify something (e.g., &quot;login system&quot; without auth method), mark it
+3. **Think like a tester**: Every vague requirement should fail the &quot;testable and unambiguous&quot; checklist item
+4. **Common underspecified areas**:
+   - User types and permissions
+   - Data retention/deletion policies  
+   - Performance targets and scale
+   - Error handling behaviors
+   - Integration requirements
+   - Security/compliance needs
+
+---
+
+## User Scenarios &amp; Testing *(mandatory)*
+
+### Primary User Story
+As a data analyst, I want to use a natural language interface to ask questions about Polymarket data, so that I can quickly get insights without writing code.
+
+### Acceptance Scenarios
+1. **Given** the MCP server is running, **When** I ask &quot;What are the top 5 markets by volume?&quot;, **Then** the system returns a markdown table of the top 5 markets.
+2. **Given** the MCP server is running, **When** I ask a question that requires fetching data from the Polymarket API, **Then** the server uses the existing REST API to fetch the data and provides an answer.
+3. **Given** the MCP server is running, **When** I ask a question that the model cannot answer, **Then** the system responds with a clear message indicating it cannot answer the question.
+
+### Edge Cases
+- What happens when the underlying Polymarket API is unavailable?
+- How does the system handle ambiguous natural language questions?
+- What happens when the user asks a question that is out of scope for Polymarket data?
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+- **FR-001**: The system MUST provide a natural language interface for users to ask questions. [NEEDS CLARIFICATION: What kind of interface? A chat window in a web UI? A CLI?]
+- **FR-002**: The system MUST be able to fetch data from the existing Polymarket REST API.
+- **FR-003**: The system MUST be able to analyze the fetched data to answer user questions.
+- **FR-004**: The system MUST be able to transform data into markdown format for presentation.
+- **FR-005**: The system MUST provide a response in natural language.
+- **FR-006**: The system MUST handle errors gracefully when the Polymarket API is unavailable or returns an error.
+- **FR-007**: The system MUST inform the user when it is unable to answer a question.
+
+### Key Entities *(include if feature involves data)*
+- **User Query**: The natural language question asked by the user.
+- **Polymarket Data**: Data fetched from the Polymarket API (e.g., markets, trades, order books).
+- **Analysis Result**: The result of the analysis performed on the Polymarket data.
+- **Response**: The natural language response provided to the user, potentially including markdown formatted data.
+
+---
+
+## Review &amp; Acceptance Checklist
+*GATE: Automated checks run during main() execution*
+
+### Content Quality
+- [ ] No implementation details (languages, frameworks, APIs)
+- [ ] Focused on user value and business needs
+- [ ] Written for non-technical stakeholders
+- [ ] All mandatory sections completed
+
+### Requirement Completeness
+- [ ] No [NEEDS CLARIFICATION] markers remain
+- [ ] Requirements are testable and unambiguous  
+- [ ] Success criteria are measurable
+- [ ] Scope is clearly bounded
+- [ ] Dependencies and assumptions identified
+
+---
+
+## Execution Status
+*Updated by main() during processing*
+
+- [ ] User description parsed
+- [ ] Key concepts extracted
+- [ ] Ambiguities marked
+- [ ] User scenarios defined
+- [ ] Requirements generated
+- [ ] Entities identified
+- [ ] Review checklist passed
+
+---
+</pre></details>
+  <details><summary>spec.md &#8212; after (scored 100.0)</summary><pre># Feature Specification: MCP Server for Polymarket Analysis
+
+**Feature Branch**: `001-write-a-mcp`
+**Created**: 2025-09-15
+**Status**: Ready for planning
+**Input**: User description: &quot;write a MCP server for this polymarket wrapper package. This polymarket sdk contains more utilities for data analysis such as transforming data to markdown, also provides full type safety. A rest API with openapi is written already. I also need a MCP server to fetch data and analyze with natural language&quot;
+
+## Execution Flow (main)
+```
+1. Parse user description from Input                &#8594; done
+2. Extract key concepts (actors, actions, data)     &#8594; done
+3. Mark unclear aspects for clarification           &#8594; done, all resolved below
+4. Fill User Scenarios &amp; Testing section            &#8594; done
+5. Generate Functional Requirements (testable)      &#8594; done
+6. Identify Key Entities                            &#8594; done
+7. Run Review Checklist                             &#8594; pass
+8. Return: SUCCESS (spec ready for planning)
+```
+
+---
+
+## &#9889; Quick Guidelines
+- &#9989; Focus on WHAT users need and WHY
+- &#10060; Avoid HOW to implement (no tech stack, APIs, code structure)
+- &#128101; Written for business stakeholders, not developers
+
+---
+
+## User Scenarios &amp; Testing *(mandatory)*
+
+### Primary User Story
+
+As a data analyst, I want to ask questions about Polymarket markets in natural
+language from the AI assistant I already use, so that I can get market insights
+without writing code.
+
+**Acceptance Scenarios:**
+
+1. **Given** the server is connected to the analyst&#x27;s assistant, **When** the
+   analyst asks &quot;What are the top 5 markets by volume?&quot;, **Then** the answer
+   contains a markdown table with exactly 5 rows ordered by 24-hour trading
+   volume, each row showing the market question, its volume, and its current
+   outcome prices.
+2. **Given** market data exists for a named market, **When** the analyst asks
+   for that market&#x27;s details, **Then** the answer presents the market question,
+   end date, outcome prices, and volume, and every value matches the Polymarket
+   data source as of the answer&#x27;s stated timestamp.
+3. **Given** the analyst asks a question unrelated to Polymarket data (e.g.
+   about the weather), **When** the question reaches the system, **Then** the
+   answer states that only Polymarket market questions are supported and lists
+   the kinds of questions it can answer.
+4. **Given** the Polymarket data source is unreachable, **When** the analyst
+   asks any data question, **Then** within 5 seconds the answer names the
+   unavailable dependency and suggests retrying, with no fabricated or
+   silently substituted data.
+5. **Given** the analyst asks an ambiguous question such as &quot;show me the top
+   markets&quot; (no metric named), **When** the system answers, **Then** the answer
+   either asks one clarifying question or states the assumption it applied
+   (default: 24-hour volume).
+
+### Edge Cases
+
+- **Polymarket data source unavailable** &#8594; the system reports the failure and
+  the failing dependency within 5 seconds (FR-006, Scenario 4).
+- **Ambiguous natural-language question** &#8594; the system asks one clarifying
+  question or answers under a stated default assumption (FR-008, Scenario 5).
+- **Question outside Polymarket data** &#8594; the system declines and states its
+  supported scope (FR-007, Scenario 3).
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: The system MUST expose Polymarket market search and analysis as
+  tools that any MCP-capable assistant can call, so the analyst&#x27;s existing
+  assistant serves as the natural-language interface. No bespoke chat window or
+  command-line interface is in scope.
+- **FR-002**: The system MUST retrieve current market, event, and trade data
+  from the existing Polymarket data source.
+- **FR-003**: The system MUST answer analysis questions deterministically from
+  retrieved data: top-N ranking by a named metric, filtering by category, tag,
+  date range, or open/closed status, and summary statistics (totals, averages,
+  counts).
+- **FR-004**: The system MUST return tabular results as markdown tables.
+- **FR-005**: The system MUST include in every data answer the units of each
+  figure and the timestamp the underlying data was fetched.
+- **FR-006**: When the Polymarket data source is unavailable or returns an
+  error, the system MUST report the failure within 5 seconds, naming the
+  failing dependency, and answer only from data it actually retrieved &#8212;
+  reporting the failure rather than substituting fabricated or stale values.
+- **FR-007**: The system MUST decline questions outside Polymarket data and
+  state its supported scope in the same answer.
+- **FR-008**: When a question is ambiguous, the system MUST either ask one
+  clarifying question or answer under a stated default assumption
+  (24-hour volume for &quot;top&quot; queries), so every assumption is visible to the
+  analyst.
+
+### Non-Functional Requirements
+
+- **NFR-001**: Single-market lookups complete within 3 seconds and multi-market
+  scans over up to 1,000 markets within 10 seconds, at the 95th percentile,
+  measured at the system boundary.
+- **NFR-002**: The system supports at least 20 concurrent analyst sessions
+  while still meeting NFR-001.
+- **NFR-003**: Answers reflect Polymarket data no older than 60 seconds at the
+  time of the query, and each answer states its data-as-of timestamp
+  (see FR-005).
+
+### Key Entities *(include if feature involves data)*
+
+- **User Query**: A natural-language question from the analyst, arriving via
+  their assistant; may name markets, metrics, categories, tags, date ranges, or
+  open/closed status.
+- **Polymarket Data**: Market, event, and trade records fetched from the
+  Polymarket data source; each record carries the timestamp it was fetched.
+- **Analysis Result**: The deterministic output of ranking, filtering, or
+  summarizing Polymarket Data in response to a User Query.
+- **Response**: The analyst-facing answer: prose plus, where tabular, a
+  markdown table; always includes units and the data-as-of timestamp.
+
+### Out of Scope
+
+- A bespoke chat window, web UI, or command-line interface &#8212; the analyst&#x27;s
+  MCP-capable assistant is the interface (FR-001).
+- Placing trades, portfolio management, or any write operation against
+  Polymarket.
+- Language understanding inside the system itself: interpreting the analyst&#x27;s
+  natural language is the assistant&#x27;s job; the system exposes structured
+  search and analysis capabilities.
+
+---
+
+## Review &amp; Acceptance Checklist
+
+### Content Quality
+
+- [x] No implementation details (languages, frameworks, APIs)
+- [x] Focused on user value and business needs
+- [x] Written for non-technical stakeholders
+- [x] All mandatory sections completed
+
+### Requirement Completeness
+
+- [x] No open clarification markers remain
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
+
+---
+
+## Execution Status
+
+- [x] User description parsed
+- [x] Key concepts extracted
+- [x] Ambiguities marked and resolved
+- [x] User scenarios defined
+- [x] Requirements generated
+- [x] Entities identified
+- [x] Review checklist passed
+
+---
+</pre></details>
+
+
+  <h2>Full repository benchmark &#8212; every document, every dimension</h2>
+  <p class="lede">The complete hybrid grading of polymarket-kit on the <strong>merged</strong> build
+  (PRs #67 + #68 now on main, 139 tests green). Repo overall: <strong class="mono">83.6/100</strong>,
+  coverage lint+semantic. Results reproduce the pre-merge eval exactly.</p>
+  <div class="tblwrap"><table>
+    <tr><th>Document</th><th>Overall</th><th>clarit.</th><th>comple.</th><th>consis.</th><th>consti.</th><th>feasib.</th><th>testab.</th><th>tracea.</th></tr>
+<tr><td class="mono">spec.md</td><td class="mono" style="font-weight:700">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td></tr>
+<tr><td class="mono">plan.md</td><td class="mono" style="font-weight:700">50</td><td class="mono dim-low">92</td><td class="mono dim-low">88</td><td class="mono dim-low">88</td><td class="mono dim-low">94</td><td class="mono dim-low">88</td><td class="mono">100</td><td class="mono">100</td></tr>
+<tr><td class="mono">tasks.md</td><td class="mono" style="font-weight:700">58</td><td class="mono">100</td><td class="mono dim-low">76</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono dim-low">82</td></tr>
+<tr><td class="mono">research.md</td><td class="mono" style="font-weight:700">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td></tr>
+<tr><td class="mono">data-model.md</td><td class="mono" style="font-weight:700">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td></tr>
+<tr><td class="mono">quickstart.md</td><td class="mono" style="font-weight:700">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td></tr>
+<tr><td class="mono">polymarket-mcp.yml</td><td class="mono" style="font-weight:700">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td></tr>
+<tr><td class="mono">constitution.md</td><td class="mono" style="font-weight:700">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td><td class="mono">100</td></tr>
+  </table></div>
+
+  <h3 style="margin:32px 0 6px; font-size:16px">The 13 open findings &#8212; all in plan.md and tasks.md</h3>
+  <p class="lede" style="margin-bottom:14px">This is the remaining to-do list the grader hands the polymarket-kit authors. spec.md's findings are done; these two documents were left as controls.</p>
+  <div class="tblwrap"><table>
+    <tr><th>Document</th><th>Severity</th><th>Dimension</th><th>Source</th><th>Finding &amp; suggested fix</th></tr>
+<tr><td class="mono">plan.md</td><td><span class="chip high">high</span></td><td class="mono">completeness</td><td class="mono">lint</td><td>2 unresolved [NEEDS CLARIFICATION] marker(s).<div class="fixhint">fix: Resolve each marker (run /speckit.clarify) and replace it with a concrete decision; remove the marker.</div></td></tr>
+<tr><td class="mono">plan.md</td><td><span class="chip high">high</span></td><td class="mono">consistency</td><td class="mono">judge</td><td>Progress Tracking asserts &#x27;[x] All NEEDS CLARIFICATION resolved&#x27; while the plan&#x27;s own Technical Context still carries two live markers (Performance Goals, Scale/Scope) &#8212; the gate was checked without being true. The spec&#x27;s NFR-001/002 now answer both questions; the plan has not been updated to adopt them.<div class="fixhint">fix: Adopt the spec&#x27;s NFR-001/NFR-002 values into Technical Context and remove the two markers, or uncheck the gate.</div></td></tr>
+<tr><td class="mono">plan.md</td><td><span class="chip high">high</span></td><td class="mono">feasibility</td><td class="mono">judge</td><td>The plan (Summary, Phase 0, and tasks.md T010 &#x27;Integrate the Gemini API&#x27;) embeds an LLM inside the MCP server, but in MCP the client host supplies the language model &#8212; the server only exposes tools/data. The revised spec now states this explicitly in Out of Scope; the plan contradicts it.<div class="fixhint">fix: Drop the embedded-LLM design: the server exposes typed search/analysis tools; natural-language understanding stays in the MCP client.</div></td></tr>
+<tr><td class="mono">plan.md</td><td><span class="chip medium">medium</span></td><td class="mono">clarity</td><td class="mono">lint</td><td>Requirement uses passive voice (no clear actor): 1 line(s).<div class="fixhint">fix: Rewrite in active voice with an explicit subject: &#x27;The system shall [action]&#x27; rather than &#x27;[thing] shall be [past-participle by actor]&#x27;.</div></td></tr>
+<tr><td class="mono">plan.md</td><td><span class="chip medium">medium</span></td><td class="mono">constitutional</td><td class="mono">judge</td><td>Constitution Check answers are rote &#x27;Yes&#x27; without evidence &#8212; &#x27;Git commits show tests before implementation? Yes&#x27; cannot be true at planning time, and &#x27;RED-GREEN-Refactor enforced? Yes&#x27; is asserted with no mechanism named.<div class="fixhint">fix: Answer gates honestly (planned vs verified) and name the enforcement mechanism (CI check, PR template) where one exists.</div></td></tr>
+<tr><td class="mono">tasks.md</td><td><span class="chip medium">medium</span></td><td class="mono">completeness</td><td class="mono">lint</td><td>Missing required section &#x27;Format: `  Description`&#x27; in tasks.<div class="fixhint">fix: Add a &#x27;## Format: `  Description`&#x27; section (see the Spec-Kit tasks template).</div></td></tr>
+<tr><td class="mono">tasks.md</td><td><span class="chip medium">medium</span></td><td class="mono">completeness</td><td class="mono">lint</td><td>Missing required section &#x27;Notes&#x27; in tasks.<div class="fixhint">fix: Add a &#x27;## Notes&#x27; section (see the Spec-Kit tasks template).</div></td></tr>
+<tr><td class="mono">tasks.md</td><td><span class="chip medium">medium</span></td><td class="mono">completeness</td><td class="mono">lint</td><td>Missing required section &#x27;Task Generation Rules&#x27; in tasks.<div class="fixhint">fix: Add a &#x27;## Task Generation Rules&#x27; section (see the Spec-Kit tasks template).</div></td></tr>
+<tr><td class="mono">tasks.md</td><td><span class="chip medium">medium</span></td><td class="mono">completeness</td><td class="mono">lint</td><td>Missing required section &#x27;Validation Checklist&#x27; in tasks.<div class="fixhint">fix: Add a &#x27;## Validation Checklist&#x27; section (see the Spec-Kit tasks template).</div></td></tr>
+<tr><td class="mono">tasks.md</td><td><span class="chip medium">medium</span></td><td class="mono">traceability</td><td class="mono">lint</td><td>Entity &#x27;UserQuery&#x27; is referenced by no task.<div class="fixhint">fix: Add a model/creation task for the entity, or remove it from the data model.</div></td></tr>
+<tr><td class="mono">tasks.md</td><td><span class="chip medium">medium</span></td><td class="mono">traceability</td><td class="mono">lint</td><td>Entity &#x27;AnalysisResult&#x27; is referenced by no task.<div class="fixhint">fix: Add a model/creation task for the entity, or remove it from the data model.</div></td></tr>
+<tr><td class="mono">tasks.md</td><td><span class="chip medium">medium</span></td><td class="mono">traceability</td><td class="mono">lint</td><td>Entity &#x27;Response&#x27; is referenced by no task.<div class="fixhint">fix: Add a model/creation task for the entity, or remove it from the data model.</div></td></tr>
+<tr><td class="mono">plan.md</td><td><span class="chip low">low</span></td><td class="mono">clarity</td><td class="mono">lint</td><td>Requirement has unclear actor (pronoun or missing subject): 1 line(s).<div class="fixhint">fix: Replace the pronoun with an explicit named actor: &#x27;The system shall&#x27;, &#x27;The API gateway shall&#x27;, &#x27;The background worker shall&#x27;.</div></td></tr>
+  </table></div>
+
+  <h3 style="margin:32px 0 6px; font-size:16px">The grader&rsquo;s own benchmark gate</h3>
+  <p class="lede" style="margin-bottom:14px">CI regression suite (<code>scripts/benchmark.py</code>) on the merged build, over the 5-case labeled corpus plus the good/bad fixture repos:</p>
+  <div class="hero">
+    <div class="tile"><div class="t-label">gate</div><div class="t-num" style="color:var(--after)">PASS</div><div class="t-note">good fixture 100.0 &middot; bad fixture 61.0 (15 pitfalls caught)</div></div>
+    <div class="tile"><div class="t-label">corpus recall</div><div class="t-num">1.0</div><div class="t-note">all expected pitfalls detected across 5 labeled cases</div></div>
+    <div class="tile"><div class="t-label">false positives</div><div class="t-num">0</div><div class="t-note">on the high-quality control case; 0 score-band failures</div></div>
+  </div>
+
+  <h2>What the eval taught the grader</h2>
+  <div class="note">
+    Dogfooding cut both ways: grading a real repo exposed <strong>three linter bugs</strong> &#8212;
+    the clarification-marker count includes the template's own instruction text (every fresh Spec-Kit
+    spec starts ~4 markers in the hole), the acceptance-criteria check fails Spec-Kit's canonical
+    sibling-heading layout, and the required-sections check demands template boilerplate the semantic
+    judge simultaneously flags for removal. Filed as
+    <a href="https://github.com/hansraj316/sdd-grader/issues/69">sdd-grader#69</a>.
+  </div>
+
+  <h2>Appendix &#8212; how the grader got here today</h2>
+  <div class="tblwrap"><table>
+    <tr><th>Step</th><th>Outcome</th></tr>
+    <tr><td>Multi-agent critical review</td><td>47 agents across 6 dimensions; 39 findings adversarially verified (2 refuted), deduped into <a href="https://github.com/hansraj316/sdd-grader/issues">31 issues</a> (#36&ndash;#66)</td></tr>
+    <tr><td>Rename</td><td><span class="mono">sddreview &rarr; sdd-grader / sddgrade</span> &#8212; repo, package, CLI, docs (<a href="https://github.com/hansraj316/sdd-grader/pull/67">PR&nbsp;#67</a>, merged)</td></tr>
+    <tr><td>Fixes landed</td><td>10 issues fixed by 4 parallel agents: judge attribution &amp; staleness, pure-JSON output, opt-in gating, config errors, <span class="mono">--tool</span> validation, lint false positives, <span class="mono">--api</span> hard-fail (<a href="https://github.com/hansraj316/sdd-grader/pull/68">PR&nbsp;#68</a>, merged &middot; 139 tests green after reconciling the improvement loop&rsquo;s parallel work)</td></tr>
+    <tr><td>This eval</td><td>spec.md 34.0 &rarr; 100.0 on hansraj316/sdd-grader&rsquo;s own fix suggestions; 3 new linter bugs found &amp; filed (#69)</td></tr>
+  </table></div>
+</div>
+
+<script>
+  const tip = document.getElementById('tip');
+  document.querySelectorAll('.bar').forEach(b => {
+    b.addEventListener('mousemove', e => {
+      tip.textContent = b.dataset.tip;
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(e.clientX + 12, innerWidth - 240) + 'px';
+      tip.style.top = (e.clientY - 34) + 'px';
+    });
+    b.addEventListener('mouseleave', () => tip.style.opacity = 0);
+  });
+</script>

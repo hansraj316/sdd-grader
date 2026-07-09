@@ -8,6 +8,7 @@ free (stdlib dataclasses + enums) makes the whole pipeline easy to unit-test.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -129,6 +130,19 @@ class Finding:
 
     ``pitfall_id`` links the finding to an entry in the research-backed pitfall
     catalog (``rubric/pitfalls.toml``) when it matches a known anti-pattern.
+
+    The optional ``fix_*`` fields carry a machine-applicable fix when one can be
+    derived deterministically (see ``enrich_structured_fixes``); they stay ``None``
+    for findings that only have a prose suggestion. This is the data contract a
+    future ``--fix`` command consumes — nothing applies fixes today.
+
+    ``fix_kind`` values:
+      - ``"resolve-marker"``  — an unresolved marker (e.g. ``[NEEDS CLARIFICATION]``)
+        at ``fix_line_start``..``fix_line_end`` must be replaced with a decision.
+      - ``"insert-section"``  — a section named in ``replacement_hint`` (e.g.
+        ``"## Edge Cases"``) must be added to the artifact.
+      - ``"replace-line"``    — the line span should be rewritten per
+        ``replacement_hint`` (reserved; not yet emitted).
     """
 
     dimension: Dimension
@@ -139,8 +153,22 @@ class Finding:
     pitfall_id: str | None = None
     artifact_path: str | None = None
     line: int | None = None
+    fix_kind: str | None = None  # "resolve-marker" | "insert-section" | "replace-line"
+    fix_line_start: int | None = None
+    fix_line_end: int | None = None
+    replacement_hint: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        # "fix" is present (non-null) only when a structured, machine-applicable
+        # fix could be derived — JSON consumers can filter on it directly.
+        fix = None
+        if self.fix_kind is not None:
+            fix = {
+                "kind": self.fix_kind,
+                "line_start": self.fix_line_start,
+                "line_end": self.fix_line_end,
+                "replacement_hint": self.replacement_hint,
+            }
         return {
             "dimension": self.dimension.value,
             "severity": self.severity.value,
@@ -150,7 +178,49 @@ class Finding:
             "pitfall_id": self.pitfall_id,
             "artifact_path": self.artifact_path,
             "line": self.line,
+            "fix": fix,
         }
+
+
+# Message shapes emitted by the lint layer that map to structured fixes.
+_MISSING_SECTION_RE = re.compile(r"^Missing required section '(?P<title>[^']+)'")
+_MARKER_RE = re.compile(r"\[NEEDS CLARIFICATION", re.IGNORECASE)
+
+
+def enrich_structured_fixes(findings: list[Finding], artifacts: list[Artifact]) -> None:
+    """Populate machine-applicable ``fix_*`` fields where they can be derived (#63).
+
+    Deterministic derivations only — everything else keeps ``fix_kind=None``:
+      - unresolved ``[NEEDS CLARIFICATION]`` markers → ``resolve-marker`` with the
+        line span from first to last marker in the artifact text;
+      - missing required sections → ``insert-section`` with the heading to add.
+
+    Mutates findings in place; safe to call on any mix of lint/judge findings.
+    """
+    raw_by_path = {a.path: a.raw for a in artifacts}
+    for f in findings:
+        if f.fix_kind is not None:
+            continue
+        if f.pitfall_id == "SPEC-UNRESOLVED-CLARIFICATION":
+            raw = raw_by_path.get(f.artifact_path or "")
+            if not raw:
+                continue
+            hits = [
+                i for i, line in enumerate(raw.splitlines(), start=1)
+                if _MARKER_RE.search(line)
+            ]
+            if hits:
+                f.fix_kind = "resolve-marker"
+                f.fix_line_start = hits[0]
+                f.fix_line_end = hits[-1]
+                f.replacement_hint = (
+                    "Replace each [NEEDS CLARIFICATION] marker with the decision made."
+                )
+            continue
+        m = _MISSING_SECTION_RE.match(f.message)
+        if m:
+            f.fix_kind = "insert-section"
+            f.replacement_hint = f"## {m.group('title')}"
 
 
 @dataclass
@@ -221,8 +291,19 @@ class ReviewResult:
 
     artifacts: list[ArtifactReview] = field(default_factory=list)
     tool: str = "speckit"
-    engine: str = "hybrid"
+    # "rules" | "agent" | "api" — the safe default is the weakest claim (#65): a
+    # default-constructed result must never pretend the semantic judge ran.
+    engine: str = "rules"
     timestamp: str | None = None  # ISO 8601; stamped by the caller, not at parse time
+    # Coverage caveats attached by the pipeline (e.g. the --api judge truncated
+    # oversized artifacts to fit its input budget). Rendered in every report so
+    # partial judge coverage is never silent.
+    notes: list[str] = field(default_factory=list)
+    # Which model produced the semantic judgment (api backend: the configured model;
+    # agent backend: the "model" the agent recorded in judge.json). None when the
+    # judge didn't run or the agent didn't say — a judged score without provenance
+    # is still labeled, just not attributed.
+    judge_model: str | None = None
 
     @property
     def overall(self) -> float:
@@ -258,7 +339,7 @@ class ReviewResult:
     @property
     def judge_used(self) -> bool:
         """True if the semantic judge actually contributed (not a degraded rules run)."""
-        return self.engine in ("agent", "api", "hybrid")
+        return self.engine in ("agent", "api")
 
     @property
     def coverage(self) -> str:
@@ -269,10 +350,13 @@ class ReviewResult:
     def coverage_note(self) -> str:
         """A one-line caveat about what this score does and does not prove."""
         if self.judge_used:
-            return (
+            base = (
                 "Lint + semantic judgment. Findings include deterministic checks and "
                 "the agent's review; a high score reflects both, but is still advisory."
             )
+            if self.notes:
+                return base + " " + " ".join(self.notes)
+            return base
         return (
             "Lint-only (no semantic judge ran). A high score means no KNOWN deterministic "
             "findings — NOT that the spec is complete or semantically correct. Run the "
@@ -280,6 +364,9 @@ class ReviewResult:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        # Score precision contract (#59): JSON keeps numeric scores for machines,
+        # rounded to at most 1 decimal (judge nondeterminism makes finer precision
+        # noise); human-facing reports render integers (report/common.format_score).
         weights = self._artifact_weights()
         top = [
             {**f.to_dict(), "impact": round(self.finding_impact(f, weights), 1)}
@@ -290,7 +377,9 @@ class ReviewResult:
             "engine": self.engine,
             "coverage": self.coverage,
             "judge_used": self.judge_used,
+            "judge_model": self.judge_model,
             "coverage_note": self.coverage_note,
+            "notes": self.notes,
             "timestamp": self.timestamp,
             "overall": round(self.overall, 1),
             "top_fixes": top,

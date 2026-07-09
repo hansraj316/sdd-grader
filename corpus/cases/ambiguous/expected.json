@@ -1,6 +1,7 @@
 {
   "quality": "medium",
-  "score_band": [80, 94],
+  "score_band": [75, 92],
+  "band_rationale": "Medium: two genuine defects (vague wording in both FRs, no edge cases) in an otherwise structurally complete spec with measurable success criteria. Ceiling 92 requires the two defects to keep costing at least 8 points; floor 75 leaves room to re-tune both up to high severity (2 x 12 = 24 penalty -> 76) without failing the gate. Engine output at labeling time: 88.",
   "expect_pitfalls": ["SPEC-AMBIGUOUS-WORDING", "SPEC-MISSING-EDGE-CASES"],
-  "note": "Vague/subjective wording and no edge cases; otherwise structurally complete."
+  "note": "Vague/subjective wording and no edge cases; otherwise structurally complete. Authored as a regex unit-test case (uses catalog trigger words verbatim); see paraphrased-defects for the non-circular counterpart."
 }

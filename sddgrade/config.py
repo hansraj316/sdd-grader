@@ -1,8 +1,9 @@
 """Load and merge configuration: built-in defaults + user ``.sddgrade.toml``.
 
 Everything has a sensible default so the common case (`sddgrade review`) needs no
-config at all. A repo can override weights, thresholds, and the chosen agent in
-``.sddgrade.toml`` at its root.
+config at all. A repo can override the toolchain, gate threshold, and dimension
+weights in ``.sddgrade.toml`` at its root. Every key parsed here is honored by the
+runner — a config key with no consumer must not be added (#46).
 """
 
 from __future__ import annotations
@@ -37,6 +38,8 @@ DEFAULT_WEIGHTS: dict[Dimension, float] = {
 class Config:
     """Resolved configuration for a run."""
 
+    # Toolchain selection. "auto" detects the layout; a config-file `tool` wins over
+    # auto-detection, and an explicit --tool flag wins over both (#31).
     tool: str = "auto"
     # CI gate threshold. None (the default) means no gating: a bare review exits 0
     # regardless of score. Opt in via --fail-under or `fail_under` in .sddgrade.toml.

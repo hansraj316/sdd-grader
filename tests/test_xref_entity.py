@@ -158,3 +158,15 @@ def test_untasked_entity_still_flagged():
     entity_findings = [f for f in findings if f.pitfall_id == "XREF-ENTITY-NO-TASK"]
     assert any("Payment" in f.message for f in entity_findings)
     assert not any("Invoice" in f.message for f in entity_findings)
+
+
+def test_migration_and_state_headings_excluded():
+    """'Migrations'/'State' headings are structural, not entities (#44)."""
+    dm = _data_model(
+        "# Data Model\n\n"
+        "### Invoice\n\n"
+        "#### State\n\n"
+        "### Migrations\n\n"
+        "#### Migration\n\n"
+    )
+    assert _entities(dm) == ["Invoice"]

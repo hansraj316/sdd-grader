@@ -1,0 +1,43 @@
+{
+  "note": "Golden judge response (#54): hand-authored raw judge output exercising judge-only pitfalls plus vocabulary normalization ('traceable' -> traceability, 'major' -> high). The benchmark writes this into .sddgrade/judge.json with a runtime-generated hash manifest (content hashes must match the artifacts on disk), runs the real agent-judge path (read_judgment freshness check -> to_findings -> merge -> score), and asserts the expectations below.",
+  "findings": [
+    {
+      "artifact": "spec.md",
+      "dimension": "traceable",
+      "severity": "major",
+      "message": "User Story 1 bundles search relevance and ranking quality into one story; it cannot be delivered or tested as independent slices.",
+      "suggestion": "Split ranking quality into its own story with separate acceptance criteria.",
+      "pitfall_id": "SPEC-NON-INDEPENDENT-STORY"
+    },
+    {
+      "artifact": "spec.md",
+      "dimension": "testability",
+      "severity": "medium",
+      "message": "FR-002 fails 29148 'verifiable': 'user-friendly and robust' admits no objective acceptance test.",
+      "suggestion": "Replace with measurable UX and failure-rate criteria (e.g. task completion rate, error budget).",
+      "pitfall_id": "JUDGE-29148-PERREQ"
+    }
+  ],
+  "expect": {
+    "merged_overall": 79.0,
+    "judge_pitfalls": [
+      "SPEC-NON-INDEPENDENT-STORY",
+      "JUDGE-29148-PERREQ"
+    ],
+    "attribution": [
+      "spec.md",
+      "spec.md"
+    ],
+    "normalized": [
+      {
+        "severity": "high",
+        "dimension": "traceability"
+      },
+      {
+        "severity": "medium",
+        "dimension": "testability"
+      }
+    ],
+    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against."
+  }
+}

@@ -20,6 +20,7 @@ from rich.markup import escape
 from . import config as config_mod
 from . import history
 from .discovery import discover_artifacts, resolve_adapter
+from . import model as model_mod
 from .engine import lint as lint_mod
 from .engine import scoring
 from .model import Finding, ReviewResult
@@ -39,6 +40,13 @@ EXIT_CONFIG_ERROR = 4
 # Score-coloring threshold for reports when no gate is configured. Display only —
 # it never affects the exit code.
 DISPLAY_FAIL_UNDER = 70.0
+
+# #51: judge findings vary run to run, so a lint+semantic score this close to the
+# configured fail_under gate can pass or fail on identical artifacts depending on
+# the judge's mood. When that happens we warn on stderr so CI users understand the
+# flake instead of blaming the commit. Sized to the capped single-judge-finding
+# contribution (see engine/scoring.py). Deterministic warning only — no retries.
+JUDGE_NOISE_BAND = 5.0
 
 
 def run_review(
@@ -71,6 +79,9 @@ def run_review(
         return EXIT_CONFIG_ERROR
     if fail_under is not None:
         cfg.fail_under = fail_under
+    # Toolchain precedence (#31): explicit --tool flag (tool is not None here) >
+    # `tool` in .sddgrade.toml (already merged into cfg) > "auto" detection (the
+    # Config default). The CLI passes None when the flag was not given.
     if tool is not None:
         cfg.tool = tool
 
@@ -90,22 +101,19 @@ def run_review(
 
     engine_label = "rules"
     judge_error: str | None = None
+    judge_notes: list[str] = []
+    judge_model: str | None = None
     if backend in ("agent", "api"):
-        judge_findings, engine_label, judge_error = _run_judge(
+        judge_findings, judge_notes, judge_model, engine_label, judge_error = _run_judge(
             artifacts, backend, root, cfg, err_console
         )
-        # Drop judge findings whose (pitfall_id, artifact_path) is already covered by
-        # a lint finding. method="both" pitfalls are linted deterministically; without
-        # dedup the same defect is double-penalised, making hybrid scores systematically
-        # lower than rules-only scores for identical artifacts.
-        lint_keys: set[tuple[str | None, str | None]] = {
-            (f.pitfall_id, f.artifact_path) for f in findings
-        }
-        deduplicated = [
-            f for f in judge_findings
-            if (f.pitfall_id, f.artifact_path) not in lint_keys
-        ]
-        findings.extend(deduplicated)
+        # Drop judge findings already covered by a lint finding on the same
+        # (pitfall_id, artifact_path) — see scoring.dedup_judge_findings (#43).
+        findings.extend(scoring.dedup_judge_findings(findings, judge_findings))
+
+    # Attach machine-applicable fix data (resolve-marker / insert-section) where it
+    # can be derived deterministically — surfaced in JSON for a future --fix (#63).
+    model_mod.enrich_structured_fixes(findings, artifacts)
 
     # Explicitly requesting the API judge (`--api`) implies --require-judge: someone
     # gating CI on the key-based backend wants a hard failure when it can't run, not a
@@ -142,11 +150,17 @@ def run_review(
                 render_json(scoring.score(artifacts, findings, cfg, engine="rules"))
             )
             sys.stdout.write("\n")
-        err_console.print(f"[bold red]ERROR[/] {escape(msg)}")
+        # highlight=False: rich's number-highlighting would inject color codes into
+        # the middle of tokens like "HTTP 401", breaking grep/CI log matching.
+        err_console.print(f"[bold red]ERROR[/] {escape(msg)}", highlight=False)
         return EXIT_JUDGE_REQUIRED
 
     result: ReviewResult = scoring.score(artifacts, findings, cfg, engine=engine_label)
     result.timestamp = datetime.now(timezone.utc).isoformat()
+    # Coverage caveats from the judge backend (e.g. --api input-budget truncation):
+    # keep them on the result so reports/JSON reflect partial judge coverage.
+    result.notes = judge_notes
+    result.judge_model = judge_model
 
     history.record(root, result)
 
@@ -186,23 +200,36 @@ def run_review(
     # asked for a threshold via --fail-under or the config file.
     if cfg.fail_under is None:
         return EXIT_PASS
+    if result.judge_used and abs(result.overall - cfg.fail_under) < JUDGE_NOISE_BAND:
+        err_console.print(
+            f"[yellow]warning[/] overall score {result.overall:.1f} is within the "
+            f"judge's noise band (±{JUDGE_NOISE_BAND:g}) of the fail-under gate "
+            f"{cfg.fail_under:g}: judge findings vary run to run, so identical "
+            "artifacts may pass or fail this gate on re-run. Move the threshold "
+            "away from where scores hover, or gate on --rules for a fully "
+            "deterministic score."
+        )
     return EXIT_PASS if result.overall >= cfg.fail_under else EXIT_FAIL
 
 
 def _run_judge(artifacts, backend, root, cfg, err_console):
     """Run the semantic judge if available.
 
-    Returns ``(findings, engine_label, error)``. On failure the error string carries
-    the reason so the caller can decide whether to degrade to rules (agent default)
-    or fail the run (--require-judge / explicit --api) — never swallow it.
+    Returns ``(findings, notes, model, engine_label, error)``. Notes are coverage
+    caveats (e.g. --api truncation) to surface on the result; model is the judge's
+    model for report provenance. On failure the error string carries the reason so
+    the caller can decide whether to degrade to rules (agent default) or fail the
+    run (--require-judge / explicit --api) — never swallow it.
     """
     try:
         from .engine import judge as judge_mod
     except Exception as exc:  # judge not built yet
-        return [], "rules", f"judge engine unavailable: {exc}"
+        return [], [], None, "rules", f"judge engine unavailable: {exc}"
 
     try:
-        findings = judge_mod.judge(artifacts, backend, root, cfg, console=err_console)
-        return findings, backend, None
+        findings, notes, model = judge_mod.judge(
+            artifacts, backend, root, cfg, console=err_console
+        )
+        return findings, notes, model, backend, None
     except judge_mod.JudgeUnavailable as exc:  # type: ignore[attr-defined]
-        return [], "rules", str(exc)
+        return [], [], None, "rules", str(exc)

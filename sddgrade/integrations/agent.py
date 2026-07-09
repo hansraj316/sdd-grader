@@ -35,18 +35,70 @@ def supported_agents() -> list[str]:
 
 
 def _command_text() -> str:
-    template = (
+    """The scaffolded command: a thin shim that defers to `sddgrade judge-prompt`.
+
+    Guidance is deliberately NOT baked in at init time (#50) — the shim tells the
+    agent to run `sddgrade judge-prompt`, which prints the current instructions for
+    the currently detected toolchain, so catalog updates reach every scaffolded
+    command without re-running init.
+    """
+    return (
         resources.files("sddgrade.integrations.commands") / "judge-command.md"
     ).read_text(encoding="utf-8")
-    return template.replace("{{GUIDANCE}}", judge_guidance())
+
+
+# Toolchain → the artifact-discovery step of the judge instructions (#50: an
+# OpenSpec repo must not be told to review Spec-Kit paths).
+_DISCOVERY_STEPS: dict[str, str] = {
+    "speckit": (
+        "Find the artifacts: every file under `specs/<feature>/` (`spec.md`, `plan.md`,\n"
+        "   `tasks.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/*`) and the\n"
+        "   constitution at `.specify/memory/constitution.md`."
+    ),
+    "openspec": (
+        "Find the artifacts: `openspec/project.md`, every source-of-truth spec\n"
+        "   `openspec/specs/<capability>/spec.md`, and for each change under\n"
+        "   `openspec/changes/<change-id>/` (skip `changes/archive/`): `proposal.md`,\n"
+        "   `tasks.md`, `design.md`, and the delta specs `specs/<capability>/spec.md`."
+    ),
+}
+
+
+def judge_instructions(root: Path, tool: str = "auto") -> str:
+    """The full, current judge instructions for the repo's (detected) toolchain.
+
+    Printed by `sddgrade judge-prompt` and consumed by the scaffolded shim command,
+    so both the pitfall catalog and the artifact paths are always live — never
+    frozen at init time (#50).
+    """
+    from ..discovery import resolve_adapter
+
+    adapter = resolve_adapter(Path(root).resolve(), tool)
+    name = getattr(adapter, "name", "speckit")
+    template = (
+        resources.files("sddgrade.integrations.commands") / "judge-instructions.md"
+    ).read_text(encoding="utf-8")
+    return template.replace(
+        "{{DISCOVERY}}", _DISCOVERY_STEPS.get(name, _DISCOVERY_STEPS["speckit"])
+    ).replace("{{GUIDANCE}}", judge_guidance())
 
 
 def _default_config() -> str:
+    # Every key written here must be honored by `sddgrade review` (#46): a scaffolded
+    # key that does nothing is a lie. Currently honored: tool, fail_under, weights.
     return (
-        "# sddgrade configuration\n"
+        "# sddgrade configuration — every key here is honored by `sddgrade review`.\n"
         "[sddgrade]\n"
+        '# Toolchain adapter: "auto" detects the layout; set "speckit" or "openspec"\n'
+        "# to force one. An explicit `--tool` flag overrides this.\n"
         'tool = "auto"\n'
+        "# CI gate: exit non-zero when the overall score is below this threshold.\n"
+        "# Delete the line (or omit --fail-under) to disable gating.\n"
         "fail_under = 70\n"
+        "\n"
+        "# Optional per-dimension penalty multipliers (default 1.0). Example:\n"
+        "# [sddgrade.weights]\n"
+        '# clarity = 1.5\n'
     )
 
 
@@ -90,6 +142,11 @@ def artifact_manifest(artifacts, root: Path) -> dict[str, str]:
 class AgentJudge:
     """Reads the judgment JSON the user's agent produced."""
 
+    def __init__(self) -> None:
+        # The model the agent recorded in judge.json ("model" key), for report
+        # provenance. None until read_judgment sees one.
+        self.model: str | None = None
+
     def read_judgment(self, root: Path, artifacts: list | None = None) -> list[dict]:
         path = Path(root) / JUDGMENT_FILE
         if not path.is_file():
@@ -105,6 +162,8 @@ class AgentJudge:
             findings = data.get("findings", [])
             if not isinstance(findings, list):
                 raise JudgeUnavailable("judge.json 'findings' value is not an array")
+            raw_model = data.get("model")
+            self.model = str(raw_model).strip() or None if raw_model else None
         elif isinstance(data, list):
             # Legacy bare-array format: carries no hash manifest, so with artifacts
             # to verify it fails the freshness check below rather than crashing.

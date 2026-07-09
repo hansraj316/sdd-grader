@@ -46,11 +46,29 @@ def parse_sections(text: str) -> list[Section]:
     return sections
 
 
+# Template authoring machinery, not content (#69): headings the Spec-Kit templates
+# carry for the generating agent's benefit. Never required of authored artifacts
+# (the judge guidance treats keeping them as boilerplate to remove).
+_SCAFFOLDING_TITLES: frozenset[str] = frozenset({
+    "execution flow", "execution flow main",
+    "quick guidelines",
+    "execution status",
+})
+
+
+def _is_scaffolding(title: str) -> bool:
+    # Normalize away emoji/punctuation ('⚡ Quick Guidelines', 'Execution Flow (main)').
+    norm = " ".join(re.sub(r"[^a-z0-9 ]", " ", title.lower()).split())
+    return norm in _SCAFFOLDING_TITLES
+
+
 def required_sections_from_template(template_text: str, max_level: int = 2) -> list[str]:
     """Derive expected section titles from a Spec-Kit ``*-template.md`` file.
 
     We take headings up to ``max_level`` and strip bracketed placeholders so the
     derived requirement is the literal heading text the author is expected to keep.
+    Template scaffolding sections (Execution Flow, Quick Guidelines, Execution
+    Status) are excluded — they are authoring machinery, not content quality (#69).
     """
     titles: list[str] = []
     for s in parse_sections(template_text):
@@ -59,6 +77,8 @@ def required_sections_from_template(template_text: str, max_level: int = 2) -> l
         cleaned = re.sub(r"\[[^\]]*\]", "", s.title).strip(" :-")
         # Drop the document title (level 1) and any now-empty placeholder heading.
         if s.level == 1 or not cleaned:
+            continue
+        if _is_scaffolding(cleaned):
             continue
         titles.append(cleaned)
     return titles

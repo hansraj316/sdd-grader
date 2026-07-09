@@ -1,0 +1,152 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]: SDD-Grader
+      - link "How it works" [ref=e5] [cursor=pointer]:
+        - /url: "#how"
+      - link "Case study" [ref=e6] [cursor=pointer]:
+        - /url: "#case"
+      - link "Get started" [ref=e7] [cursor=pointer]:
+        - /url: "#start"
+      - link "GitHub ↗" [ref=e8] [cursor=pointer]:
+        - /url: https://github.com/hansraj316/sdd-grader
+  - main [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - paragraph [ref=e12]: Announcement
+        - heading "Grade specs the way you grade code." [level=1] [ref=e13]
+        - paragraph [ref=e14]:
+          - text: In spec-driven development,
+          - strong [ref=e15]: the spec is the program
+          - text: — yet nothing in the pipeline checks whether it's good enough to build from. SDD-Grader reviews
+          - link "Spec-Kit" [ref=e16] [cursor=pointer]:
+            - /url: https://github.com/github/spec-kit
+          - text: and
+          - link "OpenSpec" [ref=e17] [cursor=pointer]:
+            - /url: https://github.com/Fission-AI/OpenSpec
+          - text: "artifacts with a hybrid engine: a deterministic linter plus a semantic judge that runs in the AI agent you already use. Every artifact gets a 0–100 score, every finding gets a fix, and your CI gets a gate."
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e20]: $
+            - generic [ref=e21]: uvx --from git+https://github.com/hansraj316/sdd-grader.git sddgrade review
+            - button "Copy" [ref=e22] [cursor=pointer]
+          - link "Get started" [ref=e23] [cursor=pointer]:
+            - /url: "#start"
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e29]: sddgrade review — polymarket-kit (a real Spec-Kit repo)
+          - group "Before or after applying the grader's fixes" [ref=e30]:
+            - button "before" [pressed] [ref=e31] [cursor=pointer]
+            - button "after" [ref=e32] [cursor=pointer]
+        - generic [ref=e33]: ╭──────────────── SDD Review — overall ────────────────╮ │ 69.4/100 engine=lint+judge · artifacts=8 · findings=22 │ ╰───────────────────────────────────────────────────────╯ Artifact Score Findings spec.md 34 9 plan.md 50 6 tasks.md 58 7 research.md 100 0 HIGH completeness spec.md 5 unresolved [NEEDS CLARIFICATION] marker(s) fix Resolve each marker with a concrete decision; remove the marker. HIGH testability spec.md User story has no acceptance criteria fix Add explicit acceptance criteria per story, ideally Given/When/Then.
+      - generic [ref=e34]:
+        - paragraph [ref=e35]: Why this exists
+        - heading "AI writes your specs now. Nothing checks them." [level=2] [ref=e36]
+        - paragraph [ref=e37]:
+          - text: "Spec-Kit and OpenSpec made the spec the source of truth: agents plan and build directly from it. But a plausible spec is not a buildable one — unresolved clarifications, untestable stories, quietly contradictory plans, and template boilerplate all flow straight into code generation. Code gets review, tests, and CI."
+          - strong [ref=e38]: The document that generates the code gets nothing.
+          - text: SDD-Grader is that missing check.
+      - generic [ref=e39]:
+        - paragraph [ref=e40]: How it works
+        - heading "A linter that proves, a judge that reads." [level=2] [ref=e41]
+        - paragraph [ref=e42]: Two layers, honestly labeled. Every report states which layers ran, so a green check is never mistaken for more than it is.
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - generic [ref=e45]: deterministic · free · offline
+            - heading "Lint what's provable" [level=3] [ref=e46]
+            - paragraph [ref=e47]:
+              - text: Unresolved
+              - code [ref=e48]: "[NEEDS CLARIFICATION]"
+              - text: markers, broken traceability (story→task, entity→task, contract→test), constitutional gates, and a research-backed catalog of requirement smells — ambiguity, escape clauses, passive voice, unquantified NFRs, ISO 29148 per-requirement checks. Reproducible, so it can gate CI.
+          - generic [ref=e49]:
+            - generic [ref=e50]: semantic · no api key
+            - heading "Your agent is the judge" [level=3] [ref=e51]
+            - paragraph [ref=e52]:
+              - text: The judge runs
+              - emphasis [ref=e53]: inside
+              - text: the AI agent you already pay for — Claude Code, Copilot, Cursor, Gemini.
+              - code [ref=e54]: sddgrade init
+              - text: scaffolds a slash command; your agent reviews for genuine ambiguity, cross-artifact contradictions, and over-engineering, and writes a judgment back. Judgments are
+              - strong [ref=e55]: hash-pinned
+              - text: to the exact content they reviewed — stale opinions are refused, never silently reused. A key-based
+              - code [ref=e56]: "--api"
+              - text: backend covers headless CI.
+          - generic [ref=e57]:
+            - generic [ref=e58]: scores · gates · history
+            - heading "Numbers CI can act on" [level=3] [ref=e59]
+            - paragraph [ref=e60]:
+              - text: 0–100 per artifact across seven dimensions, a concrete fix attached to every finding,
+              - code [ref=e61]: "--fail-under"
+              - text: exit codes, SARIF for GitHub code scanning, JSON, Markdown, a self-contained HTML report, and score history with a terminal dashboard.
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - paragraph [ref=e65]: Case study
+        - heading "A real spec, graded and repaired." [level=2] [ref=e66]
+        - paragraph [ref=e67]:
+          - text: We pointed SDD-Grader at an open-source Spec-Kit project and rewrote one file — its
+          - code [ref=e68]: spec.md
+          - text: "— using only the grader's own fix suggestions. Same rubric before and after. The two documents we left alone didn't move: the instrument responds to the document, not to wishful thinking."
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]: 34 → 100
+            - generic [ref=e72]: spec.md, hybrid score
+          - generic [ref=e73]:
+            - generic [ref=e74]: 9 → 0
+            - generic [ref=e75]: findings on spec.md
+          - generic [ref=e76]:
+            - generic [ref=e77]: "3"
+            - generic [ref=e78]: grader bugs found by grading — and fixed
+        - link "Read the full evaluation report →" [ref=e79] [cursor=pointer]:
+          - /url: ./eval.html
+      - blockquote [ref=e81]:
+        - text: "\"The plan claimed every clarification was resolved while three were still open, and it designed an LLM into a server whose client already is one. The linter can't see that. The judge did.\""
+        - generic [ref=e82]: — from the evaluation of polymarket-kit's MCP-server spec
+    - generic [ref=e83]:
+      - generic [ref=e84]:
+        - paragraph [ref=e85]: What a score means
+        - heading "Honest about what it can prove." [level=2] [ref=e86]
+        - generic [ref=e87]:
+          - heading "Read the coverage line before you trust the number." [level=3] [ref=e88]
+          - paragraph [ref=e89]:
+            - strong [ref=e90]: Lint-only
+            - text: means no known deterministic findings — required sections present, traceability intact, no lexical pitfalls. It is not a semantic guarantee, and the report says so on every run.
+          - paragraph [ref=e91]:
+            - strong [ref=e92]: Lint + semantic
+            - text: "adds the judge's reading: real ambiguity, contradictions across artifacts, over-engineering. Judges are language models — scores near your CI threshold carry noise, and the tool warns you when a run lands inside that band."
+          - paragraph [ref=e93]:
+            - text: SDD-Grader complements Spec-Kit's own in-agent
+            - code [ref=e94]: /speckit.analyze
+            - text: — it is the external, scored, history-tracking gate, not a replacement for it or for human review.
+      - generic [ref=e95]:
+        - paragraph [ref=e96]: Get started
+        - heading "Three commands to a graded spec." [level=2] [ref=e97]
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - heading "1Install" [level=3] [ref=e100]
+            - generic [ref=e101]: uvx --from git+https://github.com/\ hansraj316/sdd-grader.git sddgrade review
+            - paragraph [ref=e102]:
+              - text: Zero-install run with uv.
+              - code [ref=e103]: pip install sddgrade
+              - text: lands with v0.2.0 on PyPI.
+          - generic [ref=e104]:
+            - heading "2Wire up your agent" [level=3] [ref=e105]
+            - generic [ref=e106]: sddgrade init --integration claude
+            - paragraph [ref=e107]: Scaffolds config plus the judge slash command for Claude Code (or Copilot, Cursor, Gemini).
+          - generic [ref=e108]:
+            - heading "3Review & gate" [level=3] [ref=e109]
+            - generic [ref=e110]: sddgrade review --fail-under 70
+            - paragraph [ref=e111]:
+              - text: Grades every artifact; non-zero exit below your threshold. Add
+              - code [ref=e112]: "--sarif"
+              - text: for code scanning.
+        - generic [ref=e114]: "# .github/workflows/specs.yml — gate every PR that touches specs/ - name: Grade the specs run: uvx --from git+https://github.com/hansraj316/sdd-grader.git \\ sddgrade review --rules --fail-under 70 --sarif specs.sarif"
+  - contentinfo [ref=e115]:
+    - generic [ref=e116]:
+      - generic [ref=e117]: SDD-Grader · MIT license
+      - link "GitHub" [ref=e118] [cursor=pointer]:
+        - /url: https://github.com/hansraj316/sdd-grader
+      - link "Issues" [ref=e119] [cursor=pointer]:
+        - /url: https://github.com/hansraj316/sdd-grader/issues
+      - link "Evaluation report" [ref=e120] [cursor=pointer]:
+        - /url: ./eval.html
+      - generic [ref=e121]: Built for the Spec-Kit & OpenSpec community

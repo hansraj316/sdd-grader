@@ -1,6 +1,7 @@
 {
   "quality": "high",
   "score_band": [95, 100],
+  "band_rationale": "High: zero defects by construction (measurable criteria, edge cases, technology-agnostic, explicit actors). Anything below 95 means a false positive crept into the lint layer.",
   "expect_pitfalls": [],
-  "note": "Clean, measurable, technology-agnostic spec. Should produce no findings."
+  "note": "Clean, measurable, technology-agnostic spec. Should produce no findings. Negative control: avoids catalog trigger words; see benign-lookalike for the control that deliberately contains them."
 }

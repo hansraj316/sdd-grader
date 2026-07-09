@@ -19,7 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git
+      # Pin a release tag so the gate is reproducible (main moves daily).
+      - run: uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.2.0
       # Rules-only: deterministic, no API key, good for CI gating.
       - run: sddgrade review --rules --sarif sddgrade.sarif --fail-under 70
         continue-on-error: true   # still upload SARIF even when the gate fails
@@ -30,4 +31,7 @@ jobs:
 
 Drop `continue-on-error` if you want the job (not just the annotations) to fail the PR
 when the score is below `--fail-under`. For a semantic review in CI, use `--api` with an
-API key configured as a secret instead of `--rules`.
+API key configured as a secret instead of `--rules` — but note that judged scores have
+run-to-run variance, so an `--api` gate can flake when scores hover near the threshold
+(the review warns on stderr when that happens; see
+[api-judge.md](api-judge.md#run-to-run-variance-and---fail-under)).

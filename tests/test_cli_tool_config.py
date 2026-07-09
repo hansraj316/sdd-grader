@@ -149,7 +149,9 @@ def test_scaffolded_config_uses_auto_tool(tmp_path: Path):
     scaffold(tmp_path, "claude")
     toml_text = (tmp_path / ".sddgrade.toml").read_text()
     assert 'tool = "auto"' in toml_text, f"Expected tool = auto in scaffolded config:\n{toml_text}"
-    assert "speckit" not in toml_text, f"Scaffolded config must not contain 'speckit':\n{toml_text}"
+    assert 'tool = "speckit"' not in toml_text, (
+        f"Scaffolded config must not force tool = 'speckit':\n{toml_text}"
+    )
 
 
 def test_scaffolded_config_has_no_integration_key(tmp_path: Path):

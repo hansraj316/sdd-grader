@@ -212,9 +212,11 @@ def test_init_scaffolds_agent_command(good_repo: Path):
     assert (good_repo / ".claude/commands/sddgrade.md").is_file()
     assert (good_repo / ".sddgrade.toml").is_file()
     assert any("sddgrade.md" in str(p) for p in written)
-    # The command embeds the pitfall guidance.
+    # #50: the command is a thin shim deferring to `sddgrade judge-prompt` so
+    # guidance is always live — pitfall ids are never baked in at init time.
     text = (good_repo / ".claude/commands/sddgrade.md").read_text()
-    assert "PLAN-OVER-ENGINEERING" in text
+    assert "sddgrade judge-prompt" in text
+    assert "PLAN-OVER-ENGINEERING" not in text
 
 
 def test_supported_agents_listed():
@@ -238,6 +240,7 @@ def test_agent_judgment_merges(good_repo: Path):
     judge_dir = good_repo / ".sddgrade"
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / "judge.json").write_text(json.dumps({
+        "model": "claude-fable-5",
         "artifacts": artifact_manifest(arts, good_repo),
         "findings": [{
             "artifact": "plan.md",
@@ -251,7 +254,11 @@ def test_agent_judgment_merges(good_repo: Path):
     # Use the lower-level judge to confirm merge without needing the agent.
     from sddgrade.engine import judge as judge_mod
 
-    raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
+    raw, notes, model = judge_mod.judge(
+        arts, "agent", good_repo, config_mod.Config(), console=_quiet()
+    )
+    assert notes == []
+    assert model == "claude-fable-5"  # provenance: which model judged
     assert len(raw) == 1
     assert raw[0].source.value == "judge"
     assert raw[0].pitfall_id == "PLAN-OVER-ENGINEERING"
@@ -288,7 +295,9 @@ def test_agent_judge_findings_list_with_non_dict_items(good_repo: Path):
             {"artifacts": artifact_manifest(arts, good_repo), "findings": ["bad", 42, None]}
         )
     )
-    raw = judge_mod.judge(arts, "agent", good_repo, config_mod.Config(), console=_quiet())
+    raw, _notes, _model = judge_mod.judge(
+        arts, "agent", good_repo, config_mod.Config(), console=_quiet()
+    )
     assert raw == []
 
 
@@ -338,3 +347,78 @@ def test_advise_returns_recommendations(good_repo: Path):
     recs = _recommendations(info)
     assert len(recs) >= 4
     assert info["has_speckit"] is True
+
+
+# ------------------------------------------------------------- tool precedence (#31)
+# Precedence matrix: explicit tool= (the --tool flag) > `tool` in .sddgrade.toml >
+# auto-detection (the Config default).
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def _mixed_repo(tmp_path: Path) -> Path:
+    """A repo carrying both a Spec-Kit tree and an OpenSpec tree."""
+    import shutil
+
+    shutil.copytree(FIXTURES / "speckit_good", tmp_path, dirs_exist_ok=True)
+    shutil.copytree(FIXTURES / "openspec_good", tmp_path, dirs_exist_ok=True)
+    return tmp_path
+
+
+def _reviewed(capsys) -> dict:
+    return json.loads(capsys.readouterr().out)
+
+
+def test_config_tool_default_is_auto():
+    # No config file → auto-detection runs (not a silent speckit pin).
+    assert config_mod.Config().tool == "auto"
+
+
+def test_config_tool_honored_when_flag_absent(tmp_path: Path, capsys):
+    # #31 regression: mixed layout + config selecting OpenSpec, no --tool flag →
+    # the config wins over auto's Spec-Kit preference.
+    repo = _mixed_repo(tmp_path)
+    (repo / ".sddgrade.toml").write_text('[sddgrade]\ntool = "openspec"\n')
+    run_review(repo, backend="rules", json_out=True, err_console=_quiet())
+    result = _reviewed(capsys)
+    assert result["tool"] == "openspec"
+    assert all("openspec" in a["path"] for a in result["artifacts"])
+
+
+def test_explicit_tool_overrides_config(tmp_path: Path, capsys):
+    repo = _mixed_repo(tmp_path)
+    (repo / ".sddgrade.toml").write_text('[sddgrade]\ntool = "openspec"\n')
+    run_review(repo, backend="rules", json_out=True, tool="speckit", err_console=_quiet())
+    result = _reviewed(capsys)
+    assert result["tool"] == "speckit"
+    assert all("openspec" not in a["path"] for a in result["artifacts"])
+
+
+def test_explicit_auto_overrides_config(tmp_path: Path, capsys):
+    # `--tool auto` is an explicit choice, distinct from "flag not given": it beats
+    # the config file, and auto prefers Spec-Kit in a mixed layout.
+    repo = _mixed_repo(tmp_path)
+    (repo / ".sddgrade.toml").write_text('[sddgrade]\ntool = "openspec"\n')
+    run_review(repo, backend="rules", json_out=True, tool="auto", err_console=_quiet())
+    result = _reviewed(capsys)
+    assert result["tool"] == "auto"
+    assert any("specs/001" in a["path"] for a in result["artifacts"])
+    assert all("openspec" not in a["path"] for a in result["artifacts"])
+
+
+def test_no_flag_no_config_auto_detects(tmp_path: Path, capsys):
+    # Neither flag nor config: auto-detection, Spec-Kit preferred in mixed layouts.
+    repo = _mixed_repo(tmp_path)
+    run_review(repo, backend="rules", json_out=True, err_console=_quiet())
+    result = _reviewed(capsys)
+    assert result["tool"] == "auto"
+    assert all("openspec" not in a["path"] for a in result["artifacts"])
+
+
+def test_auto_detects_openspec_only_layout(tmp_path: Path):
+    # Sanity: with no config and no flag, an OpenSpec-only repo is still reviewed.
+    import shutil
+
+    shutil.copytree(FIXTURES / "openspec_good", tmp_path, dirs_exist_ok=True)
+    code = run_review(tmp_path, backend="rules", console=_quiet())
+    assert code == 0  # not EXIT_NO_ARTIFACTS (2)

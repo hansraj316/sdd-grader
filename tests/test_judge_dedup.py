@@ -166,3 +166,46 @@ def test_dedup_does_not_lower_score_vs_rules_only(bad_repo: Path):
     assert deduped_score >= rules_score, (
         f"deduped hybrid score ({deduped_score}) must not be lower than rules-only ({rules_score})"
     )
+
+
+# ─── scoring.dedup_judge_findings (unit) ─────────────────────────────────────
+
+
+def _finding(source: Source, pitfall_id: str | None, artifact_path: str):
+    from sddgrade.model import Finding
+
+    return Finding(
+        dimension=Dimension.CLARITY,
+        severity=Severity.MEDIUM,
+        message="m",
+        suggestion="s",
+        source=source,
+        pitfall_id=pitfall_id,
+        artifact_path=artifact_path,
+    )
+
+
+def test_dedup_drops_judge_duplicate_same_pitfall_and_artifact():
+    lint_f = _finding(Source.LINT, "SPEC-AMBIGUOUS-WORDING", "specs/a/spec.md")
+    judge_dup = _finding(Source.JUDGE, "SPEC-AMBIGUOUS-WORDING", "specs/a/spec.md")
+    assert scoring.dedup_judge_findings([lint_f], [judge_dup]) == []
+
+
+def test_dedup_keeps_judge_finding_on_different_artifact():
+    lint_f = _finding(Source.LINT, "SPEC-AMBIGUOUS-WORDING", "specs/a/spec.md")
+    judge_f = _finding(Source.JUDGE, "SPEC-AMBIGUOUS-WORDING", "specs/b/spec.md")
+    assert scoring.dedup_judge_findings([lint_f], [judge_f]) == [judge_f]
+
+
+def test_dedup_keeps_judge_finding_with_different_pitfall():
+    lint_f = _finding(Source.LINT, "SPEC-AMBIGUOUS-WORDING", "specs/a/spec.md")
+    judge_f = _finding(Source.JUDGE, "SPEC-IMPLEMENTATION-DETAILS", "specs/a/spec.md")
+    assert scoring.dedup_judge_findings([lint_f], [judge_f]) == [judge_f]
+
+
+def test_dedup_keeps_judge_findings_without_pitfall_id():
+    """pitfall-less judge findings never collide with pitfall-less lint findings
+    on OTHER artifacts — only an exact (pitfall_id, artifact_path) pair drops."""
+    lint_f = _finding(Source.LINT, None, "specs/a/spec.md")
+    judge_f = _finding(Source.JUDGE, None, "specs/b/spec.md")
+    assert scoring.dedup_judge_findings([lint_f], [judge_f]) == [judge_f]

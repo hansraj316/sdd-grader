@@ -1,0 +1,56 @@
+{
+  "note": "Golden judge response (#54) for the multi-artifact case: exercises full-relative-path attribution (specs/001-orders/plan.md), unique-basename fallback (tasks.md), the unattributed bucket (an artifact name that resolves to nothing must be kept visible under scoring's synthetic '(unattributed)' review, never dropped), a null pitfall_id, and synonym normalization ('warning' -> medium, 'consistent' -> consistency).",
+  "findings": [
+    {
+      "artifact": "specs/001-orders/plan.md",
+      "dimension": "traceability",
+      "severity": "medium",
+      "message": "Technical Context states choices (server-side PDF generation, per-order cache) with no rationale tied to a requirement.",
+      "suggestion": "Add a one-line rationale per choice linking it to the requirement it serves.",
+      "pitfall_id": "PLAN-NO-RATIONALE"
+    },
+    {
+      "artifact": "the specification",
+      "dimension": "consistency",
+      "severity": "high",
+      "message": "The spec promises invoices for every completed order but the plan caches PDFs per order with an undecided retention period \u2014 the artifacts disagree on invoice availability.",
+      "suggestion": "Decide retention in the plan and reconcile it with the spec's 100% availability criterion.",
+      "pitfall_id": "XREF-CONTRADICTION"
+    },
+    {
+      "artifact": "tasks.md",
+      "dimension": "consistent",
+      "severity": "warning",
+      "message": "Phase 1 is titled 'User Story 1' but the Dependencies section speaks generically of 'a story'; task phases and dependencies drift apart as stories are added.",
+      "suggestion": "Name the dependency edges per story (US1 -> US2) instead of generically.",
+      "pitfall_id": null
+    }
+  ],
+  "expect": {
+    "merged_overall": 90.4,
+    "judge_pitfalls": [
+      "PLAN-NO-RATIONALE",
+      "XREF-CONTRADICTION"
+    ],
+    "attribution": [
+      "specs/001-orders/plan.md",
+      "(unattributed)",
+      "specs/001-orders/tasks.md"
+    ],
+    "normalized": [
+      {
+        "severity": "medium",
+        "dimension": "traceability"
+      },
+      {
+        "severity": "high",
+        "dimension": "consistency"
+      },
+      {
+        "severity": "medium",
+        "dimension": "consistency"
+      }
+    ],
+    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against."
+  }
+}

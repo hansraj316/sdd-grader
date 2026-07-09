@@ -1,6 +1,8 @@
 {
   "quality": "low",
   "score_band": [30, 60],
+  "band_rationale": "Low: a half-authored template (unfilled placeholder title, TODO acceptance, unresolved auth decision) must fail the default 70 gate decisively, so the ceiling is 60; floor 30 asserts the engine still credits the sections that do exist. Engine output at labeling time: 46.",
   "expect_pitfalls": ["SPEC-UNRESOLVED-CLARIFICATION", "SPEC-LEFTOVER-PLACEHOLDER", "SPEC-MISSING-ACCEPTANCE"],
-  "note": "Unresolved clarification markers, placeholders, and a TODO instead of acceptance criteria."
+  "accepted_extras": ["SPEC-MISSING-EDGE-CASES", "SPEC-NON-MEASURABLE-SUCCESS"],
+  "note": "Unresolved clarification markers, placeholders, and a TODO instead of acceptance criteria. The extras are genuine secondary defects (no Edge Cases section; 'Login should work well' is unmeasurable), labeled so they count toward precision without being this case's point."
 }

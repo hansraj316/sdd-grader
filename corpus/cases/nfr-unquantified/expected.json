@@ -1,6 +1,8 @@
 {
   "quality": "medium",
-  "score_band": [64, 88],
+  "score_band": [60, 84],
+  "band_rationale": "Medium-low: every stated quality attribute (latency, availability, scalability) is unverifiable and the success criteria are unmeasurable — the spec gives an implementer no target to hit. Ceiling 84 requires those gaps to keep costing at least 16 points; floor 60 leaves room to re-tune all three findings to high severity (36 penalty -> 64). Engine output at labeling time: 76.",
   "expect_pitfalls": ["SPEC-NFR-NO-THRESHOLD", "SPEC-NON-MEASURABLE-SUCCESS"],
-  "note": "NFRs (latency/availability/scalability) with no thresholds; non-measurable success."
+  "accepted_extras": ["SPEC-AMBIGUOUS-WORDING"],
+  "note": "NFRs (latency/availability/scalability) with no thresholds; non-measurable success. The ambiguous-wording extra is genuine: 'highly scalable' in FR-002 is exactly the vague phrasing the rule exists for."
 }

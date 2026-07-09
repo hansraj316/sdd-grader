@@ -17,23 +17,40 @@ from ..adapters.base import ArtifactAdapter, _FENCE_RE
 from ..catalog import Pitfall, load_catalog
 from ..model import Artifact, ArtifactType, Dimension, Finding, Section, Severity, Source
 
-_CLARIFICATION_RE = re.compile(r"\[NEEDS CLARIFICATION", re.IGNORECASE)
+# A genuine marker has a colon and a question: [NEEDS CLARIFICATION: auth method?].
+# Bare '[NEEDS CLARIFICATION]' mentions are template prose talking ABOUT markers.
+_CLARIFICATION_RE = re.compile(r"\[NEEDS CLARIFICATION:", re.IGNORECASE)
 _NO_CLARIF_RE = re.compile(r"no\s+\[needs\s+clarif", re.IGNORECASE)
+# The template's literal demonstration placeholder ('Use [NEEDS CLARIFICATION:
+# specific question] for any assumption ...' in 'For AI Generation') — template
+# prose, not an author-written marker.
+_CLARIF_INSTRUCTION_RE = re.compile(
+    r"\[needs clarification:\s*specific question\]", re.IGNORECASE
+)
 
 
 def _count_real_clarification_markers(raw: str) -> int:
-    """Count genuine [NEEDS CLARIFICATION markers, excluding template boilerplate.
+    """Count genuine [NEEDS CLARIFICATION: ...] markers, excluding template boilerplate.
 
-    Skips blockquote lines (Spec-Kit template instructions start with '>')
-    and checklist lines that reference the marker as the item being verified
-    (e.g. '- [ ] No [NEEDS CLARIFICATION] markers remain').
+    Template-aware (#69): skips lines inside fenced code blocks (the canonical
+    Spec-Kit 'Execution Flow (main)' body is fenced), blockquote lines (template
+    instructions start with '>'), checklist lines that reference the marker as the
+    item being verified ('- [ ] No [NEEDS CLARIFICATION] markers remain'), and
+    instruction lines that demonstrate the marker ('Use [NEEDS CLARIFICATION:
+    specific question] ...'). Requires the ':' of a real marker.
     """
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
     count = 0
-    for line in raw.splitlines():
+    for line, in_fence in zip(lines, fenced):
+        if in_fence:
+            continue
         stripped = line.lstrip()
         if stripped.startswith(">"):
             continue
         if _NO_CLARIF_RE.search(stripped):
+            continue
+        if _CLARIF_INSTRUCTION_RE.search(stripped):
             continue
         if _CLARIFICATION_RE.search(line):
             count += 1
@@ -586,10 +603,6 @@ _STRUCTURAL_CHECKS = {
 }
 
 
-def _get(catalog: dict[str, Pitfall], key: str) -> Pitfall | None:
-    return catalog.get(key)
-
-
 # --------------------------------------------------------------------------- cross-artifact
 
 def _cross_artifact(artifacts: list[Artifact], catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -648,7 +661,8 @@ _STRUCTURAL_HEADINGS: frozenset[str] = frozenset({
     "fields", "field",
     "properties", "property",
     "validation rules", "validation rule", "validation",
-    "state transitions", "state transition", "states",
+    "state transitions", "state transition", "states", "state",
+    "migrations", "migration",
     "relationships", "relationship",
     "indexes", "index", "indices",
     "constraints", "constraint",
