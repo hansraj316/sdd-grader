@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-07-09T06:54:06.630840+00:00",
+  "timestamp": "2026-07-09T07:03:29.750080+00:00",
   "good": {
-    "path": "/Users/hansraj/projects/SDD-Reviewer/.claude/worktrees/agent-a9f78d38ec21cddf5/tests/fixtures/speckit_good",
+    "path": "/Users/hansraj/projects/SDD-Reviewer/tests/fixtures/speckit_good",
     "overall": 100.0,
     "artifacts": [
       {
@@ -39,7 +39,7 @@
     "finding_count": 0
   },
   "bad": {
-    "path": "/Users/hansraj/projects/SDD-Reviewer/.claude/worktrees/agent-a9f78d38ec21cddf5/tests/fixtures/speckit_bad",
+    "path": "/Users/hansraj/projects/SDD-Reviewer/tests/fixtures/speckit_bad",
     "overall": 61.0,
     "artifacts": [
       {
@@ -404,8 +404,8 @@
     "cases": [
       {
         "case": "ambiguous",
-        "merged_overall": 70.0,
-        "expected_overall": 70.0,
+        "merged_overall": 79.0,
+        "expected_overall": 79.0,
         "judge_pitfalls": [
           "JUDGE-29148-PERREQ",
           "SPEC-NON-INDEPENDENT-STORY"
@@ -422,8 +422,8 @@
       },
       {
         "case": "feature-xref",
-        "merged_overall": 88.3,
-        "expected_overall": 88.3,
+        "merged_overall": 90.4,
+        "expected_overall": 90.4,
         "judge_pitfalls": [
           "PLAN-NO-RATIONALE",
           "XREF-CONTRADICTION"

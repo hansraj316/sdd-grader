@@ -234,7 +234,7 @@ def evaluate_judge_case(case_dir: Path) -> dict:
             ),
             encoding="utf-8",
         )
-        judge_findings = judge_mod.judge(arts, "agent", case_dir, cfg)
+        judge_findings, _notes, _model = judge_mod.judge(arts, "agent", case_dir, cfg)
     finally:
         judge_file.unlink(missing_ok=True)
         if created_dir:

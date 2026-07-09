@@ -27,7 +27,7 @@
     }
   ],
   "expect": {
-    "merged_overall": 88.3,
+    "merged_overall": 90.4,
     "judge_pitfalls": [
       "PLAN-NO-RATIONALE",
       "XREF-CONTRADICTION"
@@ -50,6 +50,7 @@
         "severity": "medium",
         "dimension": "consistency"
       }
-    ]
+    ],
+    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against."
   }
 }

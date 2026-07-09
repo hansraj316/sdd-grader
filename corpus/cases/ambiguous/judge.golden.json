@@ -19,12 +19,25 @@
     }
   ],
   "expect": {
-    "merged_overall": 70.0,
-    "judge_pitfalls": ["SPEC-NON-INDEPENDENT-STORY", "JUDGE-29148-PERREQ"],
-    "attribution": ["spec.md", "spec.md"],
+    "merged_overall": 79.0,
+    "judge_pitfalls": [
+      "SPEC-NON-INDEPENDENT-STORY",
+      "JUDGE-29148-PERREQ"
+    ],
+    "attribution": [
+      "spec.md",
+      "spec.md"
+    ],
     "normalized": [
-      {"severity": "high", "dimension": "traceability"},
-      {"severity": "medium", "dimension": "testability"}
-    ]
+      {
+        "severity": "high",
+        "dimension": "traceability"
+      },
+      {
+        "severity": "medium",
+        "dimension": "testability"
+      }
+    ],
+    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against."
   }
 }
