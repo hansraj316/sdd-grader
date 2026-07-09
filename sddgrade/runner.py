@@ -100,8 +100,9 @@ def run_review(
 
     engine_label = "rules"
     judge_error: str | None = None
+    judge_notes: list[str] = []
     if backend in ("agent", "api"):
-        judge_findings, engine_label, judge_error = _run_judge(
+        judge_findings, judge_notes, engine_label, judge_error = _run_judge(
             artifacts, backend, root, cfg, err_console
         )
         findings.extend(judge_findings)
@@ -148,6 +149,9 @@ def run_review(
 
     result: ReviewResult = scoring.score(artifacts, findings, cfg, engine=engine_label)
     result.timestamp = datetime.now(timezone.utc).isoformat()
+    # Coverage caveats from the judge backend (e.g. --api input-budget truncation):
+    # keep them on the result so reports/JSON reflect partial judge coverage.
+    result.notes = judge_notes
 
     history.record(root, result)
 
@@ -202,17 +206,18 @@ def run_review(
 def _run_judge(artifacts, backend, root, cfg, err_console):
     """Run the semantic judge if available.
 
-    Returns ``(findings, engine_label, error)``. On failure the error string carries
-    the reason so the caller can decide whether to degrade to rules (agent default)
-    or fail the run (--require-judge / explicit --api) — never swallow it.
+    Returns ``(findings, notes, engine_label, error)``. Notes are coverage caveats
+    (e.g. --api truncation) to surface on the result. On failure the error string
+    carries the reason so the caller can decide whether to degrade to rules (agent
+    default) or fail the run (--require-judge / explicit --api) — never swallow it.
     """
     try:
         from .engine import judge as judge_mod
     except Exception as exc:  # judge not built yet
-        return [], "rules", f"judge engine unavailable: {exc}"
+        return [], [], "rules", f"judge engine unavailable: {exc}"
 
     try:
-        findings = judge_mod.judge(artifacts, backend, root, cfg, console=err_console)
-        return findings, backend, None
+        findings, notes = judge_mod.judge(artifacts, backend, root, cfg, console=err_console)
+        return findings, notes, backend, None
     except judge_mod.JudgeUnavailable as exc:  # type: ignore[attr-defined]
-        return [], "rules", str(exc)
+        return [], [], "rules", str(exc)

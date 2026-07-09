@@ -223,6 +223,10 @@ class ReviewResult:
     tool: str = "speckit"
     engine: str = "hybrid"
     timestamp: str | None = None  # ISO 8601; stamped by the caller, not at parse time
+    # Coverage caveats attached by the pipeline (e.g. the --api judge truncated
+    # oversized artifacts to fit its input budget). Rendered in every report so
+    # partial judge coverage is never silent.
+    notes: list[str] = field(default_factory=list)
 
     @property
     def overall(self) -> float:
@@ -269,10 +273,13 @@ class ReviewResult:
     def coverage_note(self) -> str:
         """A one-line caveat about what this score does and does not prove."""
         if self.judge_used:
-            return (
+            base = (
                 "Lint + semantic judgment. Findings include deterministic checks and "
                 "the agent's review; a high score reflects both, but is still advisory."
             )
+            if self.notes:
+                return base + " " + " ".join(self.notes)
+            return base
         return (
             "Lint-only (no semantic judge ran). A high score means no KNOWN deterministic "
             "findings — NOT that the spec is complete or semantically correct. Run the "
@@ -291,6 +298,7 @@ class ReviewResult:
             "coverage": self.coverage,
             "judge_used": self.judge_used,
             "coverage_note": self.coverage_note,
+            "notes": self.notes,
             "timestamp": self.timestamp,
             "overall": round(self.overall, 1),
             "top_fixes": top,
