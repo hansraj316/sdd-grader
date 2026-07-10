@@ -50,15 +50,40 @@ def main(
 
 @app.command()
 def init(
-    integration: str = typer.Option(
-        "claude", "--integration", "-i",
+    integration: str | None = typer.Option(
+        None, "--integration", "-i",
         help="AI agent whose subscription runs the judge: "
-        "claude | codex | copilot | cursor | gemini | windsurf | generic.",
+        "claude | codex | copilot | cursor | gemini | windsurf | generic. "
+        "Omit to choose interactively (defaults to claude when not a terminal).",
     ),
     path: Path = typer.Argument(Path("."), help="Project root."),
 ) -> None:
-    """Scaffold .sddgrade.toml and install the judge slash command into your agent."""
+    """Scaffold .sddgrade.toml and install the /sddgrade.* slash commands into your agent.
+
+    Installs the command family (/sddgrade.judge, /sddgrade.review, /sddgrade.fix,
+    /sddgrade.advise) in the agent's own convention, plus a Claude Code skill.
+    """
+    import sys
+
+    from .banner import maybe_show_banner
     from .integrations import agent as agent_backend
+
+    maybe_show_banner()
+
+    if integration is None:
+        if sys.stdin.isatty() and sys.stdout.isatty():
+            # Guided setup (Spec-Kit style): arrow-key agent selection, toolchain
+            # detection, scaffold, next-steps panel.
+            from .interactive import run_init_wizard
+
+            run_init_wizard(path)
+            return
+        # Non-interactive with no flag: same behavior as before, defaulting to
+        # claude; the note goes to stderr so piped stdout stays unchanged.
+        typer.echo(
+            "Non-interactive session: defaulting to --integration claude.", err=True
+        )
+        integration = "claude"
 
     supported = agent_backend.supported_agents()
     if integration not in supported:
@@ -67,9 +92,7 @@ def init(
             param_hint="--integration",
         )
     written = agent_backend.scaffold(path, integration)
-    typer.echo(f"Initialized sddgrade ({integration}). Wrote:")
-    for p in written:
-        typer.echo(f"  {p}")
+    typer.echo(agent_backend.scaffold_summary(written, integration))
 
 
 @app.command()
@@ -109,6 +132,13 @@ def review(
 ) -> None:
     """Grade every Spec-Kit or OpenSpec artifact found under PATH."""
     from .runner import run_review
+
+    if not json_out:
+        # Banner only for humans: maybe_show_banner is a no-op when stdout is
+        # piped, and --json stdout must stay pure JSON.
+        from .banner import maybe_show_banner
+
+        maybe_show_banner()
 
     backend = "rules" if rules else ("api" if api else "agent")
     exit_code = run_review(

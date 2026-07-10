@@ -1,9 +1,12 @@
 """Agent integration — the default judge backend, using the user's own AI agent.
 
 Mirrors Spec-Kit's `--integration`: `sddgrade init --integration <agent>` installs a
-slash command into the agent's command directory. The user runs it; their agent (on
-their existing subscription, no API key) judges the artifacts and writes
-`.sddgrade/judge.json`, which `sddgrade review` reads back.
+Spec-Kit-style *family* of slash commands (`/sddgrade.judge`, `/sddgrade.review`,
+`/sddgrade.fix`, `/sddgrade.advise`) into the agent's command directory, following
+each agent's own convention (Markdown for most, TOML for Gemini, plus a skill for
+Claude Code). The user runs them; their agent (on their existing subscription, no
+API key) judges the artifacts and writes `.sddgrade/judge.json`, which
+`sddgrade review` reads back.
 """
 
 from __future__ import annotations
@@ -15,36 +18,81 @@ from pathlib import Path
 
 from ..engine.judge import JudgeUnavailable, artifact_label, judge_guidance
 
-# Agent → relative path where its slash/prompt command file lives.
-# Best-effort conventions; the file is plain Markdown every agent can read.
-_AGENT_PATHS: dict[str, str] = {
-    "claude": ".claude/commands/sddgrade.md",
-    "copilot": ".github/prompts/sddgrade.prompt.md",
-    "cursor": ".cursor/commands/sddgrade.md",
-    "gemini": ".gemini/commands/sddgrade.md",
-    "windsurf": ".windsurf/workflows/sddgrade.md",
-    "codex": ".codex/prompts/sddgrade.md",
-    "generic": ".sddgrade/commands/sddgrade.md",
+# The command family: name → template file. `/sddgrade.<name>` in every agent.
+COMMANDS: dict[str, str] = {
+    "judge": "judge-command.md",
+    "review": "review-command.md",
+    "fix": "fix-command.md",
+    "advise": "advise-command.md",
 }
+
+# Agent → (command directory, filename pattern, format). Mirrors Spec-Kit's
+# per-agent conventions: Markdown with YAML frontmatter for most agents
+# (`speckit.<name>.md` → `sddgrade.<name>.md`), Copilot's `.prompt.md` files
+# under `.github/prompts/`, and Gemini's TOML (`description` + `prompt` keys,
+# `{{args}}` argument placeholder instead of `$ARGUMENTS`).
+_AGENT_SPECS: dict[str, tuple[str, str, str]] = {
+    "claude": (".claude/commands", "sddgrade.{name}.md", "markdown"),
+    "copilot": (".github/prompts", "sddgrade.{name}.prompt.md", "markdown"),
+    "cursor": (".cursor/commands", "sddgrade.{name}.md", "markdown"),
+    "gemini": (".gemini/commands", "sddgrade.{name}.toml", "toml"),
+    "windsurf": (".windsurf/workflows", "sddgrade.{name}.md", "markdown"),
+    "codex": (".codex/prompts", "sddgrade.{name}.md", "markdown"),
+    "generic": (".sddgrade/commands", "sddgrade.{name}.md", "markdown"),
+}
+
+# Claude Code additionally gets a skill that teaches the whole judge → review →
+# fix workflow and triggers on grade/review/score-my-specs requests.
+CLAUDE_SKILL_PATH = ".claude/skills/sddgrade/SKILL.md"
 
 JUDGMENT_FILE = ".sddgrade/judge.json"
 
 
 def supported_agents() -> list[str]:
-    return sorted(_AGENT_PATHS)
+    return sorted(_AGENT_SPECS)
 
 
-def _command_text() -> str:
-    """The scaffolded command: a thin shim that defers to `sddgrade judge-prompt`.
-
-    Guidance is deliberately NOT baked in at init time (#50) — the shim tells the
-    agent to run `sddgrade judge-prompt`, which prints the current instructions for
-    the currently detected toolchain, so catalog updates reach every scaffolded
-    command without re-running init.
-    """
+def _template_text(filename: str) -> str:
     return (
-        resources.files("sddgrade.integrations.commands") / "judge-command.md"
+        resources.files("sddgrade.integrations.commands") / filename
     ).read_text(encoding="utf-8")
+
+
+def _split_frontmatter(content: str) -> tuple[str, str]:
+    """Split ``content`` into (frontmatter text, body); ("", content) if none."""
+    if content.startswith("---\n"):
+        end = content.find("\n---", 4)
+        if end != -1:
+            return content[4:end].strip(), content[end + 4 :].lstrip("\n")
+    return "", content
+
+
+def _frontmatter_description(content: str) -> str:
+    fm, _ = _split_frontmatter(content)
+    for line in fm.splitlines():
+        if line.startswith("description:"):
+            return line.removeprefix("description:").strip()
+    return ""
+
+
+def _render_toml(content: str) -> str:
+    """Render a Markdown command template as a Gemini TOML command file.
+
+    Gemini custom commands are TOML with a ``description`` string and a
+    ``prompt`` multiline string, and use ``{{args}}`` instead of ``$ARGUMENTS``
+    (same conversion Spec-Kit's TomlIntegration performs).
+    """
+    description = _frontmatter_description(content)
+    _, body = _split_frontmatter(content)
+    body = body.replace("$ARGUMENTS", "{{args}}").rstrip("\n")
+    escaped = body.replace("\\", "\\\\").replace('"""', '\\"\\"\\"')
+    lines = []
+    if description:
+        d = description.replace("\\", "\\\\").replace('"', '\\"')
+        lines.append(f'description = "{d}"')
+        lines.append("")
+    lines.append(f'prompt = """\n{escaped}\n"""')
+    return "\n".join(lines) + "\n"
 
 
 # Toolchain → the artifact-discovery step of the judge instructions (#50: an
@@ -103,16 +151,31 @@ def _default_config() -> str:
 
 
 def scaffold(root: Path, integration: str) -> list[Path]:
-    """Write the agent command file and a starter `.sddgrade.toml`. Returns paths."""
+    """Write the agent's command family and a starter `.sddgrade.toml`.
+
+    Idempotent: command files are re-rendered from the installed templates on
+    every run (so re-running init after an upgrade refreshes them), the config
+    is only written when absent. Returns every path written, in order.
+    """
     root = Path(root).resolve()
-    rel = _AGENT_PATHS.get(integration, _AGENT_PATHS["generic"])
+    cmd_dir, pattern, fmt = _AGENT_SPECS.get(integration, _AGENT_SPECS["generic"])
 
     written: list[Path] = []
 
-    command_path = root / rel
-    command_path.parent.mkdir(parents=True, exist_ok=True)
-    command_path.write_text(_command_text(), encoding="utf-8")
-    written.append(command_path)
+    for name, template in COMMANDS.items():
+        content = _template_text(template)
+        if fmt == "toml":
+            content = _render_toml(content)
+        command_path = root / cmd_dir / pattern.format(name=name)
+        command_path.parent.mkdir(parents=True, exist_ok=True)
+        command_path.write_text(content, encoding="utf-8")
+        written.append(command_path)
+
+    if integration == "claude":
+        skill_path = root / CLAUDE_SKILL_PATH
+        skill_path.parent.mkdir(parents=True, exist_ok=True)
+        skill_path.write_text(_template_text("skill.md"), encoding="utf-8")
+        written.append(skill_path)
 
     config_path = root / ".sddgrade.toml"
     if not config_path.exists():
@@ -120,6 +183,20 @@ def scaffold(root: Path, integration: str) -> list[Path]:
         written.append(config_path)
 
     return written
+
+
+def scaffold_summary(written: list[Path], integration: str) -> str:
+    """The next-steps message `init` (and the guided wizard) prints after scaffolding."""
+    lines = [f"Initialized sddgrade ({integration}). Wrote:"]
+    lines += [f"  {p}" for p in written]
+    lines += [
+        "",
+        "Slash commands installed: /sddgrade.judge  /sddgrade.review  "
+        "/sddgrade.fix  /sddgrade.advise",
+        "Next: open your agent and run /sddgrade.review "
+        "(or run `sddgrade review --rules` for the offline lint).",
+    ]
+    return "\n".join(lines)
 
 
 def artifact_manifest(artifacts, root: Path) -> dict[str, str]:

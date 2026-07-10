@@ -157,32 +157,35 @@
       </div>
     </div>
     <pre id="term-before">
-<span class="t-dim">╭──────────────── SDD Review — overall ────────────────╮</span>
-<span class="t-dim">│</span>  <span class="scorebig t-warn">69.4/100</span>   <span class="t-dim">engine=lint+judge · artifacts=8 · findings=22</span>  <span class="t-dim">│</span>
-<span class="t-dim">╰───────────────────────────────────────────────────────╯</span>
-  <span class="t-head">Artifact</span>          <span class="t-head">Score</span>   <span class="t-head">Findings</span>
-  spec.md           <span class="t-bad"> 34</span>      9
-  plan.md           <span class="t-warn"> 50</span>      6
-  tasks.md          <span class="t-warn"> 58</span>      7
-  research.md       <span class="t-good">100</span>      0
+<span class="t-dim">╭─────────────────────── SDD Review ────────────────────────╮</span>
+<span class="t-dim">│</span>  <span class="scorebig t-warn">69/100</span>  <span class="t-bad">FAIL</span> <span class="t-dim">(gate 70)</span>                                    <span class="t-dim">│</span>
+<span class="t-dim">│</span>  <span class="t-dim">coverage lint+semantic · model=claude-fable-5</span>            <span class="t-dim">│</span>
+<span class="t-dim">│</span>  3 of 8 artifacts need work; 4 high-severity findings     <span class="t-dim">│</span>
+<span class="t-dim">│</span>  — start with spec.md.                                    <span class="t-dim">│</span>
+<span class="t-dim">╰───────────────────────────────────────────────────────────╯</span>
+  <span class="t-head">Artifact</span>       <span class="t-head">Score /100</span>   <span class="t-head">Findings</span>   <span class="t-head">Worst severity</span>
+  spec.md        <span class="t-bad"> 34</span>           9          <span class="t-bad">HIGH</span>
+  plan.md        <span class="t-warn"> 50</span>           6          <span class="t-bad">HIGH</span>
+  tasks.md       <span class="t-warn"> 58</span>           7          <span class="t-warn">MEDIUM</span>
+  research.md    <span class="t-good">100</span>           0          <span class="t-dim">—</span>
 
-  <span class="t-bad">HIGH</span>  completeness  <span class="t-dim">spec.md</span>  5 unresolved [NEEDS CLARIFICATION] marker(s)
-        <span class="t-dim">fix</span> Resolve each marker with a concrete decision; remove the marker.
-  <span class="t-bad">HIGH</span>  testability   <span class="t-dim">spec.md</span>  User story has no acceptance criteria
-        <span class="t-dim">fix</span> Add explicit acceptance criteria per story, ideally Given/When/Then.</pre>
+  <span class="t-dim">spec.md findings</span>
+  <span class="t-bad">HIGH</span>  completeness  <span class="t-dim">:73</span>  5 unresolved [NEEDS CLARIFICATION] marker(s)
+        <span class="t-dim">fix</span> Resolve each marker with a concrete decision; remove the marker.</pre>
     <pre id="term-after" hidden>
-<span class="t-dim">╭──────────────── SDD Review — overall ────────────────╮</span>
-<span class="t-dim">│</span>  <span class="scorebig t-good">83.6/100</span>   <span class="t-dim">engine=lint+judge · artifacts=8 · findings=13</span>  <span class="t-dim">│</span>
-<span class="t-dim">╰───────────────────────────────────────────────────────╯</span>
-  <span class="t-head">Artifact</span>          <span class="t-head">Score</span>   <span class="t-head">Findings</span>
-  spec.md           <span class="t-good">100</span>      0   <span class="t-good">▲ +66 — every fix applied</span>
-  plan.md           <span class="t-warn"> 50</span>      6   <span class="t-dim">(left untouched as control)</span>
-  tasks.md          <span class="t-warn"> 58</span>      7   <span class="t-dim">(left untouched as control)</span>
-  research.md       <span class="t-good">100</span>      0
+<span class="t-dim">╭─────────────────────── SDD Review ────────────────────────╮</span>
+<span class="t-dim">│</span>  <span class="scorebig t-good">84/100</span>  <span class="t-good">PASS</span> <span class="t-dim">(gate 70)</span>                                    <span class="t-dim">│</span>
+<span class="t-dim">│</span>  <span class="t-dim">coverage lint+semantic · model=claude-fable-5</span>            <span class="t-dim">│</span>
+<span class="t-dim">│</span>  spec.md is clean; 2 artifacts still need work.           <span class="t-dim">│</span>
+<span class="t-dim">╰───────────────────────────────────────────────────────────╯</span>
+  <span class="t-head">Artifact</span>       <span class="t-head">Score /100</span>   <span class="t-head">Findings</span>   <span class="t-head">Worst severity</span>
+  spec.md        <span class="t-good">100</span>           0          <span class="t-good">▲ +66 — every fix applied</span>
+  plan.md        <span class="t-warn"> 50</span>           6          <span class="t-dim">(control — untouched)</span>
+  tasks.md       <span class="t-warn"> 58</span>           7          <span class="t-dim">(control — untouched)</span>
+  research.md    <span class="t-good">100</span>           0          <span class="t-dim">—</span>
 
-  <span class="t-good">✓</span> spec.md — clarifications resolved, scenarios testable, NFRs quantified,
-    implementation details moved to plan, checklist honest. <span class="t-dim">Judged fresh:
-    judgment hash-pinned to this exact content.</span></pre>
+  <span class="t-good">✓</span> Judged fresh: judgment hash-pinned to this exact content.
+  <span class="t-dim">Next steps · work worst-first, then re-run · --html report.html to share</span></pre>
   </div>
 
   <section id="why">
@@ -281,12 +284,15 @@
         <h3><span class="no">1</span>Install</h3>
         <pre>uvx --from git+https://github.com/\
 hansraj316/sdd-grader.git sddgrade review</pre>
-        <p>Zero-install run with uv. <code>pip install sddgrade</code> lands with v0.2.0 on PyPI.</p>
+        <p>Zero-install run with uv. <code>pip install sddgrade</code> lands with the PyPI release.</p>
       </div>
       <div class="step">
         <h3><span class="no">2</span>Wire up your agent</h3>
-        <pre>sddgrade init --integration claude</pre>
-        <p>Scaffolds config plus the judge slash command for Claude Code (or Copilot, Cursor, Gemini).</p>
+        <pre>sddgrade init</pre>
+        <p>Guided setup: pick your agent with arrow keys. Installs the
+        <code>/sddgrade.judge</code>, <code>.review</code>, <code>.fix</code>, and
+        <code>.advise</code> commands (plus a skill in Claude Code) for Claude Code,
+        Copilot, Cursor, Gemini, Windsurf, or Codex.</p>
       </div>
       <div class="step">
         <h3><span class="no">3</span>Review &amp; gate</h3>

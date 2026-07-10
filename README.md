@@ -65,9 +65,30 @@ A **hybrid engine**:
   requirements, unquantified NFRs).
 - **Semantic judge** — runs **inside your existing AI agent** (Claude Code, Copilot,
   Cursor, Gemini…) using the subscription you already have, **no API key**.
-  `sddgrade init --integration <agent>` scaffolds a slash command; your agent judges
-  the artifacts and writes structured JSON back, which the CLI merges and scores. A
-  key-based `--api` backend exists for headless CI, and `--rules` runs lint-only.
+  `sddgrade init --integration <agent>` scaffolds a Spec-Kit-style slash-command
+  family; your agent judges the artifacts and writes structured JSON back, which
+  the CLI merges and scores. A key-based `--api` backend exists for headless CI,
+  and `--rules` runs lint-only.
+
+### Agent integration: the `/sddgrade.*` command family
+
+`sddgrade init --integration <agent>` installs four commands (mirroring how
+Spec-Kit ships `/speckit.specify`, `/speckit.plan`, …):
+
+| Command | What your agent does |
+|---|---|
+| `/sddgrade.judge` | Runs `sddgrade judge-prompt`, follows the live instructions, writes `.sddgrade/judge.json` (findings + sha256 hash manifest + model key). |
+| `/sddgrade.review` | Judges if needed, runs `sddgrade review`, presents the scored results, offers to fix the top findings. |
+| `/sddgrade.fix` | Takes the top N findings from `sddgrade review --json` (using the structured `fix` data), edits the artifacts, re-judges, and reports the before/after score delta. |
+| `/sddgrade.advise` | Runs `sddgrade advise` and helps you adopt SDD. |
+
+Files land in each agent's own convention: `.claude/commands/sddgrade.<cmd>.md`
+(Claude Code, plus a `.claude/skills/sddgrade/SKILL.md` skill that triggers on
+"grade/review my specs"), `.github/prompts/sddgrade.<cmd>.prompt.md` (Copilot),
+`.cursor/commands/` (Cursor), `.gemini/commands/sddgrade.<cmd>.toml` (Gemini CLI),
+`.windsurf/workflows/` (Windsurf), `.codex/prompts/` (Codex), or
+`.sddgrade/commands/` (generic). Re-running `init` refreshes the commands in
+place — it never duplicates them and only writes `.sddgrade.toml` if absent.
 
 ## Who it's for (and who it isn't)
 
@@ -107,7 +128,8 @@ version with `sddgrade --version`.
 ## Commands
 
 ```bash
-sddgrade init --integration claude   # scaffold config + agent judge slash command
+sddgrade init                        # guided setup: pick your agent (arrow keys), detect toolchain, scaffold
+sddgrade init --integration claude   # non-interactive: scaffold config + /sddgrade.* agent commands
 sddgrade review                      # grade every artifact (lint + agent judgment if present)
 sddgrade review --rules --json       # offline, machine-readable (good for CI)
 sddgrade review --fail-under 70      # opt-in CI gate: non-zero exit below threshold
@@ -121,12 +143,71 @@ sddgrade dashboard                   # terminal metrics: trends, dimensions, top
 ```
 
 Supported `--integration` agents: claude, codex, copilot, cursor, gemini, windsurf,
-generic (see `sddgrade init --help`).
+generic (see `sddgrade init --help`). Run `sddgrade init` with no flag in a terminal
+for the guided Spec-Kit-style setup; in scripts/CI (no TTY) it defaults to claude.
+
+Interactive runs of `init` and `review` open with an ASCII banner; it is never
+printed when stdout is piped or under `--json`, so parsers and CI logs stay clean.
 
 Exit codes: `0` reviewed (gating is opt-in — a bare `review` never fails on findings) ·
 `1` score below the `--fail-under`/config threshold · `2` nothing to review ·
 `3` `--require-judge` but the judge is unavailable · `4` malformed `.sddgrade.toml`.
 With `--json`, stdout carries only the JSON report; warnings and notices go to stderr.
+
+## What a review looks like
+
+`sddgrade review` renders summary-first: the verdict panel, a worst-first scores
+table, one findings table per artifact (severity, dimension, line, finding, fix),
+and contextual next steps. Real output against a defect-laden fixture:
+
+```text
+╭───────────────────────────────── SDD Review ─────────────────────────────────╮
+│  61/100   FAIL (gate 70)                                                     │
+│                                                                              │
+│  coverage lint-only — Lint-only (no semantic judge ran). A high score means  │
+│  no KNOWN deterministic findings — NOT that the spec is complete or          │
+│  semantically correct. Run the agent judge (or --api) for semantic review.   │
+│  tool=auto engine=rules artifacts=4 findings=19                              │
+│                                                                              │
+│  1 of 4 artifacts needs work; 8 high-severity findings — start with          │
+│  spec.md.                                                                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Scores
+┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Artifact          ┃ Type          ┃  Score /100 ┃  Findings ┃ Worst severity ┃
+┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ spec.md           │ spec          │          24 │        10 │ HIGH           │
+│ plan.md           │ plan          │          70 │         3 │ HIGH           │
+│ constitution.md   │ constitution  │          74 │         3 │ HIGH           │
+│ tasks.md          │ tasks         │          86 │         3 │ MEDIUM         │
+└───────────────────┴───────────────┴─────────────┴───────────┴────────────────┘
+
+specs/001-notifications/spec.md (24/100)
+┏━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Severity ┃ Dimension    ┃ Line ┃ Finding              ┃ Fix                  ┃
+┡━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
+│ HIGH     │ completeness │    1 │ Unfilled template    │ Fill in every        │
+│          │              │      │ placeholders / TODO  │ placeholder with     │
+│          │              │      │ / TBD: 2             │ real content; delete │
+│          │              │      │ occurrence(s).       │ sections that do     │
+│          │              │      │ SPEC-LEFTOVER-…      │ not apply.           │
+├──────────┼──────────────┼──────┼──────────────────────┼──────────────────────┤
+│ HIGH     │ testability  │    5 │ User story has no    │ Add explicit         │
+│          │              │      │ acceptance criteria. │ acceptance criteria  │
+│          │              │      │ SPEC-MISSING-…       │ per story.           │
+└──────────┴──────────────┴──────┴──────────────────────┴──────────────────────┘
+…one findings table per artifact, worst first…
+
+╭────────────────────────────────── Next steps ─────────────────────────────────╮
+│  • Semantic judge didn't run — run your agent's /sddgrade command (or         │
+│  sddgrade review --api), then re-run sddgrade review.                         │
+│  • Work through the fixes above (worst artifact first), then re-run           │
+│  sddgrade review.                                                             │
+│  • Get a shareable report with --html report.html, or just the shortlist      │
+│  with --top-fixes 5.                                                          │
+╰────────────────────────────────────────────────────────────────────────────────╯
+```
 
 ## Toolchains: Spec-Kit and OpenSpec
 
