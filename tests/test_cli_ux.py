@@ -83,7 +83,8 @@ def test_init_without_flag_non_tty_defaults_to_claude(tmp_path: Path):
     # No --integration and no TTY: prior behavior preserved (claude scaffold).
     proc = _cli("init", str(tmp_path))
     assert proc.returncode == 0
-    assert (tmp_path / ".claude/commands/sddgrade.md").is_file()
+    assert (tmp_path / ".claude/commands/sddgrade.judge.md").is_file()
+    assert (tmp_path / ".claude/skills/sddgrade/SKILL.md").is_file()
     assert (tmp_path / ".sddgrade.toml").is_file()
     assert "defaulting to --integration claude" in proc.stderr
 
@@ -93,9 +94,9 @@ def test_init_wizard_scaffolds_selected_agent(monkeypatch, tmp_path: Path):
     buf = io.StringIO()
     console = Console(file=buf, force_terminal=True, width=100)
     written = interactive.run_init_wizard(tmp_path, console=console)
-    assert (tmp_path / ".cursor/commands/sddgrade.md").is_file()
+    assert (tmp_path / ".cursor/commands/sddgrade.judge.md").is_file()
     assert (tmp_path / ".sddgrade.toml").is_file()
-    assert any(p.name == "sddgrade.md" for p in written)
+    assert any(p.name == "sddgrade.judge.md" for p in written)
     out = buf.getvalue()
     assert "Next Steps" in out
     assert "sddgrade review" in out
