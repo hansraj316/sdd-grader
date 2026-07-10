@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..model import Artifact, ArtifactType
+from ..model import Artifact, ArtifactType, Finding, Source
 from .base import parse_sections
 
 # OpenSpec spec → SPEC, proposal → PLAN, tasks → TASKS, design → RESEARCH,
@@ -36,6 +36,7 @@ class OpenSpecAdapter:
     """ArtifactAdapter for OpenSpec."""
 
     name = "openspec"
+    hint = "initialize an OpenSpec repository (openspec/changes/ or openspec/specs/ must exist)"
 
     def detect(self, root: Path) -> bool:
         os_dir = root / "openspec"
@@ -110,3 +111,38 @@ class OpenSpecAdapter:
 
     def required_sections(self, artifact_type: ArtifactType, root: Path) -> list[str]:
         return _DEFAULT_REQUIRED.get(artifact_type, [])
+
+    def structural_checks(self, artifact: Artifact, catalog: dict) -> list[Finding]:
+        """OpenSpec-specific checks: a Requirement heading with no Scenario sub-heading."""
+        if artifact.type is not ArtifactType.SPEC:
+            return []
+        p = catalog.get("OPENSPEC-REQ-NO-SCENARIO")
+        if p is None:
+            return []
+        out: list[Finding] = []
+        secs = artifact.sections
+        for i, s in enumerate(secs):
+            if not (s.title.lower().startswith("requirement:") and s.level <= 3):
+                continue
+            has_scenario = False
+            for t in secs[i + 1:]:
+                if t.level <= s.level:
+                    break
+                if t.title.lower().startswith("scenario:"):
+                    has_scenario = True
+                    break
+            if not has_scenario:
+                out.append(Finding(
+                    dimension=p.dimension,
+                    severity=p.severity,
+                    message=f"Requirement '{s.title}' has no #### Scenario.",
+                    suggestion=p.fix,
+                    source=Source.LINT,
+                    pitfall_id=p.id,
+                    artifact_path=artifact.path,
+                    line=s.line,
+                ))
+        return out
+
+    def cross_artifact_checks(self, artifacts: list[Artifact], catalog: dict) -> list[Finding]:
+        return []
