@@ -57,7 +57,11 @@ def init(
     ),
     path: Path = typer.Argument(Path("."), help="Project root."),
 ) -> None:
-    """Scaffold .sddgrade.toml and install the judge slash command into your agent."""
+    """Scaffold .sddgrade.toml and install the /sddgrade.* slash commands into your agent.
+
+    Installs the command family (/sddgrade.judge, /sddgrade.review, /sddgrade.fix,
+    /sddgrade.advise) in the agent's own convention, plus a Claude Code skill.
+    """
     from .integrations import agent as agent_backend
 
     supported = agent_backend.supported_agents()
@@ -67,9 +71,7 @@ def init(
             param_hint="--integration",
         )
     written = agent_backend.scaffold(path, integration)
-    typer.echo(f"Initialized sddgrade ({integration}). Wrote:")
-    for p in written:
-        typer.echo(f"  {p}")
+    typer.echo(agent_backend.scaffold_summary(written, integration))
 
 
 @app.command()

@@ -209,12 +209,12 @@ def test_init_scaffolds_agent_command(good_repo: Path):
     from sddgrade.integrations import agent as agent_backend
 
     written = agent_backend.scaffold(good_repo, "claude")
-    assert (good_repo / ".claude/commands/sddgrade.md").is_file()
+    assert (good_repo / ".claude/commands/sddgrade.judge.md").is_file()
     assert (good_repo / ".sddgrade.toml").is_file()
-    assert any("sddgrade.md" in str(p) for p in written)
+    assert any("sddgrade.judge.md" in str(p) for p in written)
     # #50: the command is a thin shim deferring to `sddgrade judge-prompt` so
     # guidance is always live — pitfall ids are never baked in at init time.
-    text = (good_repo / ".claude/commands/sddgrade.md").read_text()
+    text = (good_repo / ".claude/commands/sddgrade.judge.md").read_text()
     assert "sddgrade judge-prompt" in text
     assert "PLAN-OVER-ENGINEERING" not in text
 

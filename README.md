@@ -65,9 +65,30 @@ A **hybrid engine**:
   requirements, unquantified NFRs).
 - **Semantic judge** — runs **inside your existing AI agent** (Claude Code, Copilot,
   Cursor, Gemini…) using the subscription you already have, **no API key**.
-  `sddgrade init --integration <agent>` scaffolds a slash command; your agent judges
-  the artifacts and writes structured JSON back, which the CLI merges and scores. A
-  key-based `--api` backend exists for headless CI, and `--rules` runs lint-only.
+  `sddgrade init --integration <agent>` scaffolds a Spec-Kit-style slash-command
+  family; your agent judges the artifacts and writes structured JSON back, which
+  the CLI merges and scores. A key-based `--api` backend exists for headless CI,
+  and `--rules` runs lint-only.
+
+### Agent integration: the `/sddgrade.*` command family
+
+`sddgrade init --integration <agent>` installs four commands (mirroring how
+Spec-Kit ships `/speckit.specify`, `/speckit.plan`, …):
+
+| Command | What your agent does |
+|---|---|
+| `/sddgrade.judge` | Runs `sddgrade judge-prompt`, follows the live instructions, writes `.sddgrade/judge.json` (findings + sha256 hash manifest + model key). |
+| `/sddgrade.review` | Judges if needed, runs `sddgrade review`, presents the scored results, offers to fix the top findings. |
+| `/sddgrade.fix` | Takes the top N findings from `sddgrade review --json` (using the structured `fix` data), edits the artifacts, re-judges, and reports the before/after score delta. |
+| `/sddgrade.advise` | Runs `sddgrade advise` and helps you adopt SDD. |
+
+Files land in each agent's own convention: `.claude/commands/sddgrade.<cmd>.md`
+(Claude Code, plus a `.claude/skills/sddgrade/SKILL.md` skill that triggers on
+"grade/review my specs"), `.github/prompts/sddgrade.<cmd>.prompt.md` (Copilot),
+`.cursor/commands/` (Cursor), `.gemini/commands/sddgrade.<cmd>.toml` (Gemini CLI),
+`.windsurf/workflows/` (Windsurf), `.codex/prompts/` (Codex), or
+`.sddgrade/commands/` (generic). Re-running `init` refreshes the commands in
+place — it never duplicates them and only writes `.sddgrade.toml` if absent.
 
 ## Who it's for (and who it isn't)
 
@@ -107,7 +128,7 @@ version with `sddgrade --version`.
 ## Commands
 
 ```bash
-sddgrade init --integration claude   # scaffold config + agent judge slash command
+sddgrade init --integration claude   # scaffold config + /sddgrade.* agent commands
 sddgrade review                      # grade every artifact (lint + agent judgment if present)
 sddgrade review --rules --json       # offline, machine-readable (good for CI)
 sddgrade review --fail-under 70      # opt-in CI gate: non-zero exit below threshold

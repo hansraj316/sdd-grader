@@ -152,7 +152,7 @@ def test_judge_instructions_tracks_detected_toolchain(tmp_path: Path):
 
 def test_scaffolded_command_is_a_live_shim(tmp_path: Path):
     written = scaffold(tmp_path, "claude")
-    command = next(p for p in written if p.name.endswith(".md"))
+    command = next(p for p in written if p.name == "sddgrade.judge.md")
     text = command.read_text()
     assert "sddgrade judge-prompt" in text
     # No guidance is baked in at init time anymore.
