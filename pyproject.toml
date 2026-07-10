@@ -10,6 +10,7 @@ keywords = ["spec-kit", "spec-driven-development", "review", "lint", "benchmark"
 dependencies = [
     "typer>=0.12",
     "rich>=13.7",
+    "readchar>=4.0",  # arrow-key selection in `sddgrade init` (same as Spec-Kit)
 ]
 
 [project.optional-dependencies]
