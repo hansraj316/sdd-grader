@@ -121,6 +121,17 @@ detect = "A user-story section with no acceptance criteria / Given-When-Then sce
 fix = "Add explicit acceptance criteria per story, ideally Gherkin Given/When/Then."
 
 [[pitfall]]
+id = "SPEC-GHERKIN-MALFORMED-AC"
+name = "Malformed Gherkin acceptance criteria (incomplete Given/When/Then triad)"
+dimension = "testability"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "Gherkin BDD / INVEST 'Testable': a scenario with Given/When but no Then specifies no expected outcome and cannot be turned into a passing test. A Then with no When/Given has no trigger or precondition. Partial Gherkin gives false confidence while remaining unexecutable."
+detect = "Acceptance/scenario text for a user story has at least one line-leading Gherkin keyword (Given/When/Then) but is missing at least one of the required triad."
+fix = "Complete the Gherkin triad: Given <precondition> / When <trigger> / Then <expected outcome>. Each scenario must include all three steps."
+
+[[pitfall]]
 id = "SPEC-NON-INDEPENDENT-STORY"
 name = "User stories not independently testable"
 dimension = "traceability"

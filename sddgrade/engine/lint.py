@@ -119,6 +119,14 @@ def _nfr_without_threshold(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     return []
 
 
+# Line-leading Gherkin keywords (Given/When/Then at start of a line, allowing
+# optional bullet prefix).  "And" / "But" are continuations, not primary keywords,
+# so they don't trigger the triad check by themselves.
+_GHERKIN_GIVEN_RE = re.compile(r"^\s*[-*+]?\s*given\b", re.IGNORECASE | re.MULTILINE)
+_GHERKIN_WHEN_RE = re.compile(r"^\s*[-*+]?\s*when\b", re.IGNORECASE | re.MULTILINE)
+_GHERKIN_THEN_RE = re.compile(r"^\s*[-*+]?\s*then\b", re.IGNORECASE | re.MULTILINE)
+
+
 _PASSIVE_VERB_RE = re.compile(
     r"\b(?:shall|must|should|will)\s+be\s+\w+ed\b"
     r"|\bto\s+be\s+\w+ed\b",
@@ -464,6 +472,37 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
                         _from_pitfall(
                             p, art.path,
                             f"User story '{s.title}' has no acceptance criteria.",
+                            line=s.line,
+                        )
+                    )
+
+    # Malformed Gherkin: AC section is in "formal Gherkin mode" (≥2 distinct
+    # keywords each leading their own line) but the triad is incomplete.
+    # Single line-leading keywords are not checked — prose ACs written as
+    # "- Given ..., when ..., then ..." have only Given line-leading and are fine.
+    if p := catalog.get("SPEC-GHERKIN-MALFORMED-AC"):
+        for i, s in enumerate(art.sections):
+            if "user story" in s.title.lower():
+                combined = s.body
+                for following in art.sections[i + 1:]:
+                    if following.level < s.level:
+                        break
+                    if "user story" in following.title.lower():
+                        break
+                    t = following.title.lower()
+                    if "acceptance" in t or "scenario" in t:
+                        combined += "\n" + following.body
+                has_given = bool(_GHERKIN_GIVEN_RE.search(combined))
+                has_when = bool(_GHERKIN_WHEN_RE.search(combined))
+                has_then = bool(_GHERKIN_THEN_RE.search(combined))
+                leading_count = sum([has_given, has_when, has_then])
+                # Enter formal Gherkin mode only when ≥2 keywords each head their own line.
+                if leading_count >= 2 and not (has_given and has_when and has_then):
+                    missing = [kw for kw, ok in [("Given", has_given), ("When", has_when), ("Then", has_then)] if not ok]
+                    out.append(
+                        _from_pitfall(
+                            p, art.path,
+                            f"User story '{s.title}' has partial Gherkin AC (missing: {', '.join(missing)}).",
                             line=s.line,
                         )
                     )
