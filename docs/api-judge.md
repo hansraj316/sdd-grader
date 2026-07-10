@@ -1,7 +1,10 @@
 # The `--api` judge backend (optional)
 
-The default judge runs in your existing agent (no key). For **headless CI** where no
-interactive agent exists, `--api` calls a provider directly.
+The default judge runs in your existing agent (no key): `sddgrade init` installs the
+`/sddgrade.judge` slash command (part of the `/sddgrade.*` family — see the README's
+agent-integration section), which writes `.sddgrade/judge.json` for `sddgrade review`
+to consume. For **headless CI** where no interactive agent exists, `--api` calls a
+provider directly.
 
 ```bash
 pip install 'sddgrade[api]'        # installs the Anthropic SDK
