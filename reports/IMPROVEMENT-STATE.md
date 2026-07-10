@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 16
-Last run: 2026-07-09
+Iteration: 17
+Last run: 2026-07-10
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -28,23 +28,23 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
-- [ ] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD)
+- [~] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD) → issue #78 → PR #82
 - [ ] judge-invest — Judge-side INVEST scoring of user stories (independent, small, valuable, testable). (INVEST)
 - [ ] checklist-ingest — Ingest a generated /speckit.checklist and score item completion. (Spec-Kit checklist)
 - [ ] report-sarif — Emit SARIF so findings show up in GitHub code scanning. (CI integration practice)
 - [ ] feature-rollup — Per-feature rollup scores (group artifacts by feature) in report + dashboard. (sddgrade gap)
 - [ ] trend-regression — Dashboard flags a score regression vs the previous run. (sddgrade gap)
-- [ ] constitution-crosscheck — Check that plan.md's Constitution Check references the actual principle names from constitution.md. (Spec-Kit constitution)
+- [ ] constitution-crosscheck — Check that plan.md's Constitution Check references the actual principle names from constitution.md. (Spec-Kit constitution) → issue #79
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
-- [ ] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap)
-- [ ] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice)
+- [ ] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80
+- [ ] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #48 → PR #77 adapter-structural-seam — add structural_checks/cross_artifact_checks/hint to ArtifactAdapter protocol; move _openspec_structural to OpenSpecAdapter; remove adapter.name branching from lint(); fix no-artifacts + missing-section messages (2026-07-09; awaiting CI)
+- #78 → PR #82 gherkin-malformed-ac — SPEC-GHERKIN-MALFORMED-AC pitfall + lint check; formal Gherkin mode (≥2 leading keywords) guard prevents false positives on inline prose ACs (2026-07-10; awaiting CI)
 
 ## Merged
 
@@ -60,6 +60,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #31 → PR #72 fix-cli-tool-default — Optional[Tool] default None in cli.py; Config.tool default "speckit"→"auto" (2026-07-06, CI was green; squash-merged).
 - #44 → PR #73 fix-xref-entity-false-positives — _STRUCTURAL_HEADINGS denylist + word-boundary entity matching (2026-07-07, CI was green; squash-merged).
 - #46 → PR #74 remove-dead-config-keys — delete Config.integration + Config.rubric_override; scaffold tool=auto (2026-07-08, CI was green; squash-merged).
+- #48 → PR #77 adapter-structural-seam — add structural_checks/cross_artifact_checks/hint to ArtifactAdapter protocol; moved _openspec_structural to OpenSpecAdapter; removed adapter.name branching from lint() (2026-07-10, CI was green; squash-merged).
 
 ## Blocked
 
@@ -143,3 +144,10 @@ Tessl, and Spec-Kit extensions/presets.)
   removed adapter.name branching from lint(); fixed no-artifacts + missing-section messages to
   use adapter.name/hint; 15 new regression tests; pytest 261 green; benchmark good=100 bad=61
   PASS; PR #77 opened; issue #48 commented.
+- iter 17 (2026-07-10): Phase 1 merged PR #77 (issue #48 closed, CI was green; converted draft
+  → ready + squash-merged via MCP). Phase 2 found 0 open loop-candidate issues → Phase 3:
+  filed 4 new issues (#78 pitfall-gherkin-acceptance, #79 constitution-crosscheck, #80
+  adapter-config-schema, #81 precommit-hook). Phase 4 picked #78 (SPEC-GHERKIN-MALFORMED-AC
+  — formal Gherkin check requiring ≥2 line-leading keywords to avoid false positives on
+  inline prose ACs); 3 regexes + check in _spec_checks + 16 unit tests; pytest 277 green;
+  benchmark good=100 bad=61 PASS; PR #82 opened; issue #78 commented.
