@@ -374,6 +374,19 @@ why = "Contradictions between spec, plan, and tasks mean at least one is wrong; 
 detect = "Conflicting statements across artifacts (judge / mirrors /speckit.analyze)."
 fix = "Reconcile the artifacts so a single consistent intent remains."
 
+# ----------------------------------------------------------------- cross-artifact constitution
+
+[[pitfall]]
+id = "SPECKIT-CONSTITUTION-CROSSCHECK"
+name = "Constitution Check does not reference actual principle names from constitution.md"
+dimension = "traceability"
+artifacts = ["plan"]
+severity = "medium"
+method = "lint"
+why = "Spec-Kit constitution workflow: the Constitution Check in plan.md must evaluate each of the project's actual governing principles. A check that references no named principles gives false assurance — it could be a copy-paste 'PASS' that doesn't actually evaluate the real constraints."
+detect = "Extract principle names (level-2/3 headings, excluding generic structural headings and unfilled placeholders) from constitution.md; check that at least one appears (case-insensitive) in the plan's Constitution Check section body."
+fix = "In the Constitution Check section of plan.md, explicitly name each principle from constitution.md and state whether it passed or failed (e.g. '- Library-First: PASS — single module, no wrappers')."
+
 # ----------------------------------------------------------------------- constitution
 
 [[pitfall]]
