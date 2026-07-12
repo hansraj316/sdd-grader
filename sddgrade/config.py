@@ -8,6 +8,7 @@ runner — a config key with no consumer must not be added (#46).
 
 from __future__ import annotations
 
+import sys
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -53,6 +54,24 @@ class Config:
         return self.weights.get(dim, 1.0)
 
 
+_KNOWN_KEYS: frozenset[str] = frozenset({"tool", "fail_under", "weights"})
+_VALID_DIMENSIONS: frozenset[str] = frozenset(d.value for d in Dimension)
+
+
+def _warn_unknown_keys(section: dict[str, Any], path: Path) -> None:
+    """Emit stderr warnings for unrecognised keys in the config section."""
+    for key in section:
+        if key not in _KNOWN_KEYS:
+            print(f"warning: unknown config key '{key}' in {path}", file=sys.stderr)
+        elif key == "weights" and isinstance(section[key], dict):
+            for wk in section[key]:
+                if wk not in _VALID_DIMENSIONS:
+                    print(
+                        f"warning: unknown config key 'weights.{wk}' in {path}",
+                        file=sys.stderr,
+                    )
+
+
 def _coerce_weights(raw: dict[str, Any]) -> dict[Dimension, float]:
     out = dict(DEFAULT_WEIGHTS)
     for key, value in raw.items():
@@ -93,6 +112,7 @@ def load(root: Path | None = None) -> Config:
         raise ConfigError(f"could not read {config_file}: {exc}") from exc
 
     section = data.get("sddgrade", data)
+    _warn_unknown_keys(section, config_file)
     if isinstance(section.get("tool"), str):
         cfg.tool = section["tool"]
     if isinstance(section.get("fail_under"), (int, float)):
