@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 18
-Last run: 2026-07-11
+Iteration: 19
+Last run: 2026-07-12
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -29,7 +29,8 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
 - [x] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD) → issue #78 → merged in PR #82
-- [~] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80 → PR #84
+- [x] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80 → merged in PR #84
+- [~] constitution-crosscheck — Cross-artifact check: plan.md's Constitution Check must reference actual principle names from constitution.md → issue #79 → PR #85
 - [ ] judge-invest — Judge-side INVEST scoring of user stories (independent, small, valuable, testable). (INVEST)
 - [ ] checklist-ingest — Ingest a generated /speckit.checklist and score item completion. (Spec-Kit checklist)
 - [ ] report-sarif — Emit SARIF so findings show up in GitHub code scanning. (CI integration practice)
@@ -45,7 +46,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #80 → PR #84 config-unknown-key-warning — warn on stderr for unrecognised keys in .sddgrade.toml; also warns on unknown dimension names in [weights] sub-table (2026-07-11; awaiting CI)
+- #79 → PR #85 constitution-crosscheck — SPECKIT-CONSTITUTION-CROSSCHECK cross-artifact lint check; _constitution_principles() helper filters placeholders/generic headings; moved before tasks guard; 12 unit tests (2026-07-12; awaiting CI)
 
 ## Merged
 
@@ -63,6 +64,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #46 → PR #74 remove-dead-config-keys — delete Config.integration + Config.rubric_override; scaffold tool=auto (2026-07-08, CI was green; squash-merged).
 - #48 → PR #77 adapter-structural-seam — add structural_checks/cross_artifact_checks/hint to ArtifactAdapter protocol; moved _openspec_structural to OpenSpecAdapter; removed adapter.name branching from lint() (2026-07-10, CI was green; squash-merged).
 - #78 → PR #82 gherkin-malformed-ac — SPEC-GHERKIN-MALFORMED-AC pitfall + lint check; formal Gherkin mode (≥2 leading keywords) guard prevents false positives on inline prose ACs (2026-07-11, CI was green; squash-merged).
+- #80 → PR #84 config-unknown-key-warning — warn on stderr for unrecognised keys in .sddgrade.toml; also warns on unknown dimension names in [weights] sub-table (2026-07-12, CI was green; squash-merged).
 
 ## Blocked
 
@@ -158,3 +160,9 @@ Tessl, and Spec-Kit extensions/presets.)
   Phase 4 picked #80 (warn on unknown .sddgrade.toml keys); added _warn_unknown_keys() +
   _KNOWN_KEYS + _VALID_DIMENSIONS in config.py; 7 unit tests; pytest 322 green; benchmark
   good=100 bad=61 PASS; PR #84 opened; issue #80 commented.
+- iter 19 (2026-07-12): Phase 1 merged PR #84 (issue #80 closed, CI was green; squash-merged).
+  Phase 2 found 2 open loop-candidate issues (#79, #81); Phase 4 picked #79 (SPECKIT-CONSTITUTION-CROSSCHECK
+  — plan.md Constitution Check must reference actual principle names from constitution.md);
+  added SPECKIT-CONSTITUTION-CROSSCHECK pitfall + _constitution_principles() helper + moved
+  check before tasks-guard in _cross_artifact(); 12 unit tests; pytest 334 green; benchmark
+  good=100 bad=61 PASS; PR #85 opened (draft); issue #79 commented.
