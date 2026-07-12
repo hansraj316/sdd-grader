@@ -62,12 +62,12 @@ def _warn_unknown_keys(section: dict[str, Any], path: Path) -> None:
     """Emit stderr warnings for unrecognised keys in the config section."""
     for key in section:
         if key not in _KNOWN_KEYS:
-            print(f"warning: unknown config key '{key}' in {path}", file=sys.stderr)
+            print(f"sddgrade: warning: unknown config key '{key}' in {path}", file=sys.stderr)
         elif key == "weights" and isinstance(section[key], dict):
             for wk in section[key]:
                 if wk not in _VALID_DIMENSIONS:
                     print(
-                        f"warning: unknown config key 'weights.{wk}' in {path}",
+                        f"sddgrade: warning: unknown config key 'weights.{wk}' in {path}",
                         file=sys.stderr,
                     )
 
