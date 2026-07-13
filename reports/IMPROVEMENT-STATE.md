@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 19
-Last run: 2026-07-12
+Iteration: 20
+Last run: 2026-07-13
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -30,7 +30,8 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
 - [x] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD) → issue #78 → merged in PR #82
 - [x] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80 → merged in PR #84
-- [~] constitution-crosscheck — Cross-artifact check: plan.md's Constitution Check must reference actual principle names from constitution.md → issue #79 → PR #85
+- [x] constitution-crosscheck — Cross-artifact check: plan.md's Constitution Check must reference actual principle names from constitution.md → issue #79 → merged in PR #85
+- [~] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86
 - [ ] judge-invest — Judge-side INVEST scoring of user stories (independent, small, valuable, testable). (INVEST)
 - [ ] checklist-ingest — Ingest a generated /speckit.checklist and score item completion. (Spec-Kit checklist)
 - [ ] report-sarif — Emit SARIF so findings show up in GitHub code scanning. (CI integration practice)
@@ -39,14 +40,14 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] constitution-crosscheck — Check that plan.md's Constitution Check references the actual principle names from constitution.md. (Spec-Kit constitution) → issue #79
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
 - [ ] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80
-- [ ] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81
+- [~] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #79 → PR #85 constitution-crosscheck — SPECKIT-CONSTITUTION-CROSSCHECK cross-artifact lint check; _constitution_principles() helper filters placeholders/generic headings; moved before tasks guard; 12 unit tests (2026-07-12; awaiting CI)
+- #81 → PR #86 precommit-hook — .pre-commit-hooks.yaml at repo root; hook runs sddgrade review --rules --fail-under 60 on specs/*.md + openspec/*.md; README "Pre-commit integration" section; 8 unit tests (2026-07-13; awaiting CI)
 
 ## Merged
 
@@ -65,6 +66,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #48 → PR #77 adapter-structural-seam — add structural_checks/cross_artifact_checks/hint to ArtifactAdapter protocol; moved _openspec_structural to OpenSpecAdapter; removed adapter.name branching from lint() (2026-07-10, CI was green; squash-merged).
 - #78 → PR #82 gherkin-malformed-ac — SPEC-GHERKIN-MALFORMED-AC pitfall + lint check; formal Gherkin mode (≥2 leading keywords) guard prevents false positives on inline prose ACs (2026-07-11, CI was green; squash-merged).
 - #80 → PR #84 config-unknown-key-warning — warn on stderr for unrecognised keys in .sddgrade.toml; also warns on unknown dimension names in [weights] sub-table (2026-07-12, CI was green; squash-merged).
+- #79 → PR #85 constitution-crosscheck — SPECKIT-CONSTITUTION-CROSSCHECK cross-artifact lint check; _constitution_principles() helper filters placeholders/generic headings; moved before tasks guard; 12 unit tests (2026-07-13, CI was green; squash-merged).
 
 ## Blocked
 
@@ -166,3 +168,9 @@ Tessl, and Spec-Kit extensions/presets.)
   added SPECKIT-CONSTITUTION-CROSSCHECK pitfall + _constitution_principles() helper + moved
   check before tasks-guard in _cross_artifact(); 12 unit tests; pytest 334 green; benchmark
   good=100 bad=61 PASS; PR #85 opened (draft); issue #79 commented.
+- iter 20 (2026-07-13): Phase 1 merged PR #85 (issue #79 closed, CI was green; converted draft
+  → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#81 pre-commit
+  hook); Phase 4 picked #81; added .pre-commit-hooks.yaml (id: sddgrade; --rules --fail-under 60;
+  files: specs/*.md + openspec/*.md; pass_filenames: false) + README "Pre-commit integration"
+  section + 8 unit tests; pytest 342 green; benchmark good=100 bad=61 PASS; PR #86 opened
+  (draft); issue #81 commented.
