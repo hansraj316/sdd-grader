@@ -607,6 +607,33 @@ _STRUCTURAL_CHECKS = {
 }
 
 
+# Headings in constitution.md that are structural (not principle names).
+_GENERIC_CONSTITUTION_HEADINGS: frozenset[str] = frozenset({
+    "governance", "overview", "core principles", "introduction",
+    "summary", "preamble", "history", "amendments", "ratification",
+})
+
+# Placeholder principle names left from the constitution template.
+_PRINCIPLE_PLACEHOLDER_RE = re.compile(r"\[PRINCIPLE_\d", re.IGNORECASE)
+
+
+def _constitution_principles(constitution: Artifact) -> list[str]:
+    """Extract authored (non-placeholder) principle names from constitution.md headings."""
+    names: list[str] = []
+    for s in constitution.sections:
+        if s.level not in (2, 3):
+            continue
+        name = s.title.strip()
+        if not name:
+            continue
+        if name.lower() in _GENERIC_CONSTITUTION_HEADINGS:
+            continue
+        if _PRINCIPLE_PLACEHOLDER_RE.search(name):
+            continue
+        names.append(name)
+    return names
+
+
 # --------------------------------------------------------------------------- cross-artifact
 
 def _cross_artifact(artifacts: list[Artifact], catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -615,6 +642,10 @@ def _cross_artifact(artifacts: list[Artifact], catalog: dict[str, Pitfall]) -> l
     for a in artifacts:
         by_feature.setdefault(a.feature_id, []).append(a)
 
+    # Constitution lives at repo root (feature_id=None); gather its principles once.
+    constitution_global = _first(by_feature.get(None, []), ArtifactType.CONSTITUTION)
+    global_principles = _constitution_principles(constitution_global) if constitution_global else []
+
     for feature, arts in by_feature.items():
         if feature is None:
             continue
@@ -622,6 +653,23 @@ def _cross_artifact(artifacts: list[Artifact], catalog: dict[str, Pitfall]) -> l
         tasks = _first(arts, ArtifactType.TASKS)
         data_model = _first(arts, ArtifactType.DATA_MODEL)
         contracts = [a for a in arts if a.type == ArtifactType.CONTRACT]
+        plan = _first(arts, ArtifactType.PLAN)
+
+        # Constitution crosscheck: plan's Constitution Check section must reference
+        # at least one actual principle name from constitution.md.
+        # Runs even without tasks.md (it's a plan-only check).
+        if global_principles and plan and (p := catalog.get("SPECKIT-CONSTITUTION-CROSSCHECK")):
+            check_section = plan.section("Constitution Check")
+            if check_section and check_section.body.strip():
+                body_lower = check_section.body.lower()
+                matched = any(principle.lower() in body_lower for principle in global_principles)
+                if not matched:
+                    out.append(
+                        _from_pitfall(
+                            p, plan.path,
+                            "Constitution Check does not reference any principle names from constitution.md.",
+                        )
+                    )
 
         if tasks is None:
             continue
