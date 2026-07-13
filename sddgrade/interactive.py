@@ -157,11 +157,13 @@ def run_init_wizard(path: Path, console: Console | None = None) -> list[Path]:
         console.print(f"  [dim]{p}[/]")
 
     steps = [
-        f"1. Open [cyan]{AGENT_CHOICES[selected]}[/] in this project and run the "
-        "[cyan]/sddgrade[/] command — your agent judges the specs and writes "
+        f"1. Open [cyan]{AGENT_CHOICES[selected]}[/] in this project and run "
+        "[cyan]/sddgrade.judge[/] — your agent judges the specs and writes "
         "[dim].sddgrade/judge.json[/]",
         "2. Run [cyan]sddgrade review[/] — grades every artifact (lint + that judgment)",
-        "3. Optional: gate CI with [cyan]sddgrade review --fail-under 70[/]",
+        "3. Run [cyan]/sddgrade.fix[/] in your agent to apply the top fixes, "
+        "then repeat 1-2 until clean",
+        "4. Optional: gate CI with [cyan]sddgrade review --rules --fail-under 70[/]",
     ]
     console.print()
     console.print(

@@ -278,28 +278,50 @@
 
   <section id="start">
     <p class="kicker">Get started</p>
-    <h2>Three commands to a graded spec.</h2>
+    <h2>A short sequence, like Spec-Kit itself.</h2>
+    <p class="lede">Steps 1&ndash;2 once per repo; 3&ndash;5 every time the specs change. Writing the
+    specs stays Spec-Kit's job (<code>/speckit.specify → plan → tasks</code>) — sddgrade is the grade
+    between "the agent wrote it" and "we build from it".</p>
     <div class="steps">
       <div class="step">
         <h3><span class="no">1</span>Install</h3>
-        <pre>uvx --from git+https://github.com/\
-hansraj316/sdd-grader.git sddgrade review</pre>
-        <p>Zero-install run with uv. <code>pip install sddgrade</code> lands with the PyPI release.</p>
+        <pre>uv tool install sddgrade --from git+https://\
+github.com/hansraj316/sdd-grader.git@v0.3.0</pre>
+        <p>Or zero-install with <code>uvx</code>, or pip from the <a href="https://github.com/hansraj316/sdd-grader/releases">release wheel</a>.</p>
       </div>
       <div class="step">
-        <h3><span class="no">2</span>Wire up your agent</h3>
+        <h3><span class="no">2</span>Set up (guided)</h3>
         <pre>sddgrade init</pre>
-        <p>Guided setup: pick your agent with arrow keys. Installs the
+        <p>Arrow-key agent selection, toolchain detection. Installs
         <code>/sddgrade.judge</code>, <code>.review</code>, <code>.fix</code>, and
-        <code>.advise</code> commands (plus a skill in Claude Code) for Claude Code,
+        <code>.advise</code> (plus a skill in Claude Code) for Claude Code,
         Copilot, Cursor, Gemini, Windsurf, or Codex.</p>
       </div>
       <div class="step">
-        <h3><span class="no">3</span>Review &amp; gate</h3>
-        <pre>sddgrade review --fail-under 70</pre>
-        <p>Grades every artifact; non-zero exit below your threshold. Add <code>--sarif</code> for code scanning.</p>
+        <h3><span class="no">3</span>Judge in your agent</h3>
+        <pre>/sddgrade.judge</pre>
+        <p>Your AI agent reviews the artifacts semantically and writes a judgment hash-pinned to the exact content it read.</p>
+      </div>
+      <div class="step">
+        <h3><span class="no">4</span>Grade in the terminal</h3>
+        <pre>sddgrade review</pre>
+        <p>Lint + judgment merged into a scored, summary-first report — shown below.</p>
+      </div>
+      <div class="step">
+        <h3><span class="no">5</span>Fix in your agent</h3>
+        <pre>/sddgrade.fix</pre>
+        <p>Applies the top fixes, re-grades, and reports the score delta. Repeat 3&ndash;5 until clean.</p>
+      </div>
+      <div class="step">
+        <h3><span class="no">6</span>Gate in CI</h3>
+        <pre>sddgrade review --rules --fail-under 70</pre>
+        <p>Deterministic, reproducible gate on every PR that touches <code>specs/</code>. Add <code>--sarif</code> for code scanning.</p>
       </div>
     </div>
+    <h3 style="font-family:var(--serif); font-weight:600; font-size:20px; margin:48px 0 8px">What setup looks like</h3>
+    <p class="lede" style="margin-bottom:16px">Real terminal output — the guided <code>sddgrade init</code> and a graded review, captured from the shipped renderer:</p>
+    <p><img src="assets/init.svg" alt="sddgrade init — SDDGRADE banner, arrow-key agent selection, setup summary, next steps" style="max-width:100%; border-radius:12px; box-shadow:0 24px 60px -30px rgba(20,20,19,.35)"></p>
+    <p style="margin-top:18px"><img src="assets/review.svg" alt="sddgrade review — summary verdict panel, worst-first scores table, per-artifact findings tables, next steps" style="max-width:100%; border-radius:12px; box-shadow:0 24px 60px -30px rgba(20,20,19,.35)"></p>
     <div class="ci-snip">
       <pre><span class="t-dim"># .github/workflows/specs.yml — gate every PR that touches specs/</span>
 - name: Grade the specs

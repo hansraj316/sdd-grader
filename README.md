@@ -2,6 +2,8 @@
 
 **A CI-grade linter and reviewer for AI-generated [GitHub Spec-Kit](https://github.com/github/spec-kit) artifacts.**
 
+<p align="center"><a href="https://hansraj316.github.io/sdd-grader/"><img src="docs/assets/init.svg" alt="sddgrade init — guided setup with the SDDGRADE banner, agent selection, and next steps" width="720"></a></p>
+
 Spec-Kit (and OpenSpec) generate spec-driven-development artifacts — `spec.md`,
 `plan.md`, `tasks.md`, a constitution — but nothing in your pipeline tells you whether
 a given spec is *good enough to build from*: complete, unambiguous, testable, traceable,
@@ -9,6 +11,24 @@ and aligned with its constitution. `sddgrade` grades each artifact 0–100 acros
 dimensions, attaches a concrete **fix suggestion** to every finding, flags known **SDD
 pitfalls**, tracks score **history**, and **gates CI** — from a simple CLI that installs
 and behaves like `specify` itself.
+
+## The workflow
+
+Like Spec-Kit, sddgrade is a short sequence you run on your specs — steps 1–2 once
+per repo, steps 3–5 every time the specs change:
+
+| # | Where | Run | What happens |
+|---|-------|-----|--------------|
+| 1 | terminal | `uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.3.0` | Install the CLI ([more options](#install)) |
+| 2 | terminal | `sddgrade init` | Guided setup: pick your agent, detect the toolchain, install the `/sddgrade.*` commands |
+| 3 | your agent | `/sddgrade.judge` | Your AI agent semantically reviews the artifacts and writes a hash-pinned judgment |
+| 4 | terminal | `sddgrade review` | Merge lint + judgment into the scored report below |
+| 5 | your agent | `/sddgrade.fix` | Apply the top fixes, re-grade, see the score delta — repeat 3–5 until clean |
+| 6 | CI | `sddgrade review --rules --fail-under 70` | Gate every PR that touches `specs/` |
+
+Writing the specs themselves stays Spec-Kit's job (`/speckit.specify` → `/speckit.plan`
+→ `/speckit.tasks`); sddgrade is the grade between "the agent wrote it" and "we build
+from it".
 
 It is honest about what it can prove. A clean **lint-only** score means *no known
 deterministic findings* — not that the spec is semantically complete. Turn on the
@@ -105,25 +125,34 @@ in CI, on PRs, with a tracked trend.
 
 ## Install
 
-> **Note:** the repository is currently private, so the commands below require
-> repo access. Releases are tagged (`v*`) and published from
-> [`release.yml`](.github/workflows/release.yml) — see
-> [docs/release.md](docs/release.md); PyPI publishing activates once the owner
-> configures the Trusted Publisher described there. With access:
+Requires Python 3.11+. Any one of these works:
 
 ```bash
-# pin a released version (recommended — reproducible installs & CI gates):
-uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.2.0
-# or track tip-of-main (moves daily; scores can change between installs):
+# uv (recommended) — pin a released version for reproducible installs & CI gates:
+uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.3.0
+
+# zero-install, run straight from the repo:
+uvx --from git+https://github.com/hansraj316/sdd-grader.git@v0.3.0 sddgrade review
+
+# pip / pipx, from the wheel attached to each GitHub release:
+pip install https://github.com/hansraj316/sdd-grader/releases/download/v0.3.0/sddgrade-0.3.0-py3-none-any.whl
+
+# track tip-of-main (moves daily; scores can change between installs):
 uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git
-# or zero-install:
-uvx --from git+https://github.com/hansraj316/sdd-grader.git@v0.2.0 sddgrade review
-# or from a local clone:
+
+# from a local clone:
 uv tool install --from /path/to/sdd-grader sddgrade
 ```
 
+Releases are tagged (`v*`) and published from
+[`release.yml`](.github/workflows/release.yml) with the wheel + sdist attached —
+see [releases](https://github.com/hansraj316/sdd-grader/releases). `pip install
+sddgrade` from PyPI activates once the Trusted Publisher in
+[docs/release.md](docs/release.md) is configured.
+
 Upgrade via your installer, e.g. `uv tool upgrade sddgrade`. Check the installed
-version with `sddgrade --version`.
+version with `sddgrade --version`. The optional API judge needs
+`pip install 'sddgrade[api]'` and an `ANTHROPIC_API_KEY`.
 
 ## Commands
 
@@ -160,54 +189,34 @@ With `--json`, stdout carries only the JSON report; warnings and notices go to s
 table, one findings table per artifact (severity, dimension, line, finding, fix),
 and contextual next steps. Real output against a defect-laden fixture:
 
+<p align="center"><img src="docs/assets/review.svg" alt="sddgrade review — summary verdict panel, worst-first scores table, per-artifact findings tables with fixes, and next steps" width="860"></p>
+
+The same run in text form, abbreviated:
+
 ```text
 ╭───────────────────────────────── SDD Review ─────────────────────────────────╮
 │  61/100   FAIL (gate 70)                                                     │
-│                                                                              │
-│  coverage lint-only — Lint-only (no semantic judge ran). A high score means  │
-│  no KNOWN deterministic findings — NOT that the spec is complete or          │
-│  semantically correct. Run the agent judge (or --api) for semantic review.   │
-│  tool=auto engine=rules artifacts=4 findings=19                              │
-│                                                                              │
-│  1 of 4 artifacts needs work; 8 high-severity findings — start with          │
-│  spec.md.                                                                    │
+│  coverage lint-only · tool=auto engine=rules artifacts=4 findings=19         │
+│  1 of 4 artifacts needs work; 8 high-severity findings — start with spec.md. │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
 Scores
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
-┃ Artifact          ┃ Type          ┃  Score /100 ┃  Findings ┃ Worst severity ┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
-│ spec.md           │ spec          │          24 │        10 │ HIGH           │
-│ plan.md           │ plan          │          70 │         3 │ HIGH           │
-│ constitution.md   │ constitution  │          74 │         3 │ HIGH           │
-│ tasks.md          │ tasks         │          86 │         3 │ MEDIUM         │
-└───────────────────┴───────────────┴─────────────┴───────────┴────────────────┘
+┃ Artifact         ┃ Type          ┃  Score /100 ┃  Findings ┃ Worst severity ┃
+│ spec.md          │ spec          │          24 │        10 │ HIGH           │
+│ plan.md          │ plan          │          70 │         3 │ HIGH           │
+│ constitution.md  │ constitution  │          74 │         3 │ HIGH           │
+│ tasks.md         │ tasks         │          86 │         3 │ MEDIUM         │
 
-specs/001-notifications/spec.md (24/100)
-┏━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Severity ┃ Dimension    ┃ Line ┃ Finding              ┃ Fix                  ┃
-┡━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
-│ HIGH     │ completeness │    1 │ Unfilled template    │ Fill in every        │
-│          │              │      │ placeholders / TODO  │ placeholder with     │
-│          │              │      │ / TBD: 2             │ real content; delete │
-│          │              │      │ occurrence(s).       │ sections that do     │
-│          │              │      │ SPEC-LEFTOVER-…      │ not apply.           │
-├──────────┼──────────────┼──────┼──────────────────────┼──────────────────────┤
-│ HIGH     │ testability  │    5 │ User story has no    │ Add explicit         │
-│          │              │      │ acceptance criteria. │ acceptance criteria  │
-│          │              │      │ SPEC-MISSING-…       │ per story.           │
-└──────────┴──────────────┴──────┴──────────────────────┴──────────────────────┘
-…one findings table per artifact, worst first…
+…one findings table per artifact (Severity | Dimension | Line | Finding | Fix)…
 
-╭────────────────────────────────── Next steps ─────────────────────────────────╮
-│  • Semantic judge didn't run — run your agent's /sddgrade command (or         │
-│  sddgrade review --api), then re-run sddgrade review.                         │
-│  • Work through the fixes above (worst artifact first), then re-run           │
-│  sddgrade review.                                                             │
-│  • Get a shareable report with --html report.html, or just the shortlist      │
-│  with --top-fixes 5.                                                          │
+╭─────────────────────────────────  Next steps ─────────────────────────────────╮
+│ • Semantic judge didn't run — run your agent's /sddgrade.judge command, then  │
+│   re-run sddgrade review.                                                     │
+│ • Work through the fixes above (worst artifact first), then re-run.           │
+│ • Get a shareable report with --html report.html.                             │
 ╰────────────────────────────────────────────────────────────────────────────────╯
 ```
+
 
 ## Toolchains: Spec-Kit and OpenSpec
 
