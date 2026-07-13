@@ -183,6 +183,33 @@ Exit codes: `0` reviewed (gating is opt-in — a bare `review` never fails on fi
 `3` `--require-judge` but the judge is unavailable · `4` malformed `.sddgrade.toml`.
 With `--json`, stdout carries only the JSON report; warnings and notices go to stderr.
 
+## Pre-commit integration
+
+Add `sddgrade` to your [pre-commit](https://pre-commit.com) config to catch spec
+pitfalls at commit time — no LLM required, no API key needed:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/hansraj316/sdd-grader
+    rev: v0.3.0          # pin to a release tag
+    hooks:
+      - id: sddgrade     # runs: sddgrade review --rules --fail-under 60
+```
+
+The hook runs `sddgrade review --rules` (deterministic lint only, fast) and fails the
+commit when the overall score drops below 60. Override the threshold with `fail_under`
+in `.sddgrade.toml`, or adjust `args` in your `.pre-commit-config.yaml`:
+
+```yaml
+      - id: sddgrade
+        args: [--rules, --fail-under, "70"]
+```
+
+Install the hooks once per checkout: `pre-commit install`. The hook only fires when
+files matching `specs/.*\.md` or `openspec/.*\.md` change, so it is silent on
+unrelated commits.
+
 ## What a review looks like
 
 `sddgrade review` renders summary-first: the verdict panel, a worst-first scores

@@ -1,0 +1,8 @@
+- id: sddgrade
+  name: SDD spec quality check
+  description: Lint Spec-Kit / OpenSpec artifacts for spec-quality pitfalls.
+  language: python
+  entry: sddgrade review --rules --fail-under 60
+  files: 'specs/.*\.md$|openspec/.*\.md$'
+  pass_filenames: false
+  additional_dependencies: []
