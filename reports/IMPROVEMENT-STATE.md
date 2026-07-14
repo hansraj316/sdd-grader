@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 20
-Last run: 2026-07-13
+Iteration: 21
+Last run: 2026-07-14
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -40,14 +40,17 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] constitution-crosscheck — Check that plan.md's Constitution Check references the actual principle names from constitution.md. (Spec-Kit constitution) → issue #79
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
 - [ ] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80
-- [~] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86
+- [x] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86 → merged 2026-07-14
+- [~] story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall: "As a X, I want Y" without "so that Z" clause. (INVEST Valuable, Connextra, ISO 29148) → issue #87 → PR #90
+- [ ] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88
+- [ ] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #81 → PR #86 precommit-hook — .pre-commit-hooks.yaml at repo root; hook runs sddgrade review --rules --fail-under 60 on specs/*.md + openspec/*.md; README "Pre-commit integration" section; 8 unit tests (2026-07-13; awaiting CI)
+- #87 → PR #90 story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall + _story_no_benefit() lint check; guards on spec using user story format; checks same line then next non-blank line for "so that"; 10 unit tests; 3 corpus expected.json files updated (accepted_extras) (2026-07-14; awaiting CI)
 
 ## Merged
 
@@ -67,6 +70,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #78 → PR #82 gherkin-malformed-ac — SPEC-GHERKIN-MALFORMED-AC pitfall + lint check; formal Gherkin mode (≥2 leading keywords) guard prevents false positives on inline prose ACs (2026-07-11, CI was green; squash-merged).
 - #80 → PR #84 config-unknown-key-warning — warn on stderr for unrecognised keys in .sddgrade.toml; also warns on unknown dimension names in [weights] sub-table (2026-07-12, CI was green; squash-merged).
 - #79 → PR #85 constitution-crosscheck — SPECKIT-CONSTITUTION-CROSSCHECK cross-artifact lint check; _constitution_principles() helper filters placeholders/generic headings; moved before tasks guard; 12 unit tests (2026-07-13, CI was green; squash-merged).
+- #81 → PR #86 precommit-hook — .pre-commit-hooks.yaml at repo root; hook runs sddgrade review --rules --fail-under 60 on specs/*.md + openspec/*.md; README "Pre-commit integration" section; 8 unit tests (2026-07-14, CI was green; squash-merged).
 
 ## Blocked
 
@@ -174,3 +178,10 @@ Tessl, and Spec-Kit extensions/presets.)
   files: specs/*.md + openspec/*.md; pass_filenames: false) + README "Pre-commit integration"
   section + 8 unit tests; pytest 342 green; benchmark good=100 bad=61 PASS; PR #86 opened
   (draft); issue #81 commented.
+- iter 21 (2026-07-14): Phase 1 merged PR #86 (issue #81 closed, CI was green; converted draft
+  → ready + squash-merged via MCP). Phase 2 found 0 open loop-candidate issues → Phase 3:
+  filed 3 new issues (#87 story-no-benefit, #88 unbounded-scope, #89 plan-missing-rollback).
+  Phase 4 picked #87 (SPEC-STORY-NO-BENEFIT — Connextra user story missing "so that" clause);
+  added pitfall + _story_no_benefit() helper + 3 regex constants; 10 unit tests; updated 3
+  corpus expected.json accepted_extras; pytest 352 green; benchmark good=100 bad=61 PASS;
+  PR #90 opened (draft); issue #87 commented.

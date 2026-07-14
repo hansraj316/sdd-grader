@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-13T07:25:07.722041+00:00",
+  "timestamp": "2026-07-14T07:33:06.695039+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -147,7 +147,7 @@
         "quality": "low",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 46.0,
+        "overall": 44.0,
         "score_band": [
           30,
           60
@@ -162,7 +162,8 @@
         "false_negatives": [],
         "accepted_extras_detected": [
           "SPEC-MISSING-EDGE-CASES",
-          "SPEC-NON-MEASURABLE-SUCCESS"
+          "SPEC-NON-MEASURABLE-SUCCESS",
+          "SPEC-STORY-NO-BENEFIT"
         ],
         "known_misses_caught": [],
         "known_misses_missed": [],
@@ -171,8 +172,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 1.0,
         "precision": 1.0,
-        "correct_detections": 5,
-        "total_detections": 5,
+        "correct_detections": 6,
+        "total_detections": 6,
         "note": "Unresolved clarification markers, placeholders, and a TODO instead of acceptance criteria. The extras are genuine secondary defects (no Edge Cases section; 'Login should work well' is unmeasurable), labeled so they count toward precision without being this case's point."
       },
       {
@@ -236,7 +237,7 @@
         "quality": "medium",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 90.0,
+        "overall": 88.0,
         "score_band": [
           65,
           92
@@ -249,7 +250,8 @@
         ],
         "false_negatives": [],
         "accepted_extras_detected": [
-          "REQ-COMPOUND"
+          "REQ-COMPOUND",
+          "SPEC-STORY-NO-BENEFIT"
         ],
         "known_misses_caught": [],
         "known_misses_missed": [],
@@ -258,8 +260,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 1.0,
         "precision": 1.0,
-        "correct_detections": 3,
-        "total_detections": 3,
+        "correct_detections": 4,
+        "total_detections": 4,
         "note": "Tech-stack detail and speculative future features in a spec. REQ-COMPOUND is a genuine extra: FR-001 bundles React + Postgres + websockets in one requirement. Calibration gap: current scoring (~90) is lenient versus external judgment; the band floor is set so fixing that leniency PASSES the gate."
       },
       {
@@ -267,7 +269,7 @@
         "quality": "medium",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 76.0,
+        "overall": 74.0,
         "score_band": [
           60,
           84
@@ -280,7 +282,8 @@
         ],
         "false_negatives": [],
         "accepted_extras_detected": [
-          "SPEC-AMBIGUOUS-WORDING"
+          "SPEC-AMBIGUOUS-WORDING",
+          "SPEC-STORY-NO-BENEFIT"
         ],
         "known_misses_caught": [],
         "known_misses_missed": [],
@@ -289,8 +292,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 1.0,
         "precision": 1.0,
-        "correct_detections": 3,
-        "total_detections": 3,
+        "correct_detections": 4,
+        "total_detections": 4,
         "note": "NFRs (latency/availability/scalability) with no thresholds; non-measurable success. The ambiguous-wording extra is genuine: 'highly scalable' in FR-002 is exactly the vague phrasing the rule exists for."
       },
       {
@@ -391,9 +394,9 @@
       "n": 10,
       "mean_recall": 1.0,
       "mean_recall_incl_known_misses": 0.92,
-      "precision": 0.958,
-      "correct_detections": 23,
-      "total_detections": 24,
+      "precision": 0.963,
+      "correct_detections": 26,
+      "total_detections": 27,
       "band_failures": [],
       "unlabeled_unexpected": {},
       "known_false_positives": 1,
