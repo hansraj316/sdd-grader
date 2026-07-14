@@ -3,6 +3,6 @@
   "score_band": [65, 92],
   "band_rationale": "Medium, deliberately widened DOWNWARD (#55): a spec whose FRs are tech mandates ('build with React and Postgres') deserves roughly 65-80 by external judgment (IBM RQA / QVscribe would weight stack leakage heavily), while the current engine scores it 90. Floor 65 lets the tracked severity re-tuning land without the gate resisting it; ceiling 92 requires the defects to keep costing at least 8 points. Engine output at labeling time: 90.",
   "expect_pitfalls": ["SPEC-IMPL-DETAIL-LEAK", "SPEC-SPECULATIVE-FEATURE"],
-  "accepted_extras": ["REQ-COMPOUND"],
+  "accepted_extras": ["REQ-COMPOUND", "SPEC-STORY-NO-BENEFIT"],
   "note": "Tech-stack detail and speculative future features in a spec. REQ-COMPOUND is a genuine extra: FR-001 bundles React + Postgres + websockets in one requirement. Calibration gap: current scoring (~90) is lenient versus external judgment; the band floor is set so fixing that leniency PASSES the gate."
 }

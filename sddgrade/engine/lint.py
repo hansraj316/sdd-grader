@@ -216,6 +216,49 @@ def _unclear_actor(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     ]
 
 
+_STORY_OPENER_RE = re.compile(
+    r"^\s*(?:[-*+]?\s*)?as an?\s+\S",
+    re.IGNORECASE,
+)
+_I_WANT_RE = re.compile(r"\bi\s+want\b", re.IGNORECASE)
+_SO_THAT_RE = re.compile(r"\bso\s+that\b", re.IGNORECASE)
+
+
+def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """User stories missing the 'so that [benefit]' clause (Connextra format / INVEST Valuable)."""
+    p = catalog.get("SPEC-STORY-NO-BENEFIT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    # Guard: skip specs that use no user story format at all.
+    has_stories = any(
+        _STORY_OPENER_RE.match(line) and _I_WANT_RE.search(line) for line in lines
+    )
+    if not has_stories:
+        return []
+    missing: list[int] = []
+    for i, line in enumerate(lines):
+        if _STORY_OPENER_RE.match(line) and _I_WANT_RE.search(line):
+            if _SO_THAT_RE.search(line):
+                continue
+            # Check next non-blank line for continuation.
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            if j < len(lines) and _SO_THAT_RE.search(lines[j]):
+                continue
+            missing.append(i + 1)  # 1-indexed
+    if not missing:
+        return []
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"User story missing 'so that [benefit]' clause: {len(missing)} story(ies).",
+            line=missing[0],
+        )
+    ]
+
+
 def _from_pitfall(
     p: Pitfall, artifact_path: str, message: str, line: int | None = None
 ) -> Finding:
@@ -525,6 +568,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_negative_requirement(art, catalog))
     out.extend(_unclear_actor(art, catalog))
     out.extend(_ears_pattern(art, catalog))
+    out.extend(_story_no_benefit(art, catalog))
     return out
 
 
