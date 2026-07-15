@@ -158,6 +158,17 @@ patterns = [
 ]
 
 [[pitfall]]
+id = "SPEC-STORY-NO-BENEFIT"
+name = "User story missing 'so that [benefit]' clause"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "low"
+method = "lint"
+why = "The Connextra story format requires role + goal + benefit. The 'so that' clause is the only part that encodes business value; without it, teams cannot evaluate trade-offs or confirm the story delivers anything worthwhile. Violates INVEST's Valuable principle and ISO 29148 §5.2.5 (each requirement shall state its rationale)."
+detect = "A line matching 'As a(n) <role>, I want <goal>' with no 'so that' on the same or following non-blank line."
+fix = "Append ', so that <benefit>' to complete the Connextra format and record the business value."
+
+[[pitfall]]
 id = "SPEC-MISSING-EDGE-CASES"
 name = "Missing edge cases / error scenarios"
 dimension = "completeness"
