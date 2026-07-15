@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 21
-Last run: 2026-07-14
+Iteration: 22
+Last run: 2026-07-15
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -42,7 +42,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80
 - [x] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86 → merged 2026-07-14
 - [~] story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall: "As a X, I want Y" without "so that Z" clause. (INVEST Valuable, Connextra, ISO 29148) → issue #87 → PR #90
-- [ ] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88
+- [~] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88 → PR #91
 - [ ] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
@@ -50,7 +50,8 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #87 → PR #90 story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall + _story_no_benefit() lint check; guards on spec using user story format; checks same line then next non-blank line for "so that"; 10 unit tests; 3 corpus expected.json files updated (accepted_extras) (2026-07-14; awaiting CI)
+- #87 → PR #90 story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall + _story_no_benefit() lint check; guards on spec using user story format; checks same line then next non-blank line for "so that"; 10 unit tests; 3 corpus expected.json files updated (accepted_extras) (2026-07-14; merged 2026-07-15)
+- #88 → PR #91 unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall + _unbounded_scope() lint check; 6 open-ended markers (etc./and so on/and others/and more/including but not limited to/or similar); _REQ_BROAD_RE filter; fires once per artifact; 12 unit tests; applies to spec + plan (2026-07-15; awaiting CI)
 
 ## Merged
 
@@ -185,3 +186,9 @@ Tessl, and Spec-Kit extensions/presets.)
   added pitfall + _story_no_benefit() helper + 3 regex constants; 10 unit tests; updated 3
   corpus expected.json accepted_extras; pytest 352 green; benchmark good=100 bad=61 PASS;
   PR #90 opened (draft); issue #87 commented.
+- iter 22 (2026-07-15): Phase 1 merged PR #90 (issue #87 closed, CI was green; converted draft
+  → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#88, #89);
+  Phase 4 picked #88 (REQ-UNBOUNDED-SCOPE — open-ended enumerations in requirement lines);
+  added pitfall + _unbounded_scope() helper + _UNBOUNDED_SCOPE_RE + _REQ_BROAD_RE constants;
+  12 unit tests; pytest 364 green; benchmark good=100 bad=15 PASS; PR #91 opened (draft);
+  issue #88 commented.
