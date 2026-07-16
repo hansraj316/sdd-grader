@@ -239,6 +239,38 @@ _REQ_BROAD_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Rollback vocabulary: any mention of a recovery/undo strategy (PLAN-MISSING-ROLLBACK).
+_ROLLBACK_RE = re.compile(
+    r"\brollback\b|\brevert\b|\bfallback\b|\brecovery\b|\bundo\b|\bback\s+out\b",
+    re.IGNORECASE,
+)
+# Deployment vocabulary: signs that a plan.md covers a deployment (guard).
+_DEPLOY_VOCAB_RE = re.compile(
+    r"\bdeploy(?:ment|ing|ed)?\b|\brelease\b|\bship(?:ping|ped)?\b"
+    r"|\bproduction\b|\bstaging\b|\bprod\b",
+    re.IGNORECASE,
+)
+# Section-title guard: a Deployment or Release section triggers the check.
+_DEPLOY_SECTION_RE = re.compile(r"\b(?:deployment|release)\b", re.IGNORECASE)
+
+
+def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
+    p = catalog.get("PLAN-MISSING-ROLLBACK")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: only fire when the plan uses deployment vocabulary or has a Deployment/Release section.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Silent when any rollback vocabulary is present anywhere in the document.
+    if _ROLLBACK_RE.search(art.raw):
+        return []
+    return [_from_pitfall(p, art.path, "Deployment plan has no rollback/revert/fallback strategy.")]
+
 
 def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """User stories missing the 'so that [benefit]' clause (Connextra format / INVEST Valuable)."""
@@ -643,6 +675,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_negative_requirement(art, catalog))
     out.extend(_unclear_actor(art, catalog))
     out.extend(_unbounded_scope(art, catalog))
+    out.extend(_plan_missing_rollback(art, catalog))
     return out
 
 
