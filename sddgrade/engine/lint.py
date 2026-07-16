@@ -223,6 +223,22 @@ _STORY_OPENER_RE = re.compile(
 _I_WANT_RE = re.compile(r"\bi\s+want\b", re.IGNORECASE)
 _SO_THAT_RE = re.compile(r"\bso\s+that\b", re.IGNORECASE)
 
+# Open-ended enumeration markers that make scope impossible to bound (REQ-UNBOUNDED-SCOPE).
+_UNBOUNDED_SCOPE_RE = re.compile(
+    r"\betc\.?\b"
+    r"|\band\s+so\s+on\b"
+    r"|\band\s+others\b"
+    r"|\band\s+more\b"
+    r"|\bincluding\s+but\s+not\s+limited\s+to\b"
+    r"|\bor\s+similar\b",
+    re.IGNORECASE,
+)
+# Broader requirement filter: includes "will" and "want" in addition to _REQUIREMENTish_RE.
+_REQ_BROAD_RE = re.compile(
+    r"\b(?:shall|must|should|will|want|FR-\d|NFR-\d)\b",
+    re.IGNORECASE,
+)
+
 
 def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """User stories missing the 'so that [benefit]' clause (Connextra format / INVEST Valuable)."""
@@ -255,6 +271,26 @@ def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
             p, art.path,
             f"User story missing 'so that [benefit]' clause: {len(missing)} story(ies).",
             line=missing[0],
+        )
+    ]
+
+
+def _unbounded_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement lines with open-ended enumerations that bound scope (REQ-UNBOUNDED-SCOPE)."""
+    p = catalog.get("REQ-UNBOUNDED-SCOPE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    hits: list[int] = []
+    for i, line in enumerate(art.raw.splitlines(), start=1):
+        if _REQ_BROAD_RE.search(line) and _UNBOUNDED_SCOPE_RE.search(line):
+            hits.append(i)
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Requirement contains open-ended enumeration (unbounded scope): {len(hits)} line(s).",
+            line=hits[0],
         )
     ]
 
@@ -569,6 +605,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_unclear_actor(art, catalog))
     out.extend(_ears_pattern(art, catalog))
     out.extend(_story_no_benefit(art, catalog))
+    out.extend(_unbounded_scope(art, catalog))
     return out
 
 
@@ -605,6 +642,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_passive_voice(art, catalog))
     out.extend(_negative_requirement(art, catalog))
     out.extend(_unclear_actor(art, catalog))
+    out.extend(_unbounded_scope(art, catalog))
     return out
 
 

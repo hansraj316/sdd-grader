@@ -169,6 +169,17 @@ detect = "A line matching 'As a(n) <role>, I want <goal>' with no 'so that' on t
 fix = "Append ', so that <benefit>' to complete the Connextra format and record the business value."
 
 [[pitfall]]
+id = "REQ-UNBOUNDED-SCOPE"
+name = "Open-ended enumeration makes scope impossible to bound"
+dimension = "completeness"
+artifacts = ["spec", "plan"]
+severity = "low"
+method = "lint"
+why = "ISO 29148 §5.2.5 mandates requirements be complete — an open-ended enumeration ('etc.', 'and so on') makes acceptance testing undefined and silently expands scope. QVscribe lists unbounded enumerations as a primary Completeness failure and a source of scope creep."
+detect = "Requirement line (shall/must/should/will/want or FR-/NFR- label) containing an open-ended enumeration marker: 'etc.', 'and so on', 'and others', 'and more', 'including but not limited to', 'or similar'."
+fix = "Replace the open-ended list with a complete, bounded enumeration. If the full list cannot be stated, define a clear inclusion rule or reference a schema rather than trailing off."
+
+[[pitfall]]
 id = "SPEC-MISSING-EDGE-CASES"
 name = "Missing edge cases / error scenarios"
 dimension = "completeness"
