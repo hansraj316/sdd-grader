@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 22
-Last run: 2026-07-15
+Iteration: 23
+Last run: 2026-07-16
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -41,17 +41,16 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
 - [ ] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80
 - [x] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86 → merged 2026-07-14
-- [~] story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall: "As a X, I want Y" without "so that Z" clause. (INVEST Valuable, Connextra, ISO 29148) → issue #87 → PR #90
-- [~] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88 → PR #91
-- [ ] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89
+- [x] story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall: "As a X, I want Y" without "so that Z" clause. (INVEST Valuable, Connextra, ISO 29148) → issue #87 → PR #90 → merged 2026-07-15
+- [x] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88 → PR #91 → merged 2026-07-16
+- [~] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89 → PR #92
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #87 → PR #90 story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall + _story_no_benefit() lint check; guards on spec using user story format; checks same line then next non-blank line for "so that"; 10 unit tests; 3 corpus expected.json files updated (accepted_extras) (2026-07-14; merged 2026-07-15)
-- #88 → PR #91 unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall + _unbounded_scope() lint check; 6 open-ended markers (etc./and so on/and others/and more/including but not limited to/or similar); _REQ_BROAD_RE filter; fires once per artifact; 12 unit tests; applies to spec + plan (2026-07-15; awaiting CI)
+- #89 → PR #92 plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall + _plan_missing_rollback() helper; _ROLLBACK_RE/_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE constants; deploy-guard prevents false positives on refactoring plans; silent on any rollback keyword; 13 unit tests; pytest 377 green; benchmark good=100 bad=61 PASS (2026-07-16; awaiting CI)
 
 ## Merged
 
@@ -72,6 +71,8 @@ Tessl, and Spec-Kit extensions/presets.)
 - #80 → PR #84 config-unknown-key-warning — warn on stderr for unrecognised keys in .sddgrade.toml; also warns on unknown dimension names in [weights] sub-table (2026-07-12, CI was green; squash-merged).
 - #79 → PR #85 constitution-crosscheck — SPECKIT-CONSTITUTION-CROSSCHECK cross-artifact lint check; _constitution_principles() helper filters placeholders/generic headings; moved before tasks guard; 12 unit tests (2026-07-13, CI was green; squash-merged).
 - #81 → PR #86 precommit-hook — .pre-commit-hooks.yaml at repo root; hook runs sddgrade review --rules --fail-under 60 on specs/*.md + openspec/*.md; README "Pre-commit integration" section; 8 unit tests (2026-07-14, CI was green; squash-merged).
+- #87 → PR #90 story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall + _story_no_benefit() lint check; 10 unit tests; 3 corpus expected.json accepted_extras (2026-07-15, CI was green; squash-merged).
+- #88 → PR #91 unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall + _unbounded_scope() lint check; 12 unit tests; applies to spec + plan (2026-07-16, CI was green; squash-merged).
 
 ## Blocked
 
@@ -192,3 +193,9 @@ Tessl, and Spec-Kit extensions/presets.)
   added pitfall + _unbounded_scope() helper + _UNBOUNDED_SCOPE_RE + _REQ_BROAD_RE constants;
   12 unit tests; pytest 364 green; benchmark good=100 bad=15 PASS; PR #91 opened (draft);
   issue #88 commented.
+- iter 23 (2026-07-16): Phase 1 merged PR #91 (issue #88 closed, CI was green; converted draft
+  → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#89); Phase 4
+  picked #89 (PLAN-MISSING-ROLLBACK — deployment plans with no rollback/revert/fallback mention);
+  added pitfall + _plan_missing_rollback() helper + _ROLLBACK_RE/_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE
+  constants; guard prevents false positives on pure-refactoring plans; 13 unit tests; pytest 377
+  green; benchmark good=100 bad=61 PASS; PR #92 opened (draft); issue #89 commented.
