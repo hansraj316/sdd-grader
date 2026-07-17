@@ -492,3 +492,16 @@ patterns = [
   "\\bsystem\\s+prompt\\b",
   "\"findings\"\\s*:\\s*\\[\\s*\\]",
 ]
+
+# ------------------------------------------------ plan rollback strategy (issue #89)
+
+[[pitfall]]
+id = "PLAN-MISSING-ROLLBACK"
+name = "Deployment plan with no rollback/revert/fallback strategy"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "medium"
+method = "lint"
+why = "Spec-Kit best practices and ISO 25010 reliability require deployment plans to address reversibility. A plan that never considers what happens when a deploy fails causes production incidents and leaves teams unable to recover quickly."
+detect = "Check whether any rollback-vocabulary keyword (rollback, revert, fallback, recovery, undo, back out) appears in a plan.md that contains deployment vocabulary (deploy, release, ship, production, staging) or a Deployment/Release section. Fire once at the file level if none are found."
+fix = "Add an explicit rollback strategy: e.g. 'If the deploy fails, revert to the previous image with `kubectl rollout undo deployment/api`.' Place it in a Deployment or Rollback Plan section."
