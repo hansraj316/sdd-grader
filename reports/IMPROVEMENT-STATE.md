@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 23
-Last run: 2026-07-16
+Iteration: 24
+Last run: 2026-07-17
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -31,26 +31,24 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD) → issue #78 → merged in PR #82
 - [x] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80 → merged in PR #84
 - [x] constitution-crosscheck — Cross-artifact check: plan.md's Constitution Check must reference actual principle names from constitution.md → issue #79 → merged in PR #85
-- [~] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86
+- [x] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86 → merged 2026-07-14
 - [ ] judge-invest — Judge-side INVEST scoring of user stories (independent, small, valuable, testable). (INVEST)
 - [ ] checklist-ingest — Ingest a generated /speckit.checklist and score item completion. (Spec-Kit checklist)
 - [ ] report-sarif — Emit SARIF so findings show up in GitHub code scanning. (CI integration practice)
 - [ ] feature-rollup — Per-feature rollup scores (group artifacts by feature) in report + dashboard. (sddgrade gap)
 - [ ] trend-regression — Dashboard flags a score regression vs the previous run. (sddgrade gap)
-- [ ] constitution-crosscheck — Check that plan.md's Constitution Check references the actual principle names from constitution.md. (Spec-Kit constitution) → issue #79
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
-- [ ] adapter-config-schema — Validate `.sddgrade.toml` against a schema and warn on unknown keys. (sddgrade gap) → issue #80
-- [x] precommit-hook — Provide a pre-commit hook config that runs `sddgrade review --rules --fail-under`. (CI/dev-loop practice) → issue #81 → PR #86 → merged 2026-07-14
 - [x] story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall: "As a X, I want Y" without "so that Z" clause. (INVEST Valuable, Connextra, ISO 29148) → issue #87 → PR #90 → merged 2026-07-15
 - [x] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88 → PR #91 → merged 2026-07-16
-- [~] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89 → PR #92
+- [x] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89 → PR #92 → merged 2026-07-17
+- [~] req-duplicate-id — REQ-DUPLICATE-ID pitfall: same FR/NFR/AC/US identifier on multiple lines. (ISO 29148, QVscribe) → issue #93 → PR #96
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #89 → PR #92 plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall + _plan_missing_rollback() helper; _ROLLBACK_RE/_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE constants; deploy-guard prevents false positives on refactoring plans; silent on any rollback keyword; 13 unit tests; pytest 377 green; benchmark good=100 bad=61 PASS (2026-07-16; awaiting CI)
+- #93 → PR #96 req-duplicate-id — REQ-DUPLICATE-ID pitfall + _req_duplicate_id() helper; _REQ_ID_RE constant; fenced-block exclusion via _fence_mask(); case-insensitive; fires once per artifact; 13 unit tests; pytest 390 green; benchmark good=100 bad=61 PASS (2026-07-17; awaiting CI)
 
 ## Merged
 
@@ -73,6 +71,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #81 → PR #86 precommit-hook — .pre-commit-hooks.yaml at repo root; hook runs sddgrade review --rules --fail-under 60 on specs/*.md + openspec/*.md; README "Pre-commit integration" section; 8 unit tests (2026-07-14, CI was green; squash-merged).
 - #87 → PR #90 story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall + _story_no_benefit() lint check; 10 unit tests; 3 corpus expected.json accepted_extras (2026-07-15, CI was green; squash-merged).
 - #88 → PR #91 unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall + _unbounded_scope() lint check; 12 unit tests; applies to spec + plan (2026-07-16, CI was green; squash-merged).
+- #89 → PR #92 plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall + _plan_missing_rollback() helper; _ROLLBACK_RE/_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE constants; deploy-guard prevents false positives on refactoring plans; silent on any rollback keyword; 13 unit tests; pytest 377 green; benchmark good=100 bad=61 PASS (2026-07-17, CI was green; squash-merged).
 
 ## Blocked
 
@@ -199,3 +198,4 @@ Tessl, and Spec-Kit extensions/presets.)
   added pitfall + _plan_missing_rollback() helper + _ROLLBACK_RE/_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE
   constants; guard prevents false positives on pure-refactoring plans; 13 unit tests; pytest 377
   green; benchmark good=100 bad=61 PASS; PR #92 opened (draft); issue #89 commented.
+- iter 24 (2026-07-17): Phase 1 merged PR #92 (issue #89 closed, CI was green; converted draft → ready + squash-merged). Phase 2 found 0 open loop-candidate issues → Phase 3: filed 3 new issues (#93 req-duplicate-id, #94 plan-no-testing-strategy, #95 plan-missing-observability). Phase 4 picked #93 (REQ-DUPLICATE-ID — same FR/NFR/AC/US identifier on multiple non-fenced lines); added pitfall + _req_duplicate_id() helper + _REQ_ID_RE constant; case-insensitive; fenced-block exclusion via _fence_mask(); fires once per artifact; 13 unit tests; pytest 390 green; benchmark good=100 bad=61 PASS; PR #96 opened (draft); issue #93 commented.
