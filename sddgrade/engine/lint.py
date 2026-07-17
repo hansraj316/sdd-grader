@@ -272,6 +272,42 @@ def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     return [_from_pitfall(p, art.path, "Deployment plan has no rollback/revert/fallback strategy.")]
 
 
+# Requirement ID pattern: FR-NNN, NFR-NNN, AC-NNN, or US-NNN (REQ-DUPLICATE-ID).
+_REQ_ID_RE = re.compile(r"\b((?:FR|NFR|AC|US)-\d+)\b", re.IGNORECASE)
+
+
+def _req_duplicate_id(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Duplicate FR/NFR/AC/US requirement identifiers within spec.md (REQ-DUPLICATE-ID)."""
+    p = catalog.get("REQ-DUPLICATE-ID")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    counts: dict[str, int] = {}
+    first_line: dict[str, int] = {}
+    for i, line in enumerate(lines):
+        if fenced[i] or not line.strip():
+            continue
+        for m in _REQ_ID_RE.finditer(line):
+            uid = m.group(1).upper()
+            counts[uid] = counts.get(uid, 0) + 1
+            if uid not in first_line:
+                first_line[uid] = i + 1
+    dupes = sorted(uid for uid, cnt in counts.items() if cnt > 1)
+    if not dupes:
+        return []
+    examples = ", ".join(dupes[:3])
+    suffix = f" (and {len(dupes) - 3} more)" if len(dupes) > 3 else ""
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"Duplicate requirement ID(s): {examples}{suffix}.",
+            line=first_line[dupes[0]],
+        )
+    ]
+
+
 def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """User stories missing the 'so that [benefit]' clause (Connextra format / INVEST Valuable)."""
     p = catalog.get("SPEC-STORY-NO-BENEFIT")
@@ -638,6 +674,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_ears_pattern(art, catalog))
     out.extend(_story_no_benefit(art, catalog))
     out.extend(_unbounded_scope(art, catalog))
+    out.extend(_req_duplicate_id(art, catalog))
     return out
 
 
