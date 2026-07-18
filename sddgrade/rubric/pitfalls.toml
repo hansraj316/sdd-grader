@@ -472,6 +472,19 @@ why = "OpenSpec requirements are validated by their scenarios; a '### Requiremen
 detect = "A '### Requirement:' section whose body contains no '#### Scenario:'."
 fix = "Add at least one '#### Scenario:' with WHEN/THEN describing the expected behavior."
 
+# ----------------------------------------------------------- traceability (issue #93)
+
+[[pitfall]]
+id = "REQ-DUPLICATE-ID"
+name = "Duplicate requirement identifier"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "high"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.2 mandates every requirement carries a unique identifier so it can be unambiguously traced, referenced, and tested. A reused FR-/NFR-/AC-/US- ID silently breaks traceability: cross-artifact xref checks key on these IDs, and downstream tooling will conflate or overwrite the duplicated requirement."
+detect = "The same FR-NNN, NFR-NNN, AC-NNN, or US-NNN identifier appears on two or more non-blank, non-fenced lines in spec.md."
+fix = "Renumber colliding requirements to give each a unique identifier; update all cross-references."
+
 # ----------------------------------------------------- judge tampering (issue #49)
 
 [[pitfall]]
