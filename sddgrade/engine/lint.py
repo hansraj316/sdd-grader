@@ -275,6 +275,27 @@ def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
 # Requirement ID pattern: FR-NNN, NFR-NNN, AC-NNN, or US-NNN (REQ-DUPLICATE-ID).
 _REQ_ID_RE = re.compile(r"\b((?:FR|NFR|AC|US)-\d+)\b", re.IGNORECASE)
 
+# Phase/Step heading pattern: section titles that name phases or steps (PLAN-NO-TESTING-STRATEGY guard).
+_PHASE_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s.*\b(?:phase|step)\b", re.IGNORECASE | re.MULTILINE)
+# Testing vocabulary: any mention of testing or verification strategy.
+_TESTING_VOCAB_RE = re.compile(
+    r"\b(?:test(?:s|ing)?|coverage|validat(?:e|ion)|verif(?:y|ication))\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_testing_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Multi-phase plan with no testing vocabulary (PLAN-NO-TESTING-STRATEGY)."""
+    p = catalog.get("PLAN-NO-TESTING-STRATEGY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    phase_matches = _PHASE_HEADING_RE.findall(art.raw)
+    if len(phase_matches) < 2:
+        return []
+    if _TESTING_VOCAB_RE.search(art.raw):
+        return []
+    return [_from_pitfall(p, art.path, "Multi-phase plan has no testing or verification strategy.")]
+
 
 def _req_duplicate_id(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Duplicate FR/NFR/AC/US requirement identifiers within spec.md (REQ-DUPLICATE-ID)."""
@@ -713,6 +734,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_unclear_actor(art, catalog))
     out.extend(_unbounded_scope(art, catalog))
     out.extend(_plan_missing_rollback(art, catalog))
+    out.extend(_plan_no_testing_strategy(art, catalog))
     return out
 
 
