@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 24
-Last run: 2026-07-17
+Iteration: 25
+Last run: 2026-07-18
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -41,14 +41,15 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall: "As a X, I want Y" without "so that Z" clause. (INVEST Valuable, Connextra, ISO 29148) → issue #87 → PR #90 → merged 2026-07-15
 - [x] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88 → PR #91 → merged 2026-07-16
 - [x] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89 → PR #92 → merged 2026-07-17
-- [~] req-duplicate-id — REQ-DUPLICATE-ID pitfall: same FR/NFR/AC/US identifier on multiple lines. (ISO 29148, QVscribe) → issue #93 → PR #96
+- [x] req-duplicate-id — REQ-DUPLICATE-ID pitfall: same FR/NFR/AC/US identifier on multiple lines. (ISO 29148, QVscribe) → issue #93 → PR #96 → merged 2026-07-18
+- [~] plan-no-testing-strategy — PLAN-NO-TESTING-STRATEGY pitfall + _plan_no_testing_strategy() helper; _PHASE_HEADING_RE + _TESTING_VOCAB_RE constants; 2-phase guard prevents false positives on short plans; 13 unit tests; pytest 403 green; benchmark good=100 bad=61 PASS (2026-07-18; awaiting CI) → issue #94 → PR #97
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #93 → PR #96 req-duplicate-id — REQ-DUPLICATE-ID pitfall + _req_duplicate_id() helper; _REQ_ID_RE constant; fenced-block exclusion via _fence_mask(); case-insensitive; fires once per artifact; 13 unit tests; pytest 390 green; benchmark good=100 bad=61 PASS (2026-07-17; awaiting CI)
+- #94 → PR #97 plan-no-testing-strategy — PLAN-NO-TESTING-STRATEGY pitfall + _plan_no_testing_strategy() helper; _PHASE_HEADING_RE + _TESTING_VOCAB_RE constants; 2-phase guard prevents false positives on short plans; 13 unit tests; pytest 403 green; benchmark good=100 bad=61 PASS (2026-07-18; awaiting CI)
 
 ## Merged
 
@@ -72,6 +73,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #87 → PR #90 story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall + _story_no_benefit() lint check; 10 unit tests; 3 corpus expected.json accepted_extras (2026-07-15, CI was green; squash-merged).
 - #88 → PR #91 unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall + _unbounded_scope() lint check; 12 unit tests; applies to spec + plan (2026-07-16, CI was green; squash-merged).
 - #89 → PR #92 plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall + _plan_missing_rollback() helper; _ROLLBACK_RE/_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE constants; deploy-guard prevents false positives on refactoring plans; silent on any rollback keyword; 13 unit tests; pytest 377 green; benchmark good=100 bad=61 PASS (2026-07-17, CI was green; squash-merged).
+- #93 → PR #96 req-duplicate-id — REQ-DUPLICATE-ID pitfall + _req_duplicate_id() helper; _REQ_ID_RE constant; fenced-block exclusion via _fence_mask(); case-insensitive; fires once per artifact; 13 unit tests; pytest 390 green; benchmark good=100 bad=61 PASS (2026-07-18, CI was green; squash-merged).
 
 ## Blocked
 
@@ -199,3 +201,4 @@ Tessl, and Spec-Kit extensions/presets.)
   constants; guard prevents false positives on pure-refactoring plans; 13 unit tests; pytest 377
   green; benchmark good=100 bad=61 PASS; PR #92 opened (draft); issue #89 commented.
 - iter 24 (2026-07-17): Phase 1 merged PR #92 (issue #89 closed, CI was green; converted draft → ready + squash-merged). Phase 2 found 0 open loop-candidate issues → Phase 3: filed 3 new issues (#93 req-duplicate-id, #94 plan-no-testing-strategy, #95 plan-missing-observability). Phase 4 picked #93 (REQ-DUPLICATE-ID — same FR/NFR/AC/US identifier on multiple non-fenced lines); added pitfall + _req_duplicate_id() helper + _REQ_ID_RE constant; case-insensitive; fenced-block exclusion via _fence_mask(); fires once per artifact; 13 unit tests; pytest 390 green; benchmark good=100 bad=61 PASS; PR #96 opened (draft); issue #93 commented.
+- iter 25 (2026-07-18): Phase 1 merged PR #96 (issue #93 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#94, #95); Phase 4 picked #94 (PLAN-NO-TESTING-STRATEGY — multi-phase plan with no testing vocabulary); added pitfall + _plan_no_testing_strategy() helper + _PHASE_HEADING_RE + _TESTING_VOCAB_RE constants; 2-phase guard prevents false positives on short plans; 13 unit tests; pytest 403 green; benchmark good=100 bad=61 PASS; PR #97 opened (draft); issue #94 commented.
