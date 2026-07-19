@@ -297,6 +297,33 @@ def _plan_no_testing_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     return [_from_pitfall(p, art.path, "Multi-phase plan has no testing or verification strategy.")]
 
 
+# Observability vocabulary: monitoring/logging/metrics/tracing/alerting/SLO/SLA (PLAN-MISSING-OBSERVABILITY).
+_OBSERVABILITY_RE = re.compile(
+    r"\bmonitor(?:ing)?\b|\blogging\b|\blog\s+level\b|\bmetrics?\b"
+    r"|\bobservabilit\w+\b|\btrac(?:e|ing)\b|\balert(?:ing)?\b"
+    r"|\bdashboard\b|\bSLO\b|\bSLA\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_observability(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plans that never mention observability (PLAN-MISSING-OBSERVABILITY)."""
+    p = catalog.get("PLAN-MISSING-OBSERVABILITY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: only fire when the plan uses deployment vocabulary or has a Deployment/Release section.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Silent when any observability vocabulary is present.
+    if _OBSERVABILITY_RE.search(art.raw):
+        return []
+    return [_from_pitfall(p, art.path, "Deployment plan has no observability strategy (monitoring, logging, metrics, or alerting).")]
+
+
 def _req_duplicate_id(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Duplicate FR/NFR/AC/US requirement identifiers within spec.md (REQ-DUPLICATE-ID)."""
     p = catalog.get("REQ-DUPLICATE-ID")
@@ -735,6 +762,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_unbounded_scope(art, catalog))
     out.extend(_plan_missing_rollback(art, catalog))
     out.extend(_plan_no_testing_strategy(art, catalog))
+    out.extend(_plan_missing_observability(art, catalog))
     return out
 
 
