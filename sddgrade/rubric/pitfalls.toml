@@ -540,3 +540,14 @@ method = "lint"
 why = "ISO/IEC 25010 operability and SRE production-readiness reviews require that any deployment plan address how the running system will be observed. A plan that describes how to ship but never mentions monitoring, logging, metrics, or alerting produces a black box: failures go undetected until user reports arrive."
 detect = "Check whether deployment vocabulary (deploy, release, ship, production, staging) appears or a Deployment/Release section exists. If the guard fires, check for absence of observability vocabulary (monitor, logging, metrics, tracing, alerting, dashboard, SLO, SLA, observability). Fire once at the file level if the guard fires and no observability vocabulary is found."
 fix = "Add an Observability section: describe which metrics will be emitted, what alerts will fire, where logs go, and what dashboards or SLOs cover the released service."
+
+[[pitfall]]
+id = "REQ-WEAK-DIRECTIVE"
+name = "Requirement using non-normative modal verb"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.2.6 reserves 'shall'/'must' for mandatory requirements and classifies 'should' as a recommendation, 'may'/'could' as optional. QVscribe (Optionality defect, Level 1) and IBM RQA (directive-strength check) flag the same pattern. A requirement written with 'should' or 'may' is optionally satisfiable: an implementer can skip it without formal non-compliance, making the requirement unverifiable and the contract unenforceable."
+detect = "Requirement-bearing lines (inside a Requirements/Acceptance/Scenario section, or lines with FR-/NFR- labels) where the primary modal verb is 'should', 'may', 'could', or 'might' and neither 'shall' nor 'must' appears on the same line (which would indicate a legitimate EARS conditional)."
+fix = "Replace the non-normative modal with 'shall' or 'must': 'The system shall encrypt all tokens at rest.' Use 'should' only for advisory notes that are not requirements, placed outside the Requirements section."

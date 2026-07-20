@@ -324,6 +324,65 @@ def _plan_missing_observability(art: Artifact, catalog: dict[str, Pitfall]) -> l
     return [_from_pitfall(p, art.path, "Deployment plan has no observability strategy (monitoring, logging, metrics, or alerting).")]
 
 
+# Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
+_WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
+# Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
+_MANDATORY_MODAL_RE = re.compile(r"\b(shall|must)\b", re.IGNORECASE)
+# Explicit requirement-ID label: FR-N, NFR-N, AC-N, US-N on the same line.
+_STRICT_REQ_ID_LINE_RE = re.compile(r"\b(?:FR|NFR|AC|US)-\d+\b", re.IGNORECASE)
+
+
+def _strict_req_mask(art: Artifact, lines: list[str]) -> list[bool]:
+    """True only for lines that are explicitly in a Requirements/Acceptance/Scenario section
+    OR carry an FR-/NFR-/AC-/US- label.  Stricter than _requirement_mask — does NOT mark
+    arbitrary prose lines containing 'should' as requirement-bearing."""
+    mask = [False] * len(lines)
+    secs = art.sections
+    for idx, s in enumerate(secs):
+        if not _REQ_SECTION_TITLE_RE.search(s.title):
+            continue
+        start = s.line - 1
+        end = secs[idx + 1].line - 1 if idx + 1 < len(secs) else len(lines)
+        for i in range(start, min(end, len(lines))):
+            mask[i] = True
+    for i, line in enumerate(lines):
+        if not mask[i] and _STRICT_REQ_ID_LINE_RE.search(line):
+            mask[i] = True
+    return mask
+
+
+def _weak_directive(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement lines using non-normative modals instead of shall/must (REQ-WEAK-DIRECTIVE)."""
+    p = catalog.get("REQ-WEAK-DIRECTIVE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _strict_req_mask(art, lines)
+    hits: list[tuple[int, str]] = []
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        m = _WEAK_MODAL_RE.search(line)
+        if not m:
+            continue
+        # Skip lines where shall/must also appears — legitimate EARS conditional.
+        if _MANDATORY_MODAL_RE.search(line):
+            continue
+        hits.append((i + 1, m.group(1).lower()))
+    if not hits:
+        return []
+    examples = ", ".join(sorted({h[1] for h in hits})[:3])
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"REQ-WEAK-DIRECTIVE: {len(hits)} requirement line(s) use non-normative modal(s) ({examples}) instead of 'shall'/'must'.",
+            line=hits[0][0],
+        )
+    ]
+
+
 def _req_duplicate_id(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Duplicate FR/NFR/AC/US requirement identifiers within spec.md (REQ-DUPLICATE-ID)."""
     p = catalog.get("REQ-DUPLICATE-ID")
@@ -723,6 +782,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_story_no_benefit(art, catalog))
     out.extend(_unbounded_scope(art, catalog))
     out.extend(_req_duplicate_id(art, catalog))
+    out.extend(_weak_directive(art, catalog))
     return out
 
 
