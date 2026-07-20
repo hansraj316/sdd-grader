@@ -529,3 +529,14 @@ method = "lint"
 why = "Tessl's spec-first principle and Spec-Kit's Test-First gate require that an implementation plan address how correctness will be verified, not just what will be built. A multi-phase plan with no testing mention can be executed and declared done without any verification target, turning the plan into a pure delivery checklist with no quality gate."
 detect = "Count headings matching Phase or Step (case-insensitive). If 2 or more are found, check whether any testing vocabulary (test, testing, coverage, validate, validation, verify, verification) appears anywhere in the document. Fire once if the guard fires and no testing vocabulary is found."
 fix = "Add a Testing Strategy or Acceptance Testing section that describes how correctness will be verified: unit tests, integration tests, coverage targets, or manual acceptance criteria."
+
+[[pitfall]]
+id = "PLAN-MISSING-OBSERVABILITY"
+name = "Deployment plan with no observability mention"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "medium"
+method = "lint"
+why = "ISO/IEC 25010 operability and SRE production-readiness reviews require that any deployment plan address how the running system will be observed. A plan that describes how to ship but never mentions monitoring, logging, metrics, or alerting produces a black box: failures go undetected until user reports arrive."
+detect = "Check whether deployment vocabulary (deploy, release, ship, production, staging) appears or a Deployment/Release section exists. If the guard fires, check for absence of observability vocabulary (monitor, logging, metrics, tracing, alerting, dashboard, SLO, SLA, observability). Fire once at the file level if the guard fires and no observability vocabulary is found."
+fix = "Add an Observability section: describe which metrics will be emitted, what alerts will fire, where logs go, and what dashboards or SLOs cover the released service."
