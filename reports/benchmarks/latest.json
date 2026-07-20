@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-19T07:25:52.125078+00:00",
+  "timestamp": "2026-07-20T07:31:57.422766+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -40,12 +40,12 @@
   },
   "bad": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_bad",
-    "overall": 61.0,
+    "overall": 59.2,
     "artifacts": [
       {
         "type": "spec",
-        "overall": 24.0,
-        "findings": 10
+        "overall": 18.0,
+        "findings": 11
       },
       {
         "type": "plan",
@@ -68,6 +68,7 @@
       "CONST-UNVERSIONED",
       "PLAN-CONSTITUTION-UNCHECKED",
       "REQ-COMPOUND",
+      "REQ-WEAK-DIRECTIVE",
       "SPEC-AMBIGUOUS-WORDING",
       "SPEC-COMPARATIVE-NO-REFERENCE",
       "SPEC-IMPL-DETAIL-LEAK",
@@ -80,7 +81,7 @@
       "TASKS-MALFORMED",
       "TASKS-TESTS-NOT-FIRST"
     ],
-    "finding_count": 19
+    "finding_count": 20
   },
   "extras": [],
   "corpus": {
@@ -237,7 +238,7 @@
         "quality": "medium",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 88.0,
+        "overall": 82.0,
         "score_band": [
           65,
           92
@@ -251,6 +252,7 @@
         "false_negatives": [],
         "accepted_extras_detected": [
           "REQ-COMPOUND",
+          "REQ-WEAK-DIRECTIVE",
           "SPEC-STORY-NO-BENEFIT"
         ],
         "known_misses_caught": [],
@@ -260,8 +262,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 1.0,
         "precision": 1.0,
-        "correct_detections": 4,
-        "total_detections": 4,
+        "correct_detections": 5,
+        "total_detections": 5,
         "note": "Tech-stack detail and speculative future features in a spec. REQ-COMPOUND is a genuine extra: FR-001 bundles React + Postgres + websockets in one requirement. Calibration gap: current scoring (~90) is lenient versus external judgment; the band floor is set so fixing that leniency PASSES the gate."
       },
       {
@@ -330,7 +332,7 @@
         "quality": "medium",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 88.0,
+        "overall": 82.0,
         "score_band": [
           55,
           92
@@ -341,7 +343,9 @@
           "SPEC-NON-MEASURABLE-SUCCESS"
         ],
         "false_negatives": [],
-        "accepted_extras_detected": [],
+        "accepted_extras_detected": [
+          "REQ-WEAK-DIRECTIVE"
+        ],
         "known_misses_caught": [],
         "known_misses_missed": [
           "SPEC-AMBIGUOUS-WORDING",
@@ -354,8 +358,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 0.2,
         "precision": 1.0,
-        "correct_detections": 1,
-        "total_detections": 1,
+        "correct_detections": 2,
+        "total_detections": 2,
         "note": "Paraphrase case: the same defect classes as ambiguous/nfr-unquantified/impl-leak, worded to avoid the catalog's trigger regexes. Lint SHOULD ideally catch: 'snappy'/'lightweight'/'smoothly' (ambiguous wording, FR-001/FR-002); 'keep working when the whole company checks it at the same moment' (unquantified load NFR, FR-002); 'could later grow a spreadsheet export' (speculative feature, FR-003); 'CockroachDB'/'Svelte' (impl-detail leak, FR-004). Only the digit-based structural check (non-measurable success) generalizes to this phrasing today. These are labeled known_misses: excluded from gated recall, reported in recall_incl_known_misses so the miss stays visible."
       },
       {
@@ -394,9 +398,9 @@
       "n": 10,
       "mean_recall": 1.0,
       "mean_recall_incl_known_misses": 0.92,
-      "precision": 0.963,
-      "correct_detections": 26,
-      "total_detections": 27,
+      "precision": 0.966,
+      "correct_detections": 28,
+      "total_detections": 29,
       "band_failures": [],
       "unlabeled_unexpected": {},
       "known_false_positives": 1,
