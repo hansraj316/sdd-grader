@@ -551,3 +551,14 @@ method = "lint"
 why = "ISO/IEC/IEEE 29148:2018 §5.2.6 reserves 'shall'/'must' for mandatory requirements and classifies 'should' as a recommendation, 'may'/'could' as optional. QVscribe (Optionality defect, Level 1) and IBM RQA (directive-strength check) flag the same pattern. A requirement written with 'should' or 'may' is optionally satisfiable: an implementer can skip it without formal non-compliance, making the requirement unverifiable and the contract unenforceable."
 detect = "Requirement-bearing lines (inside a Requirements/Acceptance/Scenario section, or lines with FR-/NFR- labels) where the primary modal verb is 'should', 'may', 'could', or 'might' and neither 'shall' nor 'must' appears on the same line (which would indicate a legitimate EARS conditional)."
 fix = "Replace the non-normative modal with 'shall' or 'must': 'The system shall encrypt all tokens at rest.' Use 'should' only for advisory notes that are not requirements, placed outside the Requirements section."
+
+[[pitfall]]
+id = "PLAN-MISSING-SECURITY"
+name = "Deployment plan with no security vocabulary"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "medium"
+method = "lint"
+why = "ISO/IEC 25010 Security quality characteristic (confidentiality, integrity, non-repudiation) requires any deployment plan to address how the running system will be secured. A plan that describes how to ship but never mentions authentication, encryption, or access control produces a production surface that post-deployment security audits will flag as unaddressed."
+detect = "Check whether deployment vocabulary (deploy, release, ship, production, staging) appears or a Deployment/Release section exists. If the guard fires, check for absence of security-hardening vocabulary (auth, TLS, SSL, encrypt, secret, credential, certificate, RBAC, IAM, firewall, access control, token, mTLS, vault). Fire once at the file level if the guard fires and no security vocabulary is found."
+fix = "Add a Security section: describe how secrets are managed, what auth mechanism protects the service, whether TLS terminates at the load balancer or service, and what access-control model governs production access."
