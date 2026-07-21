@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 27
-Last run: 2026-07-20
+Iteration: 28
+Last run: 2026-07-21
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -44,8 +44,8 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] req-duplicate-id — REQ-DUPLICATE-ID pitfall: same FR/NFR/AC/US identifier on multiple lines. (ISO 29148, QVscribe) → issue #93 → PR #96 → merged 2026-07-18
 - [x] plan-no-testing-strategy — PLAN-NO-TESTING-STRATEGY pitfall + _plan_no_testing_strategy() helper; _PHASE_HEADING_RE + _TESTING_VOCAB_RE constants; 2-phase guard prevents false positives on short plans; 13 unit tests; pytest 403 green; benchmark good=100 bad=61 PASS → issue #94 → PR #97 → merged 2026-07-19
 - [x] plan-missing-observability — PLAN-MISSING-OBSERVABILITY pitfall + _plan_missing_observability() helper; _OBSERVABILITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fires on monitoring/logging/metrics/alerting/SLO/SLA absence; 14 unit tests; pytest 417 green; benchmark good=100 bad=61 PASS → issue #95 → PR #98 → merged 2026-07-20
-- [~] req-weak-directive — REQ-WEAK-DIRECTIVE pitfall + _weak_directive() helper; _WEAK_MODAL_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE constants; _strict_req_mask() scopes to section+label only (avoids false positives on prose "should"); 14 unit tests; pytest 431 green; benchmark good=100 bad=61 precision=0.966 PASS (2026-07-20; awaiting CI) → issue #99 → PR #102
-- [ ] req-weak-directive-security — PLAN-MISSING-SECURITY pitfall; deploy-guard reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE; _SECURITY_RE vocab; same pattern as PLAN-MISSING-ROLLBACK/OBSERVABILITY → issue #100
+- [x] req-weak-directive — REQ-WEAK-DIRECTIVE pitfall + _weak_directive() helper; _WEAK_MODAL_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE constants; _strict_req_mask() scopes to section+label only (avoids false positives on prose "should"); 14 unit tests; pytest 431 green; benchmark good=100 bad=61 precision=0.966 PASS → issue #99 → PR #102 → merged 2026-07-21
+- [~] plan-missing-security — PLAN-MISSING-SECURITY pitfall + _plan_missing_security() helper; _SECURITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fires on auth/TLS/encrypt/secrets/RBAC/IAM/firewall/vault absence; 17 unit tests; pytest 448 green; benchmark good=100 bad=59.2 PASS (2026-07-21; awaiting CI) → issue #100 → PR #103
 - [ ] spec-pronoun-antecedent — SPEC-PRONOUN-ANTECEDENT; object pronouns after modal verb; distinct from SPEC-UNCLEAR-ACTOR (which covers subject pronouns) → issue #101
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
@@ -53,7 +53,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #99 → PR #102 req-weak-directive — REQ-WEAK-DIRECTIVE pitfall + _weak_directive() helper; _strict_req_mask(); 14 unit tests; pytest 431 green; benchmark good=100 bad=61 precision=0.966 PASS (2026-07-20; awaiting CI)
+- #100 → PR #103 plan-missing-security — PLAN-MISSING-SECURITY pitfall + _plan_missing_security() helper; _SECURITY_RE; 17 unit tests; pytest 448 green; benchmark good=100 bad=59.2 PASS (2026-07-21; awaiting CI)
 
 ## Merged
 
@@ -80,6 +80,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #93 → PR #96 req-duplicate-id — REQ-DUPLICATE-ID pitfall + _req_duplicate_id() helper; _REQ_ID_RE constant; fenced-block exclusion via _fence_mask(); case-insensitive; fires once per artifact; 13 unit tests; pytest 390 green; benchmark good=100 bad=61 PASS (2026-07-18, CI was green; squash-merged).
 - #94 → PR #97 plan-no-testing-strategy — PLAN-NO-TESTING-STRATEGY pitfall + _plan_no_testing_strategy() helper; _PHASE_HEADING_RE + _TESTING_VOCAB_RE constants; 2-phase guard prevents false positives on short plans; 13 unit tests; pytest 403 green; benchmark good=100 bad=61 PASS (2026-07-19, CI was green; squash-merged).
 - #95 → PR #98 plan-missing-observability — PLAN-MISSING-OBSERVABILITY pitfall + _plan_missing_observability() helper; _OBSERVABILITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 14 unit tests; pytest 417 green; benchmark good=100 bad=61 PASS (2026-07-20, CI was green; squash-merged).
+- #99 → PR #102 req-weak-directive — REQ-WEAK-DIRECTIVE pitfall + _weak_directive() helper; _WEAK_MODAL_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE constants; _strict_req_mask(); 14 unit tests; pytest 431 green; benchmark good=100 bad=61 PASS (2026-07-21, CI was green; squash-merged).
 
 ## Blocked
 
@@ -210,3 +211,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 25 (2026-07-18): Phase 1 merged PR #96 (issue #93 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#94, #95); Phase 4 picked #94 (PLAN-NO-TESTING-STRATEGY — multi-phase plan with no testing vocabulary); added pitfall + _plan_no_testing_strategy() helper + _PHASE_HEADING_RE + _TESTING_VOCAB_RE constants; 2-phase guard prevents false positives on short plans; 13 unit tests; pytest 403 green; benchmark good=100 bad=61 PASS; PR #97 opened (draft); issue #94 commented.
 - iter 26 (2026-07-19): Phase 1 merged PR #97 (issue #94 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#95); Phase 4 picked #95 (PLAN-MISSING-OBSERVABILITY — deployment plans with no monitoring/logging/metrics/alerting mention); added pitfall + _plan_missing_observability() helper + _OBSERVABILITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 14 unit tests; pytest 417 green; benchmark good=100 bad=61 PASS; PR #98 opened (draft); issue #95 commented.
 - iter 27 (2026-07-20): Phase 1 merged PR #98 (issue #95 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 0 open loop-candidate issues → Phase 3: filed 3 new issues (#99 req-weak-directive, #100 plan-missing-security, #101 spec-pronoun-antecedent). Phase 4 picked #99 (REQ-WEAK-DIRECTIVE — requirement lines using non-normative modals should/may/could/might instead of shall/must); added pitfall + _weak_directive() helper + _WEAK_MODAL_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE constants; _strict_req_mask() scopes strictly to section+FR/NFR labels (avoids false positives on prose); corpus: 2 genuine true positives labelled as accepted_extras; 14 unit tests; pytest 431 green; benchmark good=100 bad=61 precision=0.966 PASS; PR #102 opened (draft); issue #99 commented.
+- iter 28 (2026-07-21): Phase 1 merged PR #102 (issue #99 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#100, #101); Phase 4 picked #100 (PLAN-MISSING-SECURITY — deployment plans with no security-hardening vocabulary); added pitfall + _plan_missing_security() helper + _SECURITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fires on auth/TLS/encrypt/secret/credential/RBAC/IAM/firewall/vault absence; 17 unit tests; pytest 448 green; benchmark good=100 bad=59.2 PASS; PR #103 opened (draft); issue #100 commented.
