@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 29
 Last run: 2026-07-22
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -46,14 +46,14 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] plan-missing-observability — PLAN-MISSING-OBSERVABILITY pitfall + _plan_missing_observability() helper; _OBSERVABILITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fires on monitoring/logging/metrics/alerting/SLO/SLA absence; 14 unit tests; pytest 417 green; benchmark good=100 bad=61 PASS → issue #95 → PR #98 → merged 2026-07-20
 - [x] req-weak-directive — REQ-WEAK-DIRECTIVE pitfall + _weak_directive() helper; _WEAK_MODAL_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE constants; _strict_req_mask() scopes to section+label only (avoids false positives on prose "should"); 14 unit tests; pytest 431 green; benchmark good=100 bad=61 precision=0.966 PASS → issue #99 → PR #102 → merged 2026-07-21
 - [x] plan-missing-security — PLAN-MISSING-SECURITY pitfall + _plan_missing_security() helper; _SECURITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fires on auth/TLS/encrypt/secrets/RBAC/IAM/firewall/vault absence; 17 unit tests; pytest 448 green; benchmark good=100 bad=59.2 PASS → issue #100 → PR #103 → merged 2026-07-22
-- [~] spec-pronoun-antecedent — SPEC-PRONOUN-ANTECEDENT; object pronouns (it/them/their/this/that/these/those) after modal verb; _VAGUE_SUBJECT_RE guard avoids double-count with SPEC-UNCLEAR-ACTOR; possessive 'its' excluded; 15 unit tests; pytest 463 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-22; awaiting CI) → issue #101 → PR #104
+- [x] spec-pronoun-antecedent — SPEC-PRONOUN-ANTECEDENT; object pronouns (it/them/their/this/that/these/those) after modal verb; _VAGUE_SUBJECT_RE guard avoids double-count with SPEC-UNCLEAR-ACTOR; possessive 'its' excluded; 15 unit tests; pytest 463 green; benchmark good=100 bad=58.6 precision=0.968 PASS → issue #101 → PR #104 → merged 2026-07-22
 
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #101 → PR #104 spec-pronoun-antecedent — SPEC-PRONOUN-ANTECEDENT pitfall + _pronoun_antecedent() helper; _PRONOUN_ANTECEDENT_RE; 15 unit tests; pytest 463 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-22; awaiting CI)
+(none)
 
 ## Merged
 
@@ -82,6 +82,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #95 → PR #98 plan-missing-observability — PLAN-MISSING-OBSERVABILITY pitfall + _plan_missing_observability() helper; _OBSERVABILITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 14 unit tests; pytest 417 green; benchmark good=100 bad=61 PASS (2026-07-20, CI was green; squash-merged).
 - #99 → PR #102 req-weak-directive — REQ-WEAK-DIRECTIVE pitfall + _weak_directive() helper; _WEAK_MODAL_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE constants; _strict_req_mask(); 14 unit tests; pytest 431 green; benchmark good=100 bad=61 PASS (2026-07-21, CI was green; squash-merged).
 - #100 → PR #103 plan-missing-security — PLAN-MISSING-SECURITY pitfall + _plan_missing_security() helper; _SECURITY_RE; 17 unit tests; pytest 448 green; benchmark good=100 bad=59.2 PASS (2026-07-22, CI was green; squash-merged).
+- #101 → PR #104 spec-pronoun-antecedent — SPEC-PRONOUN-ANTECEDENT pitfall + _pronoun_antecedent() helper; _PRONOUN_ANTECEDENT_RE; 15 unit tests; pytest 463 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-22, CI was green; squash-merged).
 
 ## Blocked
 
