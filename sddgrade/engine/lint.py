@@ -324,6 +324,34 @@ def _plan_missing_observability(art: Artifact, catalog: dict[str, Pitfall]) -> l
     return [_from_pitfall(p, art.path, "Deployment plan has no observability strategy (monitoring, logging, metrics, or alerting).")]
 
 
+# Security-hardening vocabulary: auth/TLS/encrypt/secrets/RBAC/IAM/firewall/token/vault (PLAN-MISSING-SECURITY).
+_SECURITY_RE = re.compile(
+    r"\bauth(?:entication|orization|oriz)?\b|\bTLS\b|\bSSL\b|\bencrypt\w*\b"
+    r"|\bsecret(?:s)?\b|\bcredential(?:s)?\b|\bcertif(?:icate|y)?\b"
+    r"|\bRBAC\b|\bIAM\b|\bfirewall\b|\baccess[\s\-]control\b"
+    r"|\btoken(?:s)?\b|\bmTLS\b|\bvault\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_security(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plans that never mention security hardening (PLAN-MISSING-SECURITY)."""
+    p = catalog.get("PLAN-MISSING-SECURITY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: only fire when the plan uses deployment vocabulary or has a Deployment/Release section.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Silent when any security vocabulary is present.
+    if _SECURITY_RE.search(art.raw):
+        return []
+    return [_from_pitfall(p, art.path, "Deployment plan has no security hardening mention (auth, TLS, encryption, secrets management, or access control).")]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -823,6 +851,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_rollback(art, catalog))
     out.extend(_plan_no_testing_strategy(art, catalog))
     out.extend(_plan_missing_observability(art, catalog))
+    out.extend(_plan_missing_security(art, catalog))
     return out
 
 
