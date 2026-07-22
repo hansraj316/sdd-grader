@@ -253,6 +253,50 @@ _DEPLOY_VOCAB_RE = re.compile(
 # Section-title guard: a Deployment or Release section triggers the check.
 _DEPLOY_SECTION_RE = re.compile(r"\b(?:deployment|release)\b", re.IGNORECASE)
 
+# Object pronoun following a modal verb — dangling reference (SPEC-PRONOUN-ANTECEDENT).
+# Matches: "shall ... it/them/their/this/that/these/those" within one sentence (no period).
+# Uses _strict_req_mask so only requirement-bearing lines are examined.
+_PRONOUN_ANTECEDENT_RE = re.compile(
+    r"\b(?:shall|must)\b[^.\n]{0,120}\b(it|them|their|this|that|these|those)\b",
+    re.IGNORECASE,
+)
+
+
+def _pronoun_antecedent(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement lines where a modal verb is followed by a vague object pronoun (SPEC-PRONOUN-ANTECEDENT)."""
+    p = catalog.get("SPEC-PRONOUN-ANTECEDENT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _strict_req_mask(art, lines)
+    hits: list[tuple[int, str]] = []
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        # Skip lines where the pronoun is only the subject (SPEC-UNCLEAR-ACTOR covers those).
+        # A subject pronoun appears BEFORE the modal; our regex anchors at the modal, so any
+        # match is necessarily post-modal (object position) — but we still skip if the entire
+        # subject pronoun + modal pattern fires on the same line to avoid double-counting a
+        # line that SPEC-UNCLEAR-ACTOR already surfaces.
+        if _VAGUE_SUBJECT_RE.search(line):
+            continue
+        m = _PRONOUN_ANTECEDENT_RE.search(line)
+        if not m:
+            continue
+        hits.append((i + 1, m.group(1).lower()))
+    if not hits:
+        return []
+    examples = ", ".join(sorted({h[1] for h in hits})[:3])
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-PRONOUN-ANTECEDENT: {len(hits)} requirement line(s) reference ambiguous object pronoun(s) ({examples}) after a modal verb.",
+            line=hits[0][0],
+        )
+    ]
+
 
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
@@ -811,6 +855,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_unbounded_scope(art, catalog))
     out.extend(_req_duplicate_id(art, catalog))
     out.extend(_weak_directive(art, catalog))
+    out.extend(_pronoun_antecedent(art, catalog))
     return out
 
 

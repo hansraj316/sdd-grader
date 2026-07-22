@@ -19,7 +19,7 @@
     }
   ],
   "expect": {
-    "merged_overall": 79.0,
+    "merged_overall": 77.0,
     "judge_pitfalls": [
       "SPEC-NON-INDEPENDENT-STORY",
       "JUDGE-29148-PERREQ"
@@ -38,6 +38,6 @@
         "dimension": "testability"
       }
     ],
-    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against."
+    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against. Updated 2026-07-22: SPEC-PRONOUN-ANTECEDENT (low severity) added to lint, lowering merged_overall from 79.0 to 77.0."
   }
 }

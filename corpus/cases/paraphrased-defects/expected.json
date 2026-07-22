@@ -3,7 +3,7 @@
   "score_band": [55, 92],
   "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium — five real defects — but the engine currently sees only one, scoring 88. Floor 55 is the external judgment of where the score belongs once the known misses are caught (catching all four adds ~20 penalty -> 68), so closing those gaps PASSES the gate; ceiling 92 requires the one currently-caught defect to keep costing at least 8 points. Engine output at labeling time: 88.",
   "expect_pitfalls": ["SPEC-NON-MEASURABLE-SUCCESS"],
-  "accepted_extras": ["REQ-WEAK-DIRECTIVE"],
+  "accepted_extras": ["REQ-WEAK-DIRECTIVE", "SPEC-PRONOUN-ANTECEDENT"],
   "known_misses": [
     "SPEC-AMBIGUOUS-WORDING",
     "SPEC-NFR-NO-THRESHOLD",
