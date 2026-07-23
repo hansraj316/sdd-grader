@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 29
-Last run: 2026-07-22
-Open loop PRs: 0
+Iteration: 30
+Last run: 2026-07-23
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -38,6 +38,9 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] feature-rollup — Per-feature rollup scores (group artifacts by feature) in report + dashboard. (sddgrade gap)
 - [ ] trend-regression — Dashboard flags a score regression vs the previous run. (sddgrade gap)
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
+- [~] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108
+- [ ] spec-future-tense-req — SPEC-FUTURE-TENSE-REQ pitfall: requirement lines using "will be"/"would be" instead of normative "shall"/"must" (ISO 29148, Canon) → issue #106
+- [ ] plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall: deployment plan with scaling vocab but no capacity numbers (Tessl, ISO 25010 Capacity) → issue #107
 - [x] story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall: "As a X, I want Y" without "so that Z" clause. (INVEST Valuable, Connextra, ISO 29148) → issue #87 → PR #90 → merged 2026-07-15
 - [x] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88 → PR #91 → merged 2026-07-16
 - [x] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89 → PR #92 → merged 2026-07-17
@@ -53,7 +56,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #105 → PR #108 tasks-untraced-task — TASKS-UNTRACED-TASK pitfall + _tasks_untraced_task() helper; fenced-block exclusion; applies only to tasks artifacts; fixture T001/T002 updated with [US1] tag; 15 unit tests; pytest 478 green; benchmark good=100 bad=58.6 PASS
 
 ## Merged
 
@@ -215,3 +218,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 27 (2026-07-20): Phase 1 merged PR #98 (issue #95 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 0 open loop-candidate issues → Phase 3: filed 3 new issues (#99 req-weak-directive, #100 plan-missing-security, #101 spec-pronoun-antecedent). Phase 4 picked #99 (REQ-WEAK-DIRECTIVE — requirement lines using non-normative modals should/may/could/might instead of shall/must); added pitfall + _weak_directive() helper + _WEAK_MODAL_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE constants; _strict_req_mask() scopes strictly to section+FR/NFR labels (avoids false positives on prose); corpus: 2 genuine true positives labelled as accepted_extras; 14 unit tests; pytest 431 green; benchmark good=100 bad=61 precision=0.966 PASS; PR #102 opened (draft); issue #99 commented.
 - iter 28 (2026-07-21): Phase 1 merged PR #102 (issue #99 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#100, #101); Phase 4 picked #100 (PLAN-MISSING-SECURITY — deployment plans with no security-hardening vocabulary); added pitfall + _plan_missing_security() helper + _SECURITY_RE constant; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fires on auth/TLS/encrypt/secret/credential/RBAC/IAM/firewall/vault absence; 17 unit tests; pytest 448 green; benchmark good=100 bad=59.2 PASS; PR #103 opened (draft); issue #100 commented.
 - iter 29 (2026-07-22): Phase 1 merged PR #103 (issue #100 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#101); Phase 4 picked #101 (SPEC-PRONOUN-ANTECEDENT — requirement lines with ambiguous object pronoun after modal verb); added pitfall + _pronoun_antecedent() helper + _PRONOUN_ANTECEDENT_RE; _VAGUE_SUBJECT_RE guard prevents double-reporting with SPEC-UNCLEAR-ACTOR; possessive 'its' excluded to avoid false positives; corpus: ambiguous expect_pitfalls + judge.golden merged_overall updated, paraphrased-defects accepted_extras; 15 unit tests; pytest 463 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #104 opened (draft); issue #101 commented.
+- iter 30 (2026-07-23): Phase 1 no open loop/* PRs (PR #104 already merged same run as iter 29). Phase 2 found 0 open loop-candidate issues → Phase 3: filed 3 new issues (#105 tasks-untraced-task, #106 spec-future-tense-req, #107 plan-missing-capacity; research via Kiro/MAQA/Canon/Tessl parallel agents). Phase 4 picked #105 (TASKS-UNTRACED-TASK — checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference; reverse of XREF-STORY-NO-TASK; ISO 29148 bidirectional traceability); added pitfall + _tasks_untraced_task() helper; fenced-block exclusion; fixture T001/T002 updated with [US1] tag in good corpus; 15 unit tests; pytest 478 green; benchmark good=100 bad=58.6 PASS; PR #108 opened (draft); issue #105 commented.
