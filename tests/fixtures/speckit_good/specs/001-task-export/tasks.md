@@ -8,11 +8,11 @@ Single project: source in `src/export/`, tests in `tests/export/`.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create the export module skeleton in src/export/__init__.py
+- [ ] T001 [US1] Create the export module skeleton in src/export/__init__.py
 
 ## Phase 2: Foundational
 
-- [ ] T002 Add Task query helper in src/export/query.py
+- [ ] T002 [US1] Add Task query helper in src/export/query.py
 
 ## Phase 3: User Story 1
 
