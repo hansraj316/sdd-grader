@@ -340,6 +340,17 @@ detect = "Task lines missing a `T###` id or `[ ]`/`[x]` checkbox, or with malfor
 fix = "Format every task as `[ ] T### [P?] [US?] Description with file path`."
 
 [[pitfall]]
+id = "TASKS-UNTRACED-TASK"
+name = "Task with no requirement traceability link"
+dimension = "traceability"
+artifacts = ["tasks"]
+severity = "medium"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.2.6 mandates bidirectional traceability: every task must trace back to a stated requirement. A task line that carries a T## identifier but no [US#] story tag and no FR-/NFR-/AC-/US- reference is stealth scope — work that was never specified, cannot be accepted against any criterion, and cannot be prioritised against product NFRs. This is the reverse of XREF-STORY-NO-TASK (which confirms stories have tasks)."
+detect = "For each checkbox task line carrying a T## identifier, assert it contains at least one of: a [US#] story tag, or an FR-/NFR-/AC-/US- identifier. Flag lines that carry neither."
+fix = "Add a story or requirement tag: '- [ ] T04 Add rate limiter [US3]' or '- [ ] T05 Add encryption (FR-07)'. If the task has no requirement ancestor, decide whether it belongs in the spec as a new requirement or should be removed."
+
+[[pitfall]]
 id = "TASKS-VAGUE"
 name = "Vague task lacking a concrete action / path"
 dimension = "clarity"

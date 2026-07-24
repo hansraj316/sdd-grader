@@ -487,6 +487,34 @@ def _req_duplicate_id(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     ]
 
 
+def _tasks_untraced_task(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Tasks with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (TASKS-UNTRACED-TASK)."""
+    p = catalog.get("TASKS-UNTRACED-TASK")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    untraced = [
+        (i + 1, ln)
+        for i, ln in enumerate(lines)
+        if not fenced[i]
+        and _TASK_LINE_RE.match(ln)
+        and _TASK_ID_RE.search(ln)
+        and not _US_TAG_RE.search(ln)
+        and not _REQ_ID_RE.search(ln)
+    ]
+    if not untraced:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"{len(untraced)} task line(s) with no requirement traceability link ([US#] or FR-/NFR-/AC-/US- ref).",
+            line=untraced[0][0],
+        )
+    ]
+
+
 def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """User stories missing the 'so that [benefit]' clause (Connextra format / INVEST Valuable)."""
     p = catalog.get("SPEC-STORY-NO-BENEFIT")
@@ -927,6 +955,8 @@ def _tasks_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
         has_tests = any("tests for user story" in t for t in titles)
         if has_impl and not has_tests:
             out.append(_from_pitfall(p, art.path, "Implementation tasks with no test tasks (Test-First)."))
+
+    out.extend(_tasks_untraced_task(art, catalog))
     return out
 
 
