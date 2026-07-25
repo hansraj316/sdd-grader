@@ -436,6 +436,33 @@ def _plan_missing_security(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     return [_from_pitfall(p, art.path, "Deployment plan has no security hardening mention (auth, TLS, encryption, secrets management, or access control).")]
 
 
+# Scaling vocabulary: capacity-related terms that imply resource planning is needed (PLAN-MISSING-CAPACITY).
+_SCALING_VOCAB_RE = re.compile(
+    r"\bscal(?:e|es|ing|able)\b|\breplicas?\b|\binstances?\b|\bnodes?\b"
+    r"|\bpods?\b|\bautoscal\w*\b|\bhorizontally\b|\bvertically\b",
+    re.IGNORECASE,
+)
+# Capacity numbers: a digit immediately followed by a resource unit (PLAN-MISSING-CAPACITY).
+_CAPACITY_NUMBER_RE = re.compile(
+    r"\d+\s*(?:replicas?|instances?|nodes?|pods?|vcpu|GB|MB|RAM|memory|cpu|cores?|workers?)\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_capacity(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plans that mention scaling but state no concrete capacity numbers (PLAN-MISSING-CAPACITY)."""
+    p = catalog.get("PLAN-MISSING-CAPACITY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: only fire when the plan uses scaling vocabulary.
+    if not _SCALING_VOCAB_RE.search(art.raw):
+        return []
+    # Silent when any capacity number is present.
+    if _CAPACITY_NUMBER_RE.search(art.raw):
+        return []
+    return [_from_pitfall(p, art.path, "Deployment plan mentions scaling but states no capacity numbers (replicas, instances, GB RAM, vCPU, etc.).")]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -966,6 +993,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_testing_strategy(art, catalog))
     out.extend(_plan_missing_observability(art, catalog))
     out.extend(_plan_missing_security(art, catalog))
+    out.extend(_plan_missing_capacity(art, catalog))
     return out
 
 

@@ -595,3 +595,14 @@ method = "lint"
 why = "ISO/IEC/IEEE 29148:2018 §5.2.5 requires normative requirements to use present tense with 'shall' or 'must'. Future-tense phrasing ('The system will be able to…', 'The API will support…') expresses a promise or design intention rather than a binding contract. Unlike the optionality defect caught by REQ-WEAK-DIRECTIVE ('should'/'may'), future-tense statements are an enforceability defect: they imply the obligation will be met eventually but do not mandate it now, making them untestable against a present-state acceptance criterion. Canon specification format and MAQA enforceability checks flag this as a distinct category."
 detect = "Requirement-bearing lines (inside a Requirements/Acceptance/Scenario section, or lines with FR-/NFR-/AC-/US- labels) that contain a future-tense construction ('will be', 'would be', 'will support', 'will allow', 'will provide', 'will enable', 'will handle') and do not also contain 'shall' or 'must' on the same line."
 fix = "Rewrite in normative present tense: 'The system shall process payments synchronously.' Remove 'will be able to' and state the capability directly with 'shall'."
+
+[[pitfall]]
+id = "PLAN-MISSING-CAPACITY"
+name = "Deployment plan mentions scaling but states no capacity numbers"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "medium"
+method = "lint"
+why = "Tessl's spec-first principle requires deployment decisions to flow from documented requirements, not emerge at deploy time. ISO/IEC 25010 Performance Efficiency → Capacity (§4.2.1.2) requires systems to declare resource limits. A plan that says 'scales horizontally to handle load' but never states a number (replicas, instances, GB RAM, vCPU) cannot be reviewed against the spec's NFRs, costed, provisioned, or accepted as ready for production."
+detect = "Check whether scaling vocabulary (scale/scales/scaling/scalable, replicas, instances, nodes, pods, autoscal, horizontally, vertically) appears anywhere in the plan. If it does, check whether any capacity number (a digit followed by one of: replicas, instances, nodes, pods, vcpu, GB, MB, RAM, memory, cpu, cores, workers) also appears. Fire once at file level when scaling vocabulary is present but no capacity number is stated."
+fix = "State concrete resource targets: 'Deploy 3 replicas, 2 vCPU and 4 GB RAM each, with autoscaling up to 10 replicas at 70% CPU.' Anchor the numbers to the relevant NFR (e.g. 'NFR-03: p95 latency < 200ms at 10k RPS')."
