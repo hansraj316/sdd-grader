@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 32
 Last run: 2026-07-25
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -40,7 +40,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
 - [x] spec-future-tense-req — SPEC-FUTURE-TENSE-REQ pitfall: requirement lines using "will be"/"would be" instead of normative "shall"/"must" (ISO 29148, Canon) → issue #106 → PR #109 → merged 2026-07-25
-- [~] plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall: deployment plan with scaling vocab but no capacity numbers (Tessl, ISO 25010 Capacity) → issue #107 → PR #110
+- [x] plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall: deployment plan with scaling vocab but no capacity numbers (Tessl, ISO 25010 Capacity) → issue #107 → PR #110 → merged 2026-07-25
 - [x] story-no-benefit — SPEC-STORY-NO-BENEFIT pitfall: "As a X, I want Y" without "so that Z" clause. (INVEST Valuable, Connextra, ISO 29148) → issue #87 → PR #90 → merged 2026-07-15
 - [x] unbounded-scope — REQ-UNBOUNDED-SCOPE pitfall: "etc.", "and so on" in requirements. (ISO 29148, QVscribe) → issue #88 → PR #91 → merged 2026-07-16
 - [x] plan-missing-rollback — PLAN-MISSING-ROLLBACK pitfall: plan.md with no rollback/revert/fallback mention. (Spec-Kit, ISO 25010) → issue #89 → PR #92 → merged 2026-07-17
@@ -56,7 +56,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #107 → PR #110 plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall + _plan_missing_capacity() helper; _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; fires when scaling vocab present but no capacity numbers stated; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS
+(none)
 
 ## Merged
 
@@ -88,6 +88,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #101 → PR #104 spec-pronoun-antecedent — SPEC-PRONOUN-ANTECEDENT pitfall + _pronoun_antecedent() helper; _PRONOUN_ANTECEDENT_RE; 15 unit tests; pytest 463 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-22, CI was green; squash-merged).
 - #105 → PR #108 tasks-untraced-task — TASKS-UNTRACED-TASK pitfall + _tasks_untraced_task() helper; fenced-block exclusion; applies only to tasks artifacts; fixture T001/T002 updated with [US1] tag; 15 unit tests; pytest 478 green; benchmark good=100 bad=58.6 PASS (2026-07-24, CI was green; squash-merged).
 - #106 → PR #109 spec-future-tense-req — SPEC-FUTURE-TENSE-REQ pitfall + _future_tense_req() helper; _FUTURE_TENSE_RE constant; reuses _strict_req_mask()/_MANDATORY_MODAL_RE; skips mixed normative statements (shall/must on same line); 19 unit tests; pytest 497 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-25, CI was green; squash-merged).
+- #107 → PR #110 plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall + _plan_missing_capacity() helper; _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; fires when scaling vocab present but no capacity numbers; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-25, CI was green; squash-merged same run).
 
 ## Blocked
 
@@ -222,4 +223,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 29 (2026-07-22): Phase 1 merged PR #103 (issue #100 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#101); Phase 4 picked #101 (SPEC-PRONOUN-ANTECEDENT — requirement lines with ambiguous object pronoun after modal verb); added pitfall + _pronoun_antecedent() helper + _PRONOUN_ANTECEDENT_RE; _VAGUE_SUBJECT_RE guard prevents double-reporting with SPEC-UNCLEAR-ACTOR; possessive 'its' excluded to avoid false positives; corpus: ambiguous expect_pitfalls + judge.golden merged_overall updated, paraphrased-defects accepted_extras; 15 unit tests; pytest 463 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #104 opened (draft); issue #101 commented.
 - iter 30 (2026-07-23): Phase 1 no open loop/* PRs (PR #104 already merged same run as iter 29). Phase 2 found 0 open loop-candidate issues → Phase 3: filed 3 new issues (#105 tasks-untraced-task, #106 spec-future-tense-req, #107 plan-missing-capacity; research via Kiro/MAQA/Canon/Tessl parallel agents). Phase 4 picked #105 (TASKS-UNTRACED-TASK — checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference; reverse of XREF-STORY-NO-TASK; ISO 29148 bidirectional traceability); added pitfall + _tasks_untraced_task() helper; fenced-block exclusion; fixture T001/T002 updated with [US1] tag in good corpus; 15 unit tests; pytest 478 green; benchmark good=100 bad=58.6 PASS; PR #108 opened (draft); issue #105 commented.
 - iter 31 (2026-07-24): Phase 1 merged PR #108 (issue #105 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#106, #107); Phase 4 picked #106 (SPEC-FUTURE-TENSE-REQ — requirement lines using future-tense "will be"/"would be" instead of normative "shall"/"must"; enforceability defect distinct from REQ-WEAK-DIRECTIVE's optionality defect; ISO 29148 §5.2.5, Canon, MAQA); added pitfall + _future_tense_req() helper + _FUTURE_TENSE_RE constant; reuses _strict_req_mask()/_MANDATORY_MODAL_RE; skips mixed normative statements; 19 unit tests; pytest 497 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #109 opened (draft); issue #106 commented.
-- iter 32 (2026-07-25): Phase 1 merged PR #109 (issue #106 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#107); Phase 4 picked #107 (PLAN-MISSING-CAPACITY — deployment plans that mention scaling vocab but state no concrete capacity numbers; Tessl spec-first + ISO/IEC 25010 Capacity §4.2.1.2); added pitfall + _plan_missing_capacity() helper + _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; guard: fires only when scaling vocab present; silent when any capacity number (digit + resource unit) found; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #110 opened (draft); issue #107 commented.
+- iter 32 (2026-07-25): Phase 1 merged PR #109 (issue #106 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#107); Phase 4 picked #107 (PLAN-MISSING-CAPACITY — deployment plans that mention scaling vocab but state no concrete capacity numbers; Tessl spec-first + ISO/IEC 25010 Capacity §4.2.1.2); added pitfall + _plan_missing_capacity() helper + _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; guard: fires only when scaling vocab present; silent when any capacity number (digit + resource unit) found; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #110 opened (draft); CI turned green same run; PR #110 converted + squash-merged; issue #107 closed.
