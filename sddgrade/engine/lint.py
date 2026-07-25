@@ -253,6 +253,14 @@ _DEPLOY_VOCAB_RE = re.compile(
 # Section-title guard: a Deployment or Release section triggers the check.
 _DEPLOY_SECTION_RE = re.compile(r"\b(?:deployment|release)\b", re.IGNORECASE)
 
+# Future-tense phrasing in requirements — enforceability defect (SPEC-FUTURE-TENSE-REQ).
+# ISO/IEC/IEEE 29148:2018 mandates present-tense normative statements; "will be" and
+# similar future-tense constructions express intent rather than obligation.
+_FUTURE_TENSE_RE = re.compile(
+    r"\b(will\s+be|would\s+be|will\s+support|will\s+allow|will\s+provide|will\s+enable|will\s+handle)\b",
+    re.IGNORECASE,
+)
+
 # Object pronoun following a modal verb — dangling reference (SPEC-PRONOUN-ANTECEDENT).
 # Matches: "shall ... it/them/their/this/that/these/those" within one sentence (no period).
 # Uses _strict_req_mask so only requirement-bearing lines are examined.
@@ -293,6 +301,38 @@ def _pronoun_antecedent(art: Artifact, catalog: dict[str, Pitfall]) -> list[Find
             p,
             art.path,
             f"SPEC-PRONOUN-ANTECEDENT: {len(hits)} requirement line(s) reference ambiguous object pronoun(s) ({examples}) after a modal verb.",
+            line=hits[0][0],
+        )
+    ]
+
+
+def _future_tense_req(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement lines using future-tense phrasing instead of normative shall/must (SPEC-FUTURE-TENSE-REQ)."""
+    p = catalog.get("SPEC-FUTURE-TENSE-REQ")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _strict_req_mask(art, lines)
+    hits: list[tuple[int, str]] = []
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        m = _FUTURE_TENSE_RE.search(line)
+        if not m:
+            continue
+        # A line that also contains shall/must is a mixed normative statement — skip.
+        if _MANDATORY_MODAL_RE.search(line):
+            continue
+        hits.append((i + 1, m.group(1).lower()))
+    if not hits:
+        return []
+    examples = ", ".join(sorted({h[1] for h in hits})[:3])
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-FUTURE-TENSE-REQ: {len(hits)} requirement line(s) use future-tense phrasing ({examples}) instead of normative 'shall'/'must'.",
             line=hits[0][0],
         )
     ]
@@ -884,6 +924,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_req_duplicate_id(art, catalog))
     out.extend(_weak_directive(art, catalog))
     out.extend(_pronoun_antecedent(art, catalog))
+    out.extend(_future_tense_req(art, catalog))
     return out
 
 

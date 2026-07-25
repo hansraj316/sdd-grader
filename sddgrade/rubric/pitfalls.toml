@@ -584,3 +584,14 @@ method = "lint"
 why = "IBM RQA's pronoun-antecedent check (separate from its actor/subject check) flags dangling object references that make a requirement interpretable in multiple ways. ISO/IEC/IEEE 29148:2018 §5.2.6 requires each requirement to be unambiguous. Two engineers testing 'The system shall send it to them via the API' may test completely different things, producing divergent implementations and test cases."
 detect = "Requirement-bearing lines (inside a Requirements/Acceptance/Scenario section, or lines with FR-/NFR-/AC-/US- labels) where a modal verb (shall/must) is followed within the same sentence by a standalone object pronoun (it, them, their, this, that, these, those — excluding possessive 'its' which nearly always has a clear nominal antecedent), and the pronoun is not the grammatical subject (those are caught by SPEC-UNCLEAR-ACTOR)."
 fix = "Replace the pronoun with the explicit noun it refers to: 'The system shall send the access token to the requesting client via the OAuth callback URL.'"
+
+[[pitfall]]
+id = "SPEC-FUTURE-TENSE-REQ"
+name = "Requirement stated in future tense instead of normative present tense"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.2.5 requires normative requirements to use present tense with 'shall' or 'must'. Future-tense phrasing ('The system will be able to…', 'The API will support…') expresses a promise or design intention rather than a binding contract. Unlike the optionality defect caught by REQ-WEAK-DIRECTIVE ('should'/'may'), future-tense statements are an enforceability defect: they imply the obligation will be met eventually but do not mandate it now, making them untestable against a present-state acceptance criterion. Canon specification format and MAQA enforceability checks flag this as a distinct category."
+detect = "Requirement-bearing lines (inside a Requirements/Acceptance/Scenario section, or lines with FR-/NFR-/AC-/US- labels) that contain a future-tense construction ('will be', 'would be', 'will support', 'will allow', 'will provide', 'will enable', 'will handle') and do not also contain 'shall' or 'must' on the same line."
+fix = "Rewrite in normative present tense: 'The system shall process payments synchronously.' Remove 'will be able to' and state the capability directly with 'shall'."
