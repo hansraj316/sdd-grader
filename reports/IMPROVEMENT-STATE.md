@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 33
 Last run: 2026-07-26
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -25,7 +25,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 
 - [x] pitfall-escape-clause — see issue #3 → merged in PR #10
 - [x] pitfall-negative-requirement — see issue #4 → merged in PR #11
-- [~] xref-dangling-req-ref — XREF-DANGLING-REQ-REF: task references undefined requirement ID → issue #111 → PR #114 awaiting CI
+- [x] xref-dangling-req-ref — XREF-DANGLING-REQ-REF: task references undefined requirement ID → issue #111 → PR #114 → merged 2026-07-26
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
@@ -59,7 +59,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #111 → PR #114 xref-dangling-req-ref — XREF-DANGLING-REQ-REF pitfall + cross-artifact check in _cross_artifact(); _US_TAG_NUM_RE capturing constant; fenced-block exclusion; guard when spec has no formal IDs; 15 unit tests; pytest 531 green; benchmark good=100 bad=58.6 PASS (2026-07-26, CI running)
+(none)
 
 ## Merged
 
@@ -91,6 +91,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #101 → PR #104 spec-pronoun-antecedent — SPEC-PRONOUN-ANTECEDENT pitfall + _pronoun_antecedent() helper; _PRONOUN_ANTECEDENT_RE; 15 unit tests; pytest 463 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-22, CI was green; squash-merged).
 - #105 → PR #108 tasks-untraced-task — TASKS-UNTRACED-TASK pitfall + _tasks_untraced_task() helper; fenced-block exclusion; applies only to tasks artifacts; fixture T001/T002 updated with [US1] tag; 15 unit tests; pytest 478 green; benchmark good=100 bad=58.6 PASS (2026-07-24, CI was green; squash-merged).
 - #106 → PR #109 spec-future-tense-req — SPEC-FUTURE-TENSE-REQ pitfall + _future_tense_req() helper; _FUTURE_TENSE_RE constant; reuses _strict_req_mask()/_MANDATORY_MODAL_RE; skips mixed normative statements (shall/must on same line); 19 unit tests; pytest 497 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-25, CI was green; squash-merged).
+- #111 → PR #114 xref-dangling-req-ref — XREF-DANGLING-REQ-REF cross-artifact pitfall + _US_TAG_NUM_RE; _cross_artifact() check; fenced-block exclusion; 15 unit tests; pytest 531 green; benchmark good=100 bad=58.6 PASS (2026-07-26, CI was green; squash-merged).
 - #107 → PR #110 plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall + _plan_missing_capacity() helper; _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; fires when scaling vocab present but no capacity numbers; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-25, CI was green; squash-merged same run).
 
 ## Blocked
@@ -227,4 +228,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 30 (2026-07-23): Phase 1 no open loop/* PRs (PR #104 already merged same run as iter 29). Phase 2 found 0 open loop-candidate issues → Phase 3: filed 3 new issues (#105 tasks-untraced-task, #106 spec-future-tense-req, #107 plan-missing-capacity; research via Kiro/MAQA/Canon/Tessl parallel agents). Phase 4 picked #105 (TASKS-UNTRACED-TASK — checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference; reverse of XREF-STORY-NO-TASK; ISO 29148 bidirectional traceability); added pitfall + _tasks_untraced_task() helper; fenced-block exclusion; fixture T001/T002 updated with [US1] tag in good corpus; 15 unit tests; pytest 478 green; benchmark good=100 bad=58.6 PASS; PR #108 opened (draft); issue #105 commented.
 - iter 31 (2026-07-24): Phase 1 merged PR #108 (issue #105 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#106, #107); Phase 4 picked #106 (SPEC-FUTURE-TENSE-REQ — requirement lines using future-tense "will be"/"would be" instead of normative "shall"/"must"; enforceability defect distinct from REQ-WEAK-DIRECTIVE's optionality defect; ISO 29148 §5.2.5, Canon, MAQA); added pitfall + _future_tense_req() helper + _FUTURE_TENSE_RE constant; reuses _strict_req_mask()/_MANDATORY_MODAL_RE; skips mixed normative statements; 19 unit tests; pytest 497 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #109 opened (draft); issue #106 commented.
 - iter 32 (2026-07-25): Phase 1 merged PR #109 (issue #106 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#107); Phase 4 picked #107 (PLAN-MISSING-CAPACITY — deployment plans that mention scaling vocab but state no concrete capacity numbers; Tessl spec-first + ISO/IEC 25010 Capacity §4.2.1.2); added pitfall + _plan_missing_capacity() helper + _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; guard: fires only when scaling vocab present; silent when any capacity number (digit + resource unit) found; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #110 opened (draft); CI turned green same run; PR #110 converted + squash-merged; issue #107 closed.
-- iter 33 (2026-07-26): Phase 1 no open loop/* PRs. Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 3 parallel research agents (SARIF/traceability, INVEST/Kiro/MAQA/Canon, Tessl/OpenSpec/Spec-Kit); filed 3 new issues (#111 XREF-DANGLING-REQ-REF, #112 SPEC-REQ-SECTION-PROSE-ONLY, #113 PLAN-THIRD-PARTY-NO-FALLBACK). Phase 4 picked #111 (XREF-DANGLING-REQ-REF — task line references a [US#]/FR-/NFR-/AC-/US- ID not defined in spec.md; ISO 29148 bidirectional traceability); added pitfall + _US_TAG_NUM_RE constant + cross-artifact check in _cross_artifact(); fenced-block exclusion; guard when spec defines no formal IDs; 15 unit tests; pytest 531 green; benchmark good=100 bad=58.6 PASS; PR #114 opened (draft); awaiting CI.
+- iter 33 (2026-07-26): Phase 1 no open loop/* PRs. Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 3 parallel research agents (SARIF/traceability, INVEST/Kiro/MAQA/Canon, Tessl/OpenSpec/Spec-Kit); filed 3 new issues (#111 XREF-DANGLING-REQ-REF, #112 SPEC-REQ-SECTION-PROSE-ONLY, #113 PLAN-THIRD-PARTY-NO-FALLBACK). Phase 4 picked #111 (XREF-DANGLING-REQ-REF — task line references a [US#]/FR-/NFR-/AC-/US- ID not defined in spec.md; ISO 29148 bidirectional traceability); added pitfall + _US_TAG_NUM_RE constant + cross-artifact check in _cross_artifact(); fenced-block exclusion; guard when spec defines no formal IDs; 15 unit tests; pytest 531 green; benchmark good=100 bad=58.6 PASS; PR #114 opened (draft); CI turned green same run; PR #114 converted + squash-merged; issue #111 closed.
