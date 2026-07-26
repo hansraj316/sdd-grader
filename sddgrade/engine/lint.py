@@ -58,6 +58,7 @@ def _count_real_clarification_markers(raw: str) -> int:
 _TASK_LINE_RE = re.compile(r"^\s*-?\s*\[[ xX]\]")  # a checkbox bullet
 _TASK_ID_RE = re.compile(r"\bT\d{2,}\b")
 _US_TAG_RE = re.compile(r"\[US\d+\]", re.IGNORECASE)
+_US_TAG_NUM_RE = re.compile(r"\[US(\d+)\]", re.IGNORECASE)  # capturing variant
 _US_HEADING_RE = re.compile(r"user stor(?:y|ies)\s*(\d+)", re.IGNORECASE)
 _DIGIT_RE = re.compile(r"\d")
 _FILE_PATH_RE = re.compile(r"[\w./-]+\.[A-Za-z0-9]{1,5}\b")
@@ -1117,6 +1118,37 @@ def _cross_artifact(artifacts: list[Artifact], catalog: dict[str, Pitfall]) -> l
             for n in sorted(story_nums):
                 if f"[us{n}]" not in tagged:
                     out.append(_from_pitfall(p, tasks.path, f"User Story {n} has no implementing task."))
+
+        # Dangling req refs: task references an ID not defined in spec.md.
+        if spec and (p := catalog.get("XREF-DANGLING-REQ-REF")):
+            # Collect IDs defined in spec.md (skip fenced blocks)
+            spec_lines = spec.raw.splitlines()
+            spec_fenced = _fence_mask(spec_lines)
+            spec_ids: set[str] = set()
+            for ln, in_fence in zip(spec_lines, spec_fenced):
+                if not in_fence:
+                    for m in _REQ_ID_RE.finditer(ln):
+                        spec_ids.add(m.group(1).upper())
+            # Story headings "User Story N" normalise to US-N
+            for m in _US_HEADING_RE.finditer(spec.raw):
+                spec_ids.add(f"US-{m.group(1)}")
+            # Guard: if spec defines no formal IDs, skip
+            if spec_ids:
+                task_lines = tasks.raw.splitlines()
+                task_fenced = _fence_mask(task_lines)
+                for ln, in_fence in zip(task_lines, task_fenced):
+                    if in_fence or not _TASK_LINE_RE.match(ln):
+                        continue
+                    refs: set[str] = {m.group(1).upper() for m in _REQ_ID_RE.finditer(ln)}
+                    refs |= {f"US-{m.group(1)}" for m in _US_TAG_NUM_RE.finditer(ln)}
+                    dangling = sorted(refs - spec_ids)
+                    if dangling:
+                        examples = ", ".join(dangling[:3])
+                        suffix = f" (+{len(dangling) - 3} more)" if len(dangling) > 3 else ""
+                        out.append(_from_pitfall(
+                            p, tasks.path,
+                            f"Task references undefined requirement ID(s): {examples}{suffix}.",
+                        ))
 
         # Entity → task.
         if data_model and (p := catalog.get("XREF-ENTITY-NO-TASK")):
