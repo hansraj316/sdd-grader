@@ -397,6 +397,17 @@ detect = "A file under contracts/ with no corresponding contract-test task."
 fix = "Add a contract-test task per contract before implementation tasks."
 
 [[pitfall]]
+id = "XREF-DANGLING-REQ-REF"
+name = "Task references an undefined requirement ID"
+dimension = "traceability"
+artifacts = ["tasks"]
+severity = "high"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.2.6 mandates bidirectional traceability. A task line that references a requirement ID not defined in spec.md has a broken acceptance link — it cannot be confirmed done against any stated criterion. This is the reverse direction of TASKS-UNTRACED-TASK (tasks with no link) and XREF-STORY-NO-TASK (stories with no task): it catches tasks whose reference resolves to nothing."
+detect = "For each checkbox task line carrying a [US#] tag or FR-/NFR-/AC-/US- identifier, assert the ID exists in spec.md. Flag lines that reference an ID not defined anywhere in spec.md."
+fix = "Update the task's requirement reference to match the current IDs in spec.md. If spec.md was renumbered, update tasks.md to match. If the task implements a new requirement, add that requirement to spec.md first."
+
+[[pitfall]]
 id = "XREF-CONTRADICTION"
 name = "Cross-artifact contradiction"
 dimension = "consistency"
