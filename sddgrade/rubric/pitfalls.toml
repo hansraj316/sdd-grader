@@ -408,6 +408,17 @@ detect = "For each checkbox task line carrying a [US#] tag or FR-/NFR-/AC-/US- i
 fix = "Update the task's requirement reference to match the current IDs in spec.md. If spec.md was renumbered, update tasks.md to match. If the task implements a new requirement, add that requirement to spec.md first."
 
 [[pitfall]]
+id = "SPEC-REQ-SECTION-PROSE-ONLY"
+name = "Requirements section contains prose but no normative statements"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "high"
+method = "lint"
+why = "IBM RQA classifies a requirements-titled section filled with only prose as a Level 1 Completeness defect. QVscribe's Identifiability score requires formal requirement IDs. ISO/IEC/IEEE 29148:2018 §5.2 mandates that requirements use a normative modal ('shall'/'must') or carry formal identifiers (FR-N, NFR-N). A section titled 'Requirements' or 'Functional Requirements' that contains only narrative description passes superficial completeness checks but contains zero enforceable or testable statements."
+detect = "For each section whose title matches 'requirements' or 'functional requirements', strip fenced code blocks and check whether the body (≥ 30 non-whitespace chars) contains any 'shall', 'must', or formal ID pattern (FR-N, NFR-N, AC-N, US-N). Fire once per offending section if body is substantial but no normative indicator is found."
+fix = "Rewrite each requirement as a normative statement: 'FR-001: The system shall authenticate users via OAuth 2.0.' Add formal requirement IDs (FR-N, NFR-N) and normative modals (shall/must) so each statement is verifiable and traceable."
+
+[[pitfall]]
 id = "XREF-CONTRADICTION"
 name = "Cross-artifact contradiction"
 dimension = "consistency"

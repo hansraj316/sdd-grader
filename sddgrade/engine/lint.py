@@ -339,6 +339,50 @@ def _future_tense_req(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     ]
 
 
+# Requirements section with prose but no normative statements (SPEC-REQ-SECTION-PROSE-ONLY).
+# IBM RQA Completeness L1 / QVscribe Identifiability / ISO 29148 §5.2.
+_PROSE_REQ_SECTION_RE = re.compile(
+    r"\b(?:functional\s+)?requirements?\b", re.IGNORECASE
+)
+_FORMAL_REQ_INDICATOR_RE = re.compile(
+    r"\b(?:shall|must)\b|\b(?:FR|NFR|AC|US)-\d+\b",
+    re.IGNORECASE,
+)
+
+
+def _req_section_prose_only(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirements section with substantial body text but no normative statements (SPEC-REQ-SECTION-PROSE-ONLY)."""
+    p = catalog.get("SPEC-REQ-SECTION-PROSE-ONLY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    out: list[Finding] = []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    for s in art.sections:
+        if not _PROSE_REQ_SECTION_RE.search(s.title):
+            continue
+        body = s.body.strip()
+        if len(body) < 30:
+            continue
+        # Strip fenced blocks from the section body before checking for normative indicators.
+        # We need to check only non-fenced lines of the section.
+        section_lines = body.splitlines()
+        section_fenced = _fence_mask(section_lines)
+        clean_body = "\n".join(
+            ln for ln, in_fence in zip(section_lines, section_fenced) if not in_fence
+        )
+        if not _FORMAL_REQ_INDICATOR_RE.search(clean_body):
+            out.append(
+                _from_pitfall(
+                    p,
+                    art.path,
+                    f"SPEC-REQ-SECTION-PROSE-ONLY: section '{s.title}' contains prose but no normative statements (shall/must or FR-/NFR-/AC-/US- IDs).",
+                    line=s.line,
+                )
+            )
+    return out
+
+
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
     p = catalog.get("PLAN-MISSING-ROLLBACK")
@@ -953,6 +997,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_weak_directive(art, catalog))
     out.extend(_pronoun_antecedent(art, catalog))
     out.extend(_future_tense_req(art, catalog))
+    out.extend(_req_section_prose_only(art, catalog))
     return out
 
 
