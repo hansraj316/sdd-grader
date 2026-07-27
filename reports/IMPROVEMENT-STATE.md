@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 34
 Last run: 2026-07-27
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -39,7 +39,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] feature-rollup — Per-feature rollup scores (group artifacts by feature) in report + dashboard. (sddgrade gap)
 - [ ] trend-regression — Dashboard flags a score regression vs the previous run. (sddgrade gap)
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
-- [~] spec-req-section-prose-only — SPEC-REQ-SECTION-PROSE-ONLY: requirements section with prose but no normative statements (IBM RQA, QVscribe, ISO 29148) → issue #112 → PR #115
+- [x] spec-req-section-prose-only — SPEC-REQ-SECTION-PROSE-ONLY: requirements section with prose but no normative statements (IBM RQA, QVscribe, ISO 29148) → issue #112 → PR #115 → merged 2026-07-27
 - [ ] plan-third-party-no-fallback — PLAN-THIRD-PARTY-NO-FALLBACK: plan mentions external service/API but no resilience vocabulary (Kiro, Tessl, ISO 25010) → issue #113
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
 - [x] spec-future-tense-req — SPEC-FUTURE-TENSE-REQ pitfall: requirement lines using "will be"/"would be" instead of normative "shall"/"must" (ISO 29148, Canon) → issue #106 → PR #109 → merged 2026-07-25
@@ -59,7 +59,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #112 → PR #115 spec-req-section-prose-only — SPEC-REQ-SECTION-PROSE-ONLY pitfall; awaiting CI.
+(none)
 
 ## Merged
 
@@ -92,6 +92,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #105 → PR #108 tasks-untraced-task — TASKS-UNTRACED-TASK pitfall + _tasks_untraced_task() helper; fenced-block exclusion; applies only to tasks artifacts; fixture T001/T002 updated with [US1] tag; 15 unit tests; pytest 478 green; benchmark good=100 bad=58.6 PASS (2026-07-24, CI was green; squash-merged).
 - #106 → PR #109 spec-future-tense-req — SPEC-FUTURE-TENSE-REQ pitfall + _future_tense_req() helper; _FUTURE_TENSE_RE constant; reuses _strict_req_mask()/_MANDATORY_MODAL_RE; skips mixed normative statements (shall/must on same line); 19 unit tests; pytest 497 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-25, CI was green; squash-merged).
 - #111 → PR #114 xref-dangling-req-ref — XREF-DANGLING-REQ-REF cross-artifact pitfall + _US_TAG_NUM_RE; _cross_artifact() check; fenced-block exclusion; 15 unit tests; pytest 531 green; benchmark good=100 bad=58.6 PASS (2026-07-26, CI was green; squash-merged).
+- #112 → PR #115 spec-req-section-prose-only — SPEC-REQ-SECTION-PROSE-ONLY pitfall + _PROSE_REQ_SECTION_RE + _FORMAL_REQ_INDICATOR_RE constants + _req_section_prose_only() helper; fenced-block exclusion; 16 unit tests; pytest 547 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-27, CI was green; squash-merged).
 - #107 → PR #110 plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall + _plan_missing_capacity() helper; _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; fires when scaling vocab present but no capacity numbers; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-25, CI was green; squash-merged same run).
 
 ## Blocked
@@ -229,4 +230,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 31 (2026-07-24): Phase 1 merged PR #108 (issue #105 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#106, #107); Phase 4 picked #106 (SPEC-FUTURE-TENSE-REQ — requirement lines using future-tense "will be"/"would be" instead of normative "shall"/"must"; enforceability defect distinct from REQ-WEAK-DIRECTIVE's optionality defect; ISO 29148 §5.2.5, Canon, MAQA); added pitfall + _future_tense_req() helper + _FUTURE_TENSE_RE constant; reuses _strict_req_mask()/_MANDATORY_MODAL_RE; skips mixed normative statements; 19 unit tests; pytest 497 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #109 opened (draft); issue #106 commented.
 - iter 32 (2026-07-25): Phase 1 merged PR #109 (issue #106 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#107); Phase 4 picked #107 (PLAN-MISSING-CAPACITY — deployment plans that mention scaling vocab but state no concrete capacity numbers; Tessl spec-first + ISO/IEC 25010 Capacity §4.2.1.2); added pitfall + _plan_missing_capacity() helper + _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; guard: fires only when scaling vocab present; silent when any capacity number (digit + resource unit) found; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #110 opened (draft); CI turned green same run; PR #110 converted + squash-merged; issue #107 closed.
 - iter 33 (2026-07-26): Phase 1 no open loop/* PRs. Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 3 parallel research agents (SARIF/traceability, INVEST/Kiro/MAQA/Canon, Tessl/OpenSpec/Spec-Kit); filed 3 new issues (#111 XREF-DANGLING-REQ-REF, #112 SPEC-REQ-SECTION-PROSE-ONLY, #113 PLAN-THIRD-PARTY-NO-FALLBACK). Phase 4 picked #111 (XREF-DANGLING-REQ-REF — task line references a [US#]/FR-/NFR-/AC-/US- ID not defined in spec.md; ISO 29148 bidirectional traceability); added pitfall + _US_TAG_NUM_RE constant + cross-artifact check in _cross_artifact(); fenced-block exclusion; guard when spec defines no formal IDs; 15 unit tests; pytest 531 green; benchmark good=100 bad=58.6 PASS; PR #114 opened (draft); CI turned green same run; PR #114 converted + squash-merged; issue #111 closed.
-- iter 34 (2026-07-27): Phase 1 no open loop/* PRs. Phase 2 found 2 open loop-candidate issues (#112, #113); Phase 4 picked #112 (SPEC-REQ-SECTION-PROSE-ONLY — requirements section with substantial prose but no shall/must modals or FR-/NFR-/AC-/US- IDs; IBM RQA L1 Completeness / QVscribe Identifiability / ISO 29148 §5.2); added pitfall + _PROSE_REQ_SECTION_RE + _FORMAL_REQ_INDICATOR_RE constants + _req_section_prose_only() helper wired into _spec_checks(); fenced-block exclusion prevents code samples suppressing findings; 16 unit tests; pytest 547 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #115 opened (draft); awaiting CI.
+- iter 34 (2026-07-27): Phase 1 no open loop/* PRs. Phase 2 found 2 open loop-candidate issues (#112, #113); Phase 4 picked #112 (SPEC-REQ-SECTION-PROSE-ONLY — requirements section with substantial prose but no shall/must modals or FR-/NFR-/AC-/US- IDs; IBM RQA L1 Completeness / QVscribe Identifiability / ISO 29148 §5.2); added pitfall + _PROSE_REQ_SECTION_RE + _FORMAL_REQ_INDICATOR_RE constants + _req_section_prose_only() helper wired into _spec_checks(); fenced-block exclusion prevents code samples suppressing findings; 16 unit tests; pytest 547 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #115 opened (draft); CI green same run; PR #115 converted + squash-merged; issue #112 closed.
