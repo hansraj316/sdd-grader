@@ -508,6 +508,40 @@ def _plan_missing_capacity(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     return [_from_pitfall(p, art.path, "Deployment plan mentions scaling but states no capacity numbers (replicas, instances, GB RAM, vCPU, etc.).")]
 
 
+# Third-party integration vocabulary: any "<word> API", webhook, OAuth, third-party, external
+# service/endpoint/provider (PLAN-THIRD-PARTY-NO-FALLBACK).
+_THIRD_PARTY_RE = re.compile(
+    r"\b\w[\w-]*\s+API\b"
+    r"|\bwebhook\b"
+    r"|\bOAuth\b"
+    r"|\bthird[-\s]party\b"
+    r"|\bexternal\s+(?:service|endpoint|provider)\b",
+    re.IGNORECASE,
+)
+# Resilience vocabulary: fallback, retry, timeout, circuit breaker, degradation, unavailable,
+# offline, error hand* (PLAN-THIRD-PARTY-NO-FALLBACK).
+_RESILIENCE_RE = re.compile(
+    r"\bfallback\b|\bretr(?:y|ied|ies|ying)\b|\btimeout\b"
+    r"|\bcircuit[\s-]breaker\b"
+    r"|\bdegrad(?:e|ation)\b"
+    r"|\bunavailable\b|\boffline\b"
+    r"|\berror\s+hand\w+\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_third_party_no_fallback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Integration plans that name an external API/service but lack resilience vocabulary (PLAN-THIRD-PARTY-NO-FALLBACK)."""
+    p = catalog.get("PLAN-THIRD-PARTY-NO-FALLBACK")
+    if p is None or not p.applies_to(art.type):
+        return []
+    if not _THIRD_PARTY_RE.search(art.raw):
+        return []
+    if _RESILIENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(p, art.path, "Integration plan names an external service or API but has no resilience vocabulary (retry, timeout, fallback, circuit breaker, or graceful degradation).")]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -1040,6 +1074,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_observability(art, catalog))
     out.extend(_plan_missing_security(art, catalog))
     out.extend(_plan_missing_capacity(art, catalog))
+    out.extend(_plan_third_party_no_fallback(art, catalog))
     return out
 
 

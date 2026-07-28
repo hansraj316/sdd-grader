@@ -628,3 +628,14 @@ method = "lint"
 why = "Tessl's spec-first principle requires deployment decisions to flow from documented requirements, not emerge at deploy time. ISO/IEC 25010 Performance Efficiency → Capacity (§4.2.1.2) requires systems to declare resource limits. A plan that says 'scales horizontally to handle load' but never states a number (replicas, instances, GB RAM, vCPU) cannot be reviewed against the spec's NFRs, costed, provisioned, or accepted as ready for production."
 detect = "Check whether scaling vocabulary (scale/scales/scaling/scalable, replicas, instances, nodes, pods, autoscal, horizontally, vertically) appears anywhere in the plan. If it does, check whether any capacity number (a digit followed by one of: replicas, instances, nodes, pods, vcpu, GB, MB, RAM, memory, cpu, cores, workers) also appears. Fire once at file level when scaling vocabulary is present but no capacity number is stated."
 fix = "State concrete resource targets: 'Deploy 3 replicas, 2 vCPU and 4 GB RAM each, with autoscaling up to 10 replicas at 70% CPU.' Anchor the numbers to the relevant NFR (e.g. 'NFR-03: p95 latency < 200ms at 10k RPS')."
+
+[[pitfall]]
+id = "PLAN-THIRD-PARTY-NO-FALLBACK"
+name = "Integration plan references external service/API without resilience vocabulary"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "medium"
+method = "lint"
+why = "Amazon Kiro's production-readiness validation treats external service dependencies as a gate: a plan that names a third-party API but provides no resilience strategy silently assumes the external service is always available. Tessl spec-first resilience requirements and ISO/IEC 25010 Reliability → Fault Tolerance (§4.2.1.4) require the plan to state how the system behaves when an external dependency is unavailable. Plans without retry, timeout, fallback, or circuit-breaker vocabulary produce integrations that fail in uncontrolled ways under partial outages."
+detect = "Check whether third-party integration vocabulary appears anywhere in the plan (any '<word> API', webhook, OAuth, third-party, external service/endpoint/provider). If it does, check for the absence of resilience vocabulary (fallback, retry, timeout, circuit breaker, degrad*, unavailable, offline, error handling). Fire once at file level when integration vocabulary is present but no resilience vocabulary is found."
+fix = "Add a Resilience or Error Handling section: describe retry policy (e.g. exponential backoff with 3 attempts), timeout (e.g. 5 s per call), fallback behaviour when the external service is unavailable (e.g. cached response, graceful degradation, user-facing error message), and whether a circuit breaker is used."
