@@ -530,6 +530,41 @@ _RESILIENCE_RE = re.compile(
 )
 
 
+# Health-check / readiness-probe vocabulary (PLAN-MISSING-HEALTH-CHECK).
+_HEALTH_CHECK_RE = re.compile(
+    r"\bhealth[\s-]?check[s]?\b"
+    r"|\bhealthcheck\b"
+    r"|\bliveness[\s-]?probe[s]?\b"
+    r"|\breadiness[\s-]?probe[s]?\b"
+    r"|\bhealth\s+endpoint\b"
+    r"|\bhealth\s+status\b"
+    r"|/health\b"
+    r"|/ready\b"
+    r"|/ping\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_health_check(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plans with no health-check or readiness-probe mention (PLAN-MISSING-HEALTH-CHECK)."""
+    p = catalog.get("PLAN-MISSING-HEALTH-CHECK")
+    if p is None or not p.applies_to(art.type):
+        return []
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    if _HEALTH_CHECK_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan mentions deploying/releasing to production but has no health-check or readiness-probe vocabulary.",
+    )]
+
+
 def _plan_third_party_no_fallback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Integration plans that name an external API/service but lack resilience vocabulary (PLAN-THIRD-PARTY-NO-FALLBACK)."""
     p = catalog.get("PLAN-THIRD-PARTY-NO-FALLBACK")
@@ -1075,6 +1110,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_security(art, catalog))
     out.extend(_plan_missing_capacity(art, catalog))
     out.extend(_plan_third_party_no_fallback(art, catalog))
+    out.extend(_plan_missing_health_check(art, catalog))
     return out
 
 
