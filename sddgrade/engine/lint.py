@@ -403,6 +403,8 @@ def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
 
 # Requirement ID pattern: FR-NNN, NFR-NNN, AC-NNN, or US-NNN (REQ-DUPLICATE-ID).
 _REQ_ID_RE = re.compile(r"\b((?:FR|NFR|AC|US)-\d+)\b", re.IGNORECASE)
+# AC-only requirement ID (XREF-AC-NO-TASK): captures the digit portion for normalisation.
+_AC_ID_RE = re.compile(r"\bAC-(\d+)\b", re.IGNORECASE)
 
 # Phase/Step heading pattern: section titles that name phases or steps (PLAN-NO-TESTING-STRATEGY guard).
 _PHASE_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s.*\b(?:phase|step)\b", re.IGNORECASE | re.MULTILINE)
@@ -1265,6 +1267,37 @@ def _cross_artifact(artifacts: list[Artifact], catalog: dict[str, Pitfall]) -> l
                             p, tasks.path,
                             f"Task references undefined requirement ID(s): {examples}{suffix}.",
                         ))
+
+        # AC-NNN forward traceability: AC defined in spec but not referenced by any task.
+        if spec and (p := catalog.get("XREF-AC-NO-TASK")):
+            spec_lines = spec.raw.splitlines()
+            spec_fenced = _fence_mask(spec_lines)
+            spec_ac_ids: dict[str, int] = {}  # id → first line number (1-based)
+            for lineno, (ln, in_fence) in enumerate(zip(spec_lines, spec_fenced), start=1):
+                if not in_fence and not ln.lstrip().startswith("#"):
+                    for m in _AC_ID_RE.finditer(ln):
+                        ac_key = f"AC-{m.group(1)}"
+                        if ac_key not in spec_ac_ids:
+                            spec_ac_ids[ac_key] = lineno
+            if spec_ac_ids:
+                task_lines = tasks.raw.splitlines()
+                task_fenced = _fence_mask(task_lines)
+                referenced: set[str] = set()
+                for ln, in_fence in zip(task_lines, task_fenced):
+                    if not in_fence and _TASK_LINE_RE.match(ln):
+                        for m in _AC_ID_RE.finditer(ln):
+                            referenced.add(f"AC-{m.group(1)}")
+                orphaned = sorted(
+                    (ac for ac in spec_ac_ids if ac not in referenced),
+                    key=lambda x: int(x.split("-")[1]),
+                )
+                if orphaned:
+                    examples = ", ".join(orphaned[:3])
+                    suffix = f" (+{len(orphaned) - 3} more)" if len(orphaned) > 3 else ""
+                    out.append(_from_pitfall(
+                        p, spec.path,
+                        f"Acceptance-criteria ID(s) in spec.md have no task reference: {examples}{suffix}.",
+                    ))
 
         # Entity → task.
         if data_model and (p := catalog.get("XREF-ENTITY-NO-TASK")):
