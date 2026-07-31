@@ -430,6 +430,17 @@ detect = "For each section whose title matches 'requirements' or 'functional req
 fix = "Rewrite each requirement as a normative statement: 'FR-001: The system shall authenticate users via OAuth 2.0.' Add formal requirement IDs (FR-N, NFR-N) and normative modals (shall/must) so each statement is verifiable and traceable."
 
 [[pitfall]]
+id = "SPEC-REQ-NO-ID"
+name = "Normative requirement line missing a formal identifier"
+dimension = "traceability"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "QVscribe Level-1 Identifiability defect: every requirement must carry a unique ID so it can be referenced in tasks, test cases, and cross-artifact xrefs. IBM RQA requires each requirement to be labeled before any other quality attribute can be measured. ISO/IEC/IEEE 29148:2018 §5.2.6 mandates 'each requirement shall be uniquely identified.' Distinct from SPEC-REQ-SECTION-PROSE-ONLY (whole section lacks normative statements) and REQ-DUPLICATE-ID (ID appears twice) — a section can contain one properly-labeled FR-001 line and one unlabeled 'shall' line that passes both those checks but still has a stealth unnumbered requirement that cannot be traced, referenced, or prioritised."
+detect = "For each section whose title matches requirement|acceptance|scenario: skip the section if it contains zero shall/must lines (SPEC-REQ-SECTION-PROSE-ONLY covers that case). Strip fenced code blocks, skip heading lines. For each remaining non-blank line where shall/must is present but no FR-/NFR-/AC-/US-NNN identifier appears on the same line, record a hit. Fire once per artifact with the hit count and first offending line number."
+fix = "Prefix each normative statement with a formal identifier: 'FR-004: The system shall validate the JWT signature before granting access.' Run REQ-DUPLICATE-ID to ensure IDs are unique, then update tasks.md and the traceability matrix to reference the new IDs."
+
+[[pitfall]]
 id = "XREF-CONTRADICTION"
 name = "Cross-artifact contradiction"
 dimension = "consistency"
