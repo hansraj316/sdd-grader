@@ -408,6 +408,17 @@ detect = "For each checkbox task line carrying a [US#] tag or FR-/NFR-/AC-/US- i
 fix = "Update the task's requirement reference to match the current IDs in spec.md. If spec.md was renumbered, update tasks.md to match. If the task implements a new requirement, add that requirement to spec.md first."
 
 [[pitfall]]
+id = "XREF-AC-NO-TASK"
+name = "Acceptance-criteria ID in spec.md has no corresponding task reference"
+dimension = "completeness"
+artifacts = ["spec", "tasks"]
+severity = "medium"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.2.6 mandates bidirectional traceability: every requirement must trace forward to at least one implementing or verifying artifact. The existing checks cover story→task (XREF-STORY-NO-TASK) and task→spec (XREF-DANGLING-REQ-REF, TASKS-UNTRACED-TASK), but not the AC-NNN forward direction. An AC identifier defined in spec.md but never cited by any task line has no verification task: it cannot be confirmed done, cannot be prioritised against product NFRs, and will be silently dropped by the agent implementation loop — stealth scope that survives every other traceability check."
+detect = "Collect all AC-NNN identifiers from non-fenced, non-heading lines in spec.md. Guard: if none, skip. Scan all task lines in tasks.md (lines matching a checkbox bullet with a T## id) for AC-NNN references. For each AC-NNN defined in spec but absent from all task lines, emit one finding anchored to spec.md."
+fix = "Add a task for each orphaned AC-NNN: '- [ ] T### Implement / verify [AC-NNN]: <description>'. If the AC is superseded, remove it from spec.md and update any references in the traceability matrix."
+
+[[pitfall]]
 id = "SPEC-REQ-SECTION-PROSE-ONLY"
 name = "Requirements section contains prose but no normative statements"
 dimension = "completeness"
