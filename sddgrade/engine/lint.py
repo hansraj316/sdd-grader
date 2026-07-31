@@ -383,6 +383,45 @@ def _req_section_prose_only(art: Artifact, catalog: dict[str, Pitfall]) -> list[
     return out
 
 
+def _req_no_id(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Normative requirement line (shall/must) in a requirements section missing a formal ID (SPEC-REQ-NO-ID)."""
+    p = catalog.get("SPEC-REQ-NO-ID")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    secs = art.sections
+    hits: list[tuple[int, str]] = []
+    for idx, s in enumerate(secs):
+        if not _REQ_SECTION_TITLE_RE.search(s.title):
+            continue
+        start = s.line - 1
+        end = secs[idx + 1].line - 1 if idx + 1 < len(secs) else len(lines)
+        # Guard: skip sections with no normative modal — SPEC-REQ-SECTION-PROSE-ONLY covers those.
+        section_has_modal = any(
+            not fenced[i] and not lines[i].lstrip().startswith("#") and _MANDATORY_MODAL_RE.search(lines[i])
+            for i in range(start, min(end, len(lines)))
+        )
+        if not section_has_modal:
+            continue
+        for i in range(start, min(end, len(lines))):
+            ln = lines[i]
+            if fenced[i] or not ln.strip() or ln.lstrip().startswith("#"):
+                continue
+            if _MANDATORY_MODAL_RE.search(ln) and not _STRICT_REQ_ID_LINE_RE.search(ln):
+                hits.append((i + 1, ln.strip()))
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-REQ-NO-ID: {len(hits)} normative requirement line(s) lack a formal identifier (FR-/NFR-/AC-/US-NNN); first at line {hits[0][0]}.",
+            line=hits[0][0],
+        )
+    ]
+
+
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
     p = catalog.get("PLAN-MISSING-ROLLBACK")
@@ -1069,6 +1108,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_pronoun_antecedent(art, catalog))
     out.extend(_future_tense_req(art, catalog))
     out.extend(_req_section_prose_only(art, catalog))
+    out.extend(_req_no_id(art, catalog))
     return out
 
 
