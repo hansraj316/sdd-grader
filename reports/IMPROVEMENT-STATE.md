@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 38
 Last run: 2026-07-31
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -43,7 +43,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] plan-third-party-no-fallback — PLAN-THIRD-PARTY-NO-FALLBACK: plan mentions external service/API but no resilience vocabulary (Kiro, Tessl, ISO 25010) → issue #113 → merged in PR #116
 - [x] plan-missing-health-check — PLAN-MISSING-HEALTH-CHECK: deployment plan with no health-check/liveness/readiness-probe mention (Kiro production-readiness, ISO 25010 Availability) → issue #117 → PR #120 → merged 2026-07-29
 - [x] xref-ac-no-task — XREF-AC-NO-TASK: AC-NNN defined in spec.md but never referenced by any task in tasks.md (ISO 29148 §5.2.6 bidirectional traceability) → issue #118 → PR #121 → merged 2026-07-31
-- [~] spec-req-no-id — SPEC-REQ-NO-ID: normative requirement line (shall/must) in Requirements section with no FR-/NFR-/AC-/US- identifier (QVscribe Identifiability, IBM RQA, ISO 29148 §5.2.6) → issue #119 → PR #122
+- [x] spec-req-no-id — SPEC-REQ-NO-ID: normative requirement line (shall/must) in Requirements section with no FR-/NFR-/AC-/US- identifier (QVscribe Identifiability, IBM RQA, ISO 29148 §5.2.6) → issue #119 → PR #122 → merged 2026-07-31
 - [ ] tasks-no-estimate — TASKS-NO-ESTIMATE: task file with T## IDs but no effort estimate annotation (story points, t-shirt size, hours) — INVEST Estimable criterion (not yet filed as issue)
 - [ ] spec-ac-no-fr-link — SPEC-AC-NO-FR-LINK: spec uses both FR-NNN and AC-NNN identifiers but no line co-references both — Canon Fit Criterion / MAQA Traceability (not yet filed as issue)
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
@@ -64,7 +64,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #119 → PR #122 spec-req-no-id — SPEC-REQ-NO-ID pitfall + _req_no_id() helper; scoped to _REQ_SECTION_TITLE_RE sections; guard skips pure-prose sections; reuses _MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE/_fence_mask(); aggregate finding anchored to first offending line; 17 unit tests; pytest 608 green; benchmark good=100 bad=58.6 precision=0.968 PASS; awaiting CI.
+(none)
 
 ## Merged
 
@@ -102,6 +102,7 @@ Tessl, and Spec-Kit extensions/presets.)
 - #107 → PR #110 plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall + _plan_missing_capacity() helper; _SCALING_VOCAB_RE + _CAPACITY_NUMBER_RE constants; fires when scaling vocab present but no capacity numbers; 19 unit tests; pytest 516 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-25, CI was green; squash-merged same run).
 - #117 → PR #120 plan-missing-health-check — PLAN-MISSING-HEALTH-CHECK pitfall + _HEALTH_CHECK_RE constant + _plan_missing_health_check() helper; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 14 unit tests (6 fire, 8 silent); pytest 578 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-29, CI was green; squash-merged).
 - #118 → PR #121 xref-ac-no-task — XREF-AC-NO-TASK pitfall + _AC_ID_RE constant + cross-artifact check in _cross_artifact(); fenced-block/heading exclusion; restricts task-side scan to checkbox lines; 13 unit tests; pytest 591 green; benchmark good=100 bad=58.6 PASS (2026-07-31, CI was green; squash-merged).
+- #119 → PR #122 spec-req-no-id — SPEC-REQ-NO-ID pitfall + _req_no_id() helper; scoped to _REQ_SECTION_TITLE_RE sections; guard skips pure-prose sections; reuses _MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE/_fence_mask(); aggregate finding anchored to first offending line; 17 unit tests; pytest 608 green; benchmark good=100 bad=58.6 precision=0.968 PASS (2026-07-31, CI was green; squash-merged same run).
 
 ## Blocked
 
@@ -242,4 +243,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 35 (2026-07-28): Phase 1 no open loop/* PRs. Phase 2 found 1 open loop-candidate issue (#113); Phase 4 picked #113 (PLAN-THIRD-PARTY-NO-FALLBACK — plan names external API/service/webhook/OAuth but has no resilience vocabulary; Amazon Kiro production-readiness, Tessl spec-first, ISO 25010 Fault Tolerance §4.2.1.4); added pitfall + _THIRD_PARTY_RE + _RESILIENCE_RE constants + _plan_third_party_no_fallback() helper wired into _plan_checks(); 17 unit tests (8 fire, 9 silent); pytest 564 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #116 opened; CI green same run; converted + squash-merged; issue #113 closed.
 - iter 36 (2026-07-29): Phase 1 no open loop/* PRs. Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 3 parallel research agents (INVEST/MAQA/Canon, Kiro/Tessl/ISO-25010, ISO-29148/IBM-RQA); filed 3 new issues (#117 PLAN-MISSING-HEALTH-CHECK, #118 XREF-AC-NO-TASK, #119 SPEC-REQ-NO-ID); also surfaced 2 additional ideas for pool (TASKS-NO-ESTIMATE, SPEC-AC-NO-FR-LINK). Phase 4 picked #117 (PLAN-MISSING-HEALTH-CHECK — deployment plan with no health-check/probe; Amazon Kiro production-readiness, ISO 25010 Availability §4.2.1.3; distinct from PLAN-MISSING-OBSERVABILITY); added pitfall + _HEALTH_CHECK_RE constant + _plan_missing_health_check() helper reusing _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; wired into _plan_checks(); 14 unit tests (6 fire, 8 silent); pytest 578 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #120 opened; CI green same run; converted + squash-merged; issue #117 closed.
 - iter 37 (2026-07-30): Phase 1 no open loop/* PRs. Phase 2 found 2 open loop-candidate issues (#118, #119); Phase 4 picked #118 (XREF-AC-NO-TASK — AC-NNN defined in spec.md but never cited by any checkbox task line in tasks.md; ISO 29148 §5.2.6 forward traceability from AC to implementing task; fills the last gap in the 4-direction traceability matrix); added pitfall + _AC_ID_RE module-level constant + XREF-AC-NO-TASK block in _cross_artifact(); fenced-block/heading exclusion on spec side; checkbox-line filter on task side; one aggregate finding anchored to spec.md; 13 unit tests; pytest 591 green; benchmark good=100 bad=58.6 PASS; PR #121 opened (draft); awaiting CI.
-- iter 38 (2026-07-31): Phase 1 merged PR #121 (issue #118 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#119); Phase 4 picked #119 (SPEC-REQ-NO-ID — normative requirement line with shall/must in a Requirements/Acceptance/Scenario section but no FR-/NFR-/AC-/US-NNN identifier; QVscribe Level-1 Identifiability, IBM RQA labeling prerequisite, ISO 29148 §5.2.6; distinct from SPEC-REQ-SECTION-PROSE-ONLY and REQ-DUPLICATE-ID); added pitfall + _req_no_id() helper; guard skips pure-prose sections; reuses _REQ_SECTION_TITLE_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE/_fence_mask(); 17 unit tests; pytest 608 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #122 opened (draft); awaiting CI.
+- iter 38 (2026-07-31): Phase 1 merged PR #121 (issue #118 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#119); Phase 4 picked #119 (SPEC-REQ-NO-ID — normative requirement line with shall/must in a Requirements/Acceptance/Scenario section but no FR-/NFR-/AC-/US-NNN identifier; QVscribe Level-1 Identifiability, IBM RQA labeling prerequisite, ISO 29148 §5.2.6; distinct from SPEC-REQ-SECTION-PROSE-ONLY and REQ-DUPLICATE-ID); added pitfall + _req_no_id() helper; guard skips pure-prose sections; reuses _REQ_SECTION_TITLE_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE/_fence_mask(); 17 unit tests; pytest 608 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #122 opened; CI green same run; converted + squash-merged; issue #119 closed.
