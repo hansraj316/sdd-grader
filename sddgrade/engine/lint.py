@@ -60,6 +60,20 @@ _TASK_ID_RE = re.compile(r"\bT\d{2,}\b")
 _US_TAG_RE = re.compile(r"\[US\d+\]", re.IGNORECASE)
 _US_TAG_NUM_RE = re.compile(r"\[US(\d+)\]", re.IGNORECASE)  # capturing variant
 _US_HEADING_RE = re.compile(r"user stor(?:y|ies)\s*(\d+)", re.IGNORECASE)
+_ESTIMATE_RE = re.compile(
+    r"""
+    \b\d+\s*sp\b              # story points: "3 sp", "3sp"
+    | \bsp\s*[:=]\s*\d+       # "sp: 3"
+    | \b\d+\s*pts?\b           # "3 pt", "3 pts"
+    | \(\d+\s*points?\)        # "(3 points)"
+    | \[(?:XS|XL|XXL)\]        # t-shirt in brackets: "[XL]", "[XXL]" (avoid [S]/[L] false pos)
+    | \bsize\s*[:=]\s*(?:XS|S|M|L|XL|XXL)\b   # "size: M"
+    | \bt-?shirt\s*[:=]\s*(?:XS|S|M|L|XL|XXL)\b  # "t-shirt: L"
+    | \b\d+\s*(?:h\b|hr\b|hrs\b|hours?\b)    # "2h", "2 hrs", "2 hours"
+    | \b\d+(?:\.\d+)?\s*days?\b               # "1 day", "2 days"
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 _DIGIT_RE = re.compile(r"\d")
 _FILE_PATH_RE = re.compile(r"[\w./-]+\.[A-Za-z0-9]{1,5}\b")
 _NFR_RE = re.compile(
@@ -737,6 +751,33 @@ def _tasks_untraced_task(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fin
     ]
 
 
+def _tasks_no_estimate(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Tasks file with T## IDs but no effort estimate annotation (TASKS-NO-ESTIMATE)."""
+    p = catalog.get("TASKS-NO-ESTIMATE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    task_lines = [
+        (i + 1, ln)
+        for i, ln in enumerate(lines)
+        if not fenced[i] and _TASK_LINE_RE.match(ln) and _TASK_ID_RE.search(ln)
+    ]
+    if len(task_lines) < 3:
+        return []
+    if any(_ESTIMATE_RE.search(ln) for ln in lines):
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"{len(task_lines)} task(s) with T## IDs but no effort estimate annotation"
+            " (story points, t-shirt size, or hours).",
+            line=task_lines[0][0],
+        )
+    ]
+
+
 def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """User stories missing the 'so that [benefit]' clause (Connextra format / INVEST Valuable)."""
     p = catalog.get("SPEC-STORY-NO-BENEFIT")
@@ -1185,6 +1226,7 @@ def _tasks_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
             out.append(_from_pitfall(p, art.path, "Implementation tasks with no test tasks (Test-First)."))
 
     out.extend(_tasks_untraced_task(art, catalog))
+    out.extend(_tasks_no_estimate(art, catalog))
     return out
 
 

@@ -1,6 +1,6 @@
 # Tasks: Task Export
 
-## Format: [ID] [P?] [Story] Description
+## Format: [ID] [P?] [Story] Description (estimate)
 
 ## Path Conventions
 
@@ -8,7 +8,7 @@ Single project: source in `src/export/`, tests in `tests/export/`.
 
 ## Phase 1: Setup
 
-- [ ] T001 [US1] Create the export module skeleton in src/export/__init__.py
+- [ ] T001 [US1] Create the export module skeleton in src/export/__init__.py (1 sp)
 
 ## Phase 2: Foundational
 

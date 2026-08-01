@@ -27,7 +27,7 @@
     }
   ],
   "expect": {
-    "merged_overall": 90.4,
+    "merged_overall": 89.9,
     "judge_pitfalls": [
       "PLAN-NO-RATIONALE",
       "XREF-CONTRADICTION"
@@ -51,6 +51,6 @@
         "dimension": "consistency"
       }
     ],
-    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against."
+    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against. Updated 2026-08-01: TASKS-NO-ESTIMATE lint finding added; score recalculated from 90.4 to 89.9."
   }
 }
