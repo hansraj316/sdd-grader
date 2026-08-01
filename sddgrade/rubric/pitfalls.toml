@@ -351,6 +351,17 @@ detect = "For each checkbox task line carrying a T## identifier, assert it conta
 fix = "Add a story or requirement tag: '- [ ] T04 Add rate limiter [US3]' or '- [ ] T05 Add encryption (FR-07)'. If the task has no requirement ancestor, decide whether it belongs in the spec as a new requirement or should be removed."
 
 [[pitfall]]
+id = "TASKS-NO-ESTIMATE"
+name = "Tasks file with no effort estimate annotation"
+dimension = "completeness"
+artifacts = ["tasks"]
+severity = "low"
+method = "lint"
+why = "INVEST's Estimable criterion requires every user story and its implementing tasks to be sized so that sprint planning is possible. A tasks file with 3 or more T##-identified tasks but zero effort annotations (story points, t-shirt size, or hours) signals an incomplete planning artifact that cannot be committed to a sprint, costed, or tracked for velocity. Kiro and MAQA both require effort labels for backlog-ready tasks."
+detect = "Count checkbox task lines carrying a T## identifier (not in fenced blocks). If ≥3 are found, scan the entire file for any effort annotation: story-point notation (e.g. '3 sp', 'sp: 3'), t-shirt size in brackets (e.g. '[M]', '[XL]'), or hours/days (e.g. '2h', '1 day'). Fire once when 3+ T## tasks exist but no estimate annotation appears anywhere."
+fix = "Add an effort annotation to each task line or to a summary table. Examples: '- [ ] T01 [US1] Implement login (3 sp)', '- [ ] T02 [US1] Add tests [M]', '- [ ] T03 [US2] Write migration (2h)'. Use whichever sizing unit the team tracks."
+
+[[pitfall]]
 id = "TASKS-VAGUE"
 name = "Vague task lacking a concrete action / path"
 dimension = "clarity"
