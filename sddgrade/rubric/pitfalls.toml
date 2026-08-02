@@ -452,6 +452,17 @@ detect = "For each section whose title matches requirement|acceptance|scenario: 
 fix = "Prefix each normative statement with a formal identifier: 'FR-004: The system shall validate the JWT signature before granting access.' Run REQ-DUPLICATE-ID to ensure IDs are unique, then update tasks.md and the traceability matrix to reference the new IDs."
 
 [[pitfall]]
+id = "SPEC-MISSING-OUT-OF-SCOPE"
+name = "Spec with substantial requirements has no Out-of-Scope / Non-Goals section"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "Amazon Kiro's spec template mandates an 'Out of Scope' section. Tessl's boundary-first methodology treats the absence of explicit exclusions as a scope defect: without a non-goals section, implementers have no signal about what to refuse and scope creep is structurally invisible. ISO/IEC/IEEE 29148:2018 §5.2.4 requires that the system's scope identify what is explicitly excluded."
+detect = "Artifact type is spec AND it has ≥3 normative requirement lines (shall/must or FR-/NFR-/AC-/US- IDs). Scan all headings for any title matching (case-insensitive): out.of.scope|non.?goal|not in scope|exclusion|scope boundar|won.t do|will not. Fire one finding anchored at line 1 when none is found."
+fix = "Add an '## Out of Scope' or '## Non-Goals' section listing what the feature explicitly will not do. This gives implementers a clear boundary and prevents scope creep."
+
+[[pitfall]]
 id = "XREF-CONTRADICTION"
 name = "Cross-artifact contradiction"
 dimension = "consistency"

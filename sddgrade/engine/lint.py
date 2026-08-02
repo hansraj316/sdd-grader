@@ -436,6 +436,47 @@ def _req_no_id(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     ]
 
 
+# Spec with no Out-of-Scope / Non-Goals section despite having substantial requirements (SPEC-MISSING-OUT-OF-SCOPE).
+# Amazon Kiro, Tessl, ISO 29148 §5.2.4.
+_OUT_OF_SCOPE_HEADING_RE = re.compile(
+    r"out[\s._-]*of[\s._-]*scope|non[\s._-]?goal|not\s+in\s+scope|exclusion|"
+    r"scope[\s._-]*boundar|won.?t\s+do|will\s+not",
+    re.IGNORECASE,
+)
+# Matches a normative indicator line: shall/must modal or formal FR-/NFR-/AC-/US- identifier.
+_NORMATIVE_LINE_RE = re.compile(
+    r"\b(?:shall|must)\b|\b(?:FR|NFR|AC|US)-\d+\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_out_of_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 normative requirement lines but no Out-of-Scope/Non-Goals heading (SPEC-MISSING-OUT-OF-SCOPE)."""
+    p = catalog.get("SPEC-MISSING-OUT-OF-SCOPE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: only fire when the spec has enough normative requirement lines to be substantial.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    normative_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _NORMATIVE_LINE_RE.search(ln)
+    )
+    if normative_count < 3:
+        return []
+    # Check whether any heading matches an out-of-scope/non-goals pattern.
+    for s in art.sections:
+        if _OUT_OF_SCOPE_HEADING_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-OUT-OF-SCOPE: spec has substantial requirements but no Out-of-Scope / Non-Goals section.",
+        )
+    ]
+
+
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
     p = catalog.get("PLAN-MISSING-ROLLBACK")
@@ -1150,6 +1191,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_future_tense_req(art, catalog))
     out.extend(_req_section_prose_only(art, catalog))
     out.extend(_req_no_id(art, catalog))
+    out.extend(_spec_missing_out_of_scope(art, catalog))
     return out
 
 

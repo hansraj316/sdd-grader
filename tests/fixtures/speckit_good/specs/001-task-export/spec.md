@@ -50,6 +50,12 @@ shared file is scoped to what matters.
 - 100% of exported CSV files open without error in Excel and Google Sheets.
 - Zero data-loss defects: exported row count equals filtered task count in all tests.
 
+## Out of Scope
+
+- Real-time push notifications for export completion are not part of this feature.
+- Exporting to formats other than CSV (PDF, Excel) is excluded from this release.
+- Scheduling or automating recurring exports is not in scope.
+
 ## Assumptions
 
 - Users have permission to read every task they export.
