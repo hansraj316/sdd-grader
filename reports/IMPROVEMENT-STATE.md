@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 40
 Last run: 2026-08-02
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -47,7 +47,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] tasks-no-estimate — TASKS-NO-ESTIMATE: task file with T## IDs but no effort estimate annotation (story points, t-shirt size, hours) — INVEST Estimable criterion → issue #123 → PR #126 → merged 2026-08-01
 - [ ] spec-ac-no-fr-link — SPEC-AC-NO-FR-LINK: spec uses both FR-NNN and AC-NNN identifiers but no line co-references both — Canon Fit Criterion / MAQA Traceability (not yet filed as issue)
 - [ ] spec-story-compound — SPEC-STORY-COMPOUND: user story header with 2+ wants joined by "and" (INVEST Small violation) → issue #124
-- [~] spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE: spec with substantial reqs but no out-of-scope/non-goal heading (Kiro, Tessl, ISO 29148) → issue #125 → PR #127
+- [x] spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE: spec with substantial reqs but no out-of-scope/non-goal heading (Kiro, Tessl, ISO 29148) → issue #125 → PR #127 → merged 2026-08-02
 - [ ] spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: Gherkin Then clause with vague outcome words (correctly/properly/as expected) with no observable condition (MAQA binary-verifiable AC rule)
 - [ ] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-headed section and no [US#] tag (Canon/29148 traceability)
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
@@ -68,10 +68,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #125 → PR #127 spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE pitfall; awaiting CI.
+(none)
 
 ## Merged
 
+- #125 → PR #127 spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE pitfall + _spec_missing_out_of_scope() helper; _OUT_OF_SCOPE_HEADING_RE + _NORMATIVE_LINE_RE constants; ≥3-normative-line guard; 15 unit tests; pytest 639 green; benchmark good=100 bad=56.8 precision=0.971 PASS (2026-08-02, CI was green; squash-merged).
 - #1 pitfall-nfr-thresholds — SPEC-NFR-NO-THRESHOLD pitfall + lint check (2026-06-25).
 - #2 → PR #9 pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check (2026-06-27).
 - #3 → PR #10 pitfall-escape-clause — SPEC-ESCAPE-CLAUSE pitfall + lint check (2026-06-28).
