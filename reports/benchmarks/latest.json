@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-01T07:35:42.765601+00:00",
+  "timestamp": "2026-08-02T07:29:09.670616+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -40,12 +40,12 @@
   },
   "bad": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_bad",
-    "overall": 58.6,
+    "overall": 56.8,
     "artifacts": [
       {
         "type": "spec",
-        "overall": 16.0,
-        "findings": 12
+        "overall": 10.0,
+        "findings": 13
       },
       {
         "type": "plan",
@@ -75,6 +75,7 @@
       "SPEC-LEFTOVER-PLACEHOLDER",
       "SPEC-MISSING-ACCEPTANCE",
       "SPEC-MISSING-EDGE-CASES",
+      "SPEC-MISSING-OUT-OF-SCOPE",
       "SPEC-NON-MEASURABLE-SUCCESS",
       "SPEC-PRONOUN-ANTECEDENT",
       "SPEC-SPECULATIVE-FEATURE",
@@ -82,7 +83,7 @@
       "TASKS-MALFORMED",
       "TASKS-TESTS-NOT-FIRST"
     ],
-    "finding_count": 21
+    "finding_count": 22
   },
   "extras": [],
   "corpus": {
@@ -336,7 +337,7 @@
         "quality": "medium",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 80.0,
+        "overall": 74.0,
         "score_band": [
           55,
           92
@@ -349,6 +350,7 @@
         "false_negatives": [],
         "accepted_extras_detected": [
           "REQ-WEAK-DIRECTIVE",
+          "SPEC-MISSING-OUT-OF-SCOPE",
           "SPEC-PRONOUN-ANTECEDENT"
         ],
         "known_misses_caught": [],
@@ -363,8 +365,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 0.2,
         "precision": 1.0,
-        "correct_detections": 3,
-        "total_detections": 3,
+        "correct_detections": 4,
+        "total_detections": 4,
         "note": "Paraphrase case: the same defect classes as ambiguous/nfr-unquantified/impl-leak, worded to avoid the catalog's trigger regexes. Lint SHOULD ideally catch: 'snappy'/'lightweight'/'smoothly' (ambiguous wording, FR-001/FR-002); 'keep working when the whole company checks it at the same moment' (unquantified load NFR, FR-002); 'could later grow a spreadsheet export' (speculative feature, FR-003); 'CockroachDB'/'Svelte' (impl-detail leak, FR-004). Only the digit-based structural check (non-measurable success) generalizes to this phrasing today. These are labeled known_misses: excluded from gated recall, reported in recall_incl_known_misses so the miss stays visible."
       },
       {
@@ -372,7 +374,7 @@
         "quality": "low",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 64.0,
+        "overall": 58.0,
         "score_band": [
           50,
           70
@@ -386,7 +388,9 @@
           "SPEC-UNRESOLVED-CLARIFICATION"
         ],
         "false_negatives": [],
-        "accepted_extras_detected": [],
+        "accepted_extras_detected": [
+          "SPEC-MISSING-OUT-OF-SCOPE"
+        ],
         "known_misses_caught": [],
         "known_misses_missed": [],
         "known_false_positives_detected": [],
@@ -394,8 +398,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 1.0,
         "precision": 1.0,
-        "correct_detections": 4,
-        "total_detections": 4,
+        "correct_detections": 5,
+        "total_detections": 5,
         "note": "Real-world-derived case (#53c): adapts the flawed spec shape seen in real Spec-Kit repos (e.g. the polymarket-kit MCP-server spec pattern) \u2014 a [NEEDS CLARIFICATION] marker left inside FR-003, the template's '$ARGUMENTS' input line retained, 'REST API' leaked into an FR, and the Review & Acceptance Checklist kept with every box unchecked. Known gap (not a labeled miss because no catalog rule covers it): lint does not flag a retained, fully-unchecked review checklist \u2014 SPEC-LEFTOVER-PLACEHOLDER only fires here because of '$ARGUMENTS'."
       }
     ],
@@ -403,9 +407,9 @@
       "n": 10,
       "mean_recall": 1.0,
       "mean_recall_incl_known_misses": 0.92,
-      "precision": 0.969,
-      "correct_detections": 31,
-      "total_detections": 32,
+      "precision": 0.971,
+      "correct_detections": 33,
+      "total_detections": 34,
       "band_failures": [],
       "unlabeled_unexpected": {},
       "known_false_positives": 1,

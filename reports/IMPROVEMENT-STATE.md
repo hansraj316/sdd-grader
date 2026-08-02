@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 39
-Last run: 2026-08-01
-Open loop PRs: 0
+Iteration: 40
+Last run: 2026-08-02
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -47,7 +47,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] tasks-no-estimate — TASKS-NO-ESTIMATE: task file with T## IDs but no effort estimate annotation (story points, t-shirt size, hours) — INVEST Estimable criterion → issue #123 → PR #126 → merged 2026-08-01
 - [ ] spec-ac-no-fr-link — SPEC-AC-NO-FR-LINK: spec uses both FR-NNN and AC-NNN identifiers but no line co-references both — Canon Fit Criterion / MAQA Traceability (not yet filed as issue)
 - [ ] spec-story-compound — SPEC-STORY-COMPOUND: user story header with 2+ wants joined by "and" (INVEST Small violation) → issue #124
-- [ ] spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE: spec with substantial reqs but no out-of-scope/non-goal heading (Kiro, Tessl, ISO 29148) → issue #125
+- [~] spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE: spec with substantial reqs but no out-of-scope/non-goal heading (Kiro, Tessl, ISO 29148) → issue #125 → PR #127
 - [ ] spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: Gherkin Then clause with vague outcome words (correctly/properly/as expected) with no observable condition (MAQA binary-verifiable AC rule)
 - [ ] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-headed section and no [US#] tag (Canon/29148 traceability)
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
@@ -68,7 +68,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #125 → PR #127 spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE pitfall; awaiting CI.
 
 ## Merged
 
@@ -250,3 +250,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 37 (2026-07-30): Phase 1 no open loop/* PRs. Phase 2 found 2 open loop-candidate issues (#118, #119); Phase 4 picked #118 (XREF-AC-NO-TASK — AC-NNN defined in spec.md but never cited by any checkbox task line in tasks.md; ISO 29148 §5.2.6 forward traceability from AC to implementing task; fills the last gap in the 4-direction traceability matrix); added pitfall + _AC_ID_RE module-level constant + XREF-AC-NO-TASK block in _cross_artifact(); fenced-block/heading exclusion on spec side; checkbox-line filter on task side; one aggregate finding anchored to spec.md; 13 unit tests; pytest 591 green; benchmark good=100 bad=58.6 PASS; PR #121 opened (draft); awaiting CI.
 - iter 38 (2026-07-31): Phase 1 merged PR #121 (issue #118 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#119); Phase 4 picked #119 (SPEC-REQ-NO-ID — normative requirement line with shall/must in a Requirements/Acceptance/Scenario section but no FR-/NFR-/AC-/US-NNN identifier; QVscribe Level-1 Identifiability, IBM RQA labeling prerequisite, ISO 29148 §5.2.6; distinct from SPEC-REQ-SECTION-PROSE-ONLY and REQ-DUPLICATE-ID); added pitfall + _req_no_id() helper; guard skips pure-prose sections; reuses _REQ_SECTION_TITLE_RE/_MANDATORY_MODAL_RE/_STRICT_REQ_ID_LINE_RE/_fence_mask(); 17 unit tests; pytest 608 green; benchmark good=100 bad=58.6 precision=0.968 PASS; PR #122 opened; CI green same run; converted + squash-merged; issue #119 closed.
 - iter 39 (2026-08-01): Phase 1 no open loop/* PRs. Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (Kiro/Tessl/OpenSpec → SPEC-MISSING-OUT-OF-SCOPE, SPEC-MISSING-ASSUMPTIONS, SPEC-NO-PRIORITY-LABELS; INVEST/MAQA/Canon → SPEC-AC-VAGUE-OUTCOME, SPEC-STORY-COMPOUND, SPEC-FR-NO-STORY); filed 3 new issues (#123 tasks-no-estimate, #124 spec-story-compound, #125 spec-missing-out-of-scope); also added 2 ideas to pool (spec-ac-vague-outcome, spec-fr-no-story). Phase 4 picked #123 (TASKS-NO-ESTIMATE — tasks.md with 3+ T## checkbox tasks but no effort estimate annotation; INVEST Estimable criterion); added pitfall + _ESTIMATE_RE constant + _tasks_no_estimate() helper wired into _tasks_checks(); good fixture tasks.md updated with (1 sp); feature-xref corpus case accepted_extras + golden score updated 90.4→89.9; 16 unit tests; pytest 624 green; benchmark good=100 bad=58.6 precision=0.969 PASS; PR #126 opened; CI green same run; converted + squash-merged; issue #123 closed.
+- iter 40 (2026-08-02): Phase 1 no open loop/* PRs. Phase 2 found 2 open loop-candidate issues (#124, #125). Phase 4 picked #125 (SPEC-MISSING-OUT-OF-SCOPE — spec with ≥3 normative requirement lines but no Out-of-Scope/Non-Goals heading; Amazon Kiro, Tessl, ISO 29148 §5.2.4); added pitfall + _OUT_OF_SCOPE_HEADING_RE + _NORMATIVE_LINE_RE constants + _spec_missing_out_of_scope() helper wired into _spec_checks(); good fixture spec.md updated with ## Out of Scope section; corpus accepted_extras labeled for paraphrased-defects + realworld-mcp-proxy; 15 unit tests; pytest 639 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #127 opened (draft); awaiting CI.
