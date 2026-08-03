@@ -463,6 +463,17 @@ detect = "Artifact type is spec AND it has ≥3 normative requirement lines (sha
 fix = "Add an '## Out of Scope' or '## Non-Goals' section listing what the feature explicitly will not do. This gives implementers a clear boundary and prevents scope creep."
 
 [[pitfall]]
+id = "SPEC-STORY-COMPOUND"
+name = "Compound user-story header bundles multiple wants (INVEST Small violation)"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "INVEST's Small criterion requires each user story to cover a single capability. A story header like 'As a user, I want to log in and reset my password' bundles two independent capabilities, making the story hard to estimate, split, prioritise, or accept independently. Bundled wants also make it impossible to write a single focused acceptance criterion, which MAQA flags as a Level-2 quality defect on compound acceptance items."
+detect = "Match Connextra story opener lines ('As a/an X, I want ...') where the want-clause portion (the text between 'I want' and 'so that' if present, or end-of-line) contains the conjunction 'and' as a whole word. Only fire on lines that begin with the Connextra opener pattern; do not scan arbitrary prose 'and' usage."
+fix = "Split the story into one story per capability: 'As a user, I want to log in so that I can access my account.' and 'As a user, I want to reset my password so that I can regain access when locked out.' Each story should have a single 'so that [benefit]' clause and a focused set of acceptance criteria."
+
+[[pitfall]]
 id = "XREF-CONTRADICTION"
 name = "Cross-artifact contradiction"
 dimension = "consistency"
