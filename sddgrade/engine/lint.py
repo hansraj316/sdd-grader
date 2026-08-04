@@ -236,7 +236,10 @@ _STORY_OPENER_RE = re.compile(
     re.IGNORECASE,
 )
 _I_WANT_RE = re.compile(r"\bi\s+want\b", re.IGNORECASE)
+_I_WANT_TO_RE = re.compile(r"\bi\s+want\s+to\b", re.IGNORECASE)
 _SO_THAT_RE = re.compile(r"\bso\s+that\b", re.IGNORECASE)
+# Compound-want detector: any 'and' as a whole word in the want-clause portion.
+_COMPOUND_AND_RE = re.compile(r"\band\b", re.IGNORECASE)
 
 # Open-ended enumeration markers that make scope impossible to bound (REQ-UNBOUNDED-SCOPE).
 _UNBOUNDED_SCOPE_RE = re.compile(
@@ -854,6 +857,45 @@ def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     ]
 
 
+def _spec_story_compound(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """User story header that bundles 2+ distinct wants via 'and' (INVEST Small violation)."""
+    p = catalog.get("SPEC-STORY-COMPOUND")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    # Guard: skip specs that contain no Connextra 'I want to' story openers at all.
+    # Requiring 'to' avoids false positives on quality-adjective wants
+    # like "I want fast and intuitive search" where 'and' joins adjectives.
+    has_stories = any(
+        _STORY_OPENER_RE.match(line) and _I_WANT_TO_RE.search(line) for line in lines
+    )
+    if not has_stories:
+        return []
+    compound: list[int] = []
+    for i, line in enumerate(lines):
+        if not (_STORY_OPENER_RE.match(line) and _I_WANT_TO_RE.search(line)):
+            continue
+        # Extract the want-clause: from "I want to" up to "so that" (or end of line).
+        want_match = _I_WANT_TO_RE.search(line)
+        if want_match is None:
+            continue
+        want_portion = line[want_match.start():]
+        so_that_match = _SO_THAT_RE.search(want_portion)
+        if so_that_match:
+            want_portion = want_portion[: so_that_match.start()]
+        if _COMPOUND_AND_RE.search(want_portion):
+            compound.append(i + 1)  # 1-indexed
+    if not compound:
+        return []
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"SPEC-STORY-COMPOUND: user story header bundles multiple wants via 'and': {len(compound)} story(ies).",
+            line=compound[0],
+        )
+    ]
+
+
 def _unbounded_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Requirement lines with open-ended enumerations that bound scope (REQ-UNBOUNDED-SCOPE)."""
     p = catalog.get("REQ-UNBOUNDED-SCOPE")
@@ -1184,6 +1226,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_unclear_actor(art, catalog))
     out.extend(_ears_pattern(art, catalog))
     out.extend(_story_no_benefit(art, catalog))
+    out.extend(_spec_story_compound(art, catalog))
     out.extend(_unbounded_scope(art, catalog))
     out.extend(_req_duplicate_id(art, catalog))
     out.extend(_weak_directive(art, catalog))
