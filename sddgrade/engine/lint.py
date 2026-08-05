@@ -241,6 +241,12 @@ _SO_THAT_RE = re.compile(r"\bso\s+that\b", re.IGNORECASE)
 # Compound-want detector: any 'and' as a whole word in the want-clause portion.
 _COMPOUND_AND_RE = re.compile(r"\band\b", re.IGNORECASE)
 
+# Vague outcome adverbs in Gherkin Then clauses (SPEC-AC-VAGUE-OUTCOME).
+_VAGUE_OUTCOME_RE = re.compile(
+    r"\b(?:correctly|properly|appropriately|as\s+expected|as\s+intended)\b",
+    re.IGNORECASE,
+)
+
 # Open-ended enumeration markers that make scope impossible to bound (REQ-UNBOUNDED-SCOPE).
 _UNBOUNDED_SCOPE_RE = re.compile(
     r"\betc\.?\b"
@@ -896,6 +902,43 @@ def _spec_story_compound(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fin
     ]
 
 
+def _spec_ac_vague_outcome(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Then clause with vague non-observable outcome word (SPEC-AC-VAGUE-OUTCOME).
+
+    Guard: only fires in formal-Gherkin mode — at least one Given AND one When
+    line-leader must each start their own line.  Prose ACs and single-line
+    'Given … when … then …' styles are not subject to this check.
+    """
+    p = catalog.get("SPEC-AC-VAGUE-OUTCOME")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Require formal Gherkin mode: both a Given line-leader and a When line-leader.
+    if not (_GHERKIN_GIVEN_RE.search(raw) and _GHERKIN_WHEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+    hits: list[int] = []
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if not _GHERKIN_THEN_RE.match(line):
+            continue
+        if _VAGUE_OUTCOME_RE.search(line):
+            hits.append(i + 1)  # 1-indexed
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-AC-VAGUE-OUTCOME: {len(hits)} Then clause(s) with vague outcome word "
+            f"(correctly/properly/appropriately/as expected/as intended); replace with an observable state.",
+            line=hits[0],
+        )
+    ]
+
+
 def _unbounded_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Requirement lines with open-ended enumerations that bound scope (REQ-UNBOUNDED-SCOPE)."""
     p = catalog.get("REQ-UNBOUNDED-SCOPE")
@@ -1235,6 +1278,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_req_section_prose_only(art, catalog))
     out.extend(_req_no_id(art, catalog))
     out.extend(_spec_missing_out_of_scope(art, catalog))
+    out.extend(_spec_ac_vague_outcome(art, catalog))
     return out
 
 

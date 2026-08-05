@@ -474,6 +474,17 @@ detect = "Match Connextra story opener lines ('As a/an X, I want ...') where the
 fix = "Split the story into one story per capability: 'As a user, I want to log in so that I can access my account.' and 'As a user, I want to reset my password so that I can regain access when locked out.' Each story should have a single 'so that [benefit]' clause and a focused set of acceptance criteria."
 
 [[pitfall]]
+id = "SPEC-AC-VAGUE-OUTCOME"
+name = "Gherkin Then clause with vague non-observable outcome word"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "MAQA's binary-verifiable AC rule requires every acceptance criterion to be assertable with a concrete, observable outcome — a status code, a value, a visible element, a file path — so that a test can produce an unambiguous pass/fail result without domain knowledge. A Then clause that says 'the system correctly processes the request' or 'the user is appropriately notified' cannot be verified objectively: 'correctly' and 'appropriately' delegate the oracle to the human reader, not to the automated test. This is a distinct defect from SPEC-GHERKIN-MALFORMED-AC (structural incompleteness) — the Gherkin triad is present but the Then step is semantically untestable."
+detect = "Scan only specs in formal-Gherkin mode (at least one Given line-leader AND one When line-leader each starting their own line). For each Then line-leader, check whether the line contains a vague outcome adverb: correctly, properly, appropriately, as expected, as intended. Fire one aggregate finding anchored at the first offending line."
+fix = "Replace the vague adverb with a concrete, observable assertion. Instead of 'Then the system correctly processes the payment', write 'Then a 200 OK response is returned and the order status is set to confirmed'. Every Then clause should state a value, status, or visible state that a test can assert without interpretation."
+
+[[pitfall]]
 id = "XREF-CONTRADICTION"
 name = "Cross-artifact contradiction"
 dimension = "consistency"
