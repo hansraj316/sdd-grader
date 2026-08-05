@@ -1,8 +1,8 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 42
-Last run: 2026-08-04
+Iteration: 43
+Last run: 2026-08-05
 Open loop PRs: 1
 Consecutive empty research rounds: 0
 
@@ -48,8 +48,8 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [~] spec-ac-no-fr-link — SPEC-AC-NO-FR-LINK: spec uses both FR-NNN and AC-NNN identifiers but no line co-references both — Canon Fit Criterion / MAQA Traceability → issue #131
 - [x] spec-story-compound — SPEC-STORY-COMPOUND: user story header with 2+ wants joined by "and" (INVEST Small violation) → issue #124 → PR #128 → merged 2026-08-04
 - [x] spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE: spec with substantial reqs but no out-of-scope/non-goal heading (Kiro, Tessl, ISO 29148) → issue #125 → PR #127 → merged 2026-08-02
-- [~] spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: Gherkin Then clause with vague outcome words (correctly/properly/as expected) with no observable condition (MAQA binary-verifiable AC rule) → issue #130 → PR #132
-- [~] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-headed section and no [US#] tag (Canon/29148 traceability) → issue #129
+- [x] spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: Gherkin Then clause with vague outcome words (correctly/properly/as expected) with no observable condition (MAQA binary-verifiable AC rule) → issue #130 → PR #132 → merged 2026-08-05
+- [~] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-NNN section and no [US#] tag (Canon/29148 traceability) → issue #129 → PR #133
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
 - [x] spec-future-tense-req — SPEC-FUTURE-TENSE-REQ pitfall: requirement lines using "will be"/"would be" instead of normative "shall"/"must" (ISO 29148, Canon) → issue #106 → PR #109 → merged 2026-07-25
 - [x] plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall: deployment plan with scaling vocab but no capacity numbers (Tessl, ISO 25010 Capacity) → issue #107 → PR #110 → merged 2026-07-25
@@ -68,10 +68,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #130 → PR #132 spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: vague outcome adverb (correctly/properly/appropriately/as expected/as intended) in Gherkin Then clause; formal-Gherkin guard (Given+When line-leaders required); _VAGUE_OUTCOME_RE constant; 14 unit tests (6 fire, 8 silent); pytest 668 green; benchmark good=100 bad=56.8 precision=0.971 PASS; awaiting CI.
+- #129 → PR #133 spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line outside any US-NNN section with no [US#] link; _US_NNN_TITLE_RE guard (only fires when spec uses US-NNN headings, not standard User Story N format); section-boundary scan via art.sections; fenced-block exclusion; 13 unit tests (5 fire, 8 silent); pytest 681 green; benchmark good=100 bad=56.8 precision=0.971 PASS; awaiting CI.
 
 ## Merged
 
+- #130 → PR #132 spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: vague outcome adverb (correctly/properly/appropriately/as expected/as intended) in Gherkin Then clause; formal-Gherkin guard (Given+When line-leaders required); _VAGUE_OUTCOME_RE constant; 14 unit tests (6 fire, 8 silent); pytest 668 green; benchmark good=100 bad=56.8 precision=0.971 PASS (2026-08-05, CI was green; squash-merged).
 - #124 → PR #128 spec-story-compound — SPEC-STORY-COMPOUND: compound user-story header (INVEST Small); _I_WANT_TO_RE guard avoids adj-want false positives; 15 unit tests; pytest 654 green; benchmark good=100 bad=56.8 precision=0.971 PASS (2026-08-04, CI was green; squash-merged).
 - #125 → PR #127 spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE pitfall + _spec_missing_out_of_scope() helper; _OUT_OF_SCOPE_HEADING_RE + _NORMATIVE_LINE_RE constants; ≥3-normative-line guard; 15 unit tests; pytest 639 green; benchmark good=100 bad=56.8 precision=0.971 PASS (2026-08-02, CI was green; squash-merged).
 - #1 pitfall-nfr-thresholds — SPEC-NFR-NO-THRESHOLD pitfall + lint check (2026-06-25).
@@ -255,3 +256,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 40 (2026-08-02): Phase 1 no open loop/* PRs. Phase 2 found 2 open loop-candidate issues (#124, #125). Phase 4 picked #125 (SPEC-MISSING-OUT-OF-SCOPE — spec with ≥3 normative requirement lines but no Out-of-Scope/Non-Goals heading; Amazon Kiro, Tessl, ISO 29148 §5.2.4); added pitfall + _OUT_OF_SCOPE_HEADING_RE + _NORMATIVE_LINE_RE constants + _spec_missing_out_of_scope() helper wired into _spec_checks(); good fixture spec.md updated with ## Out of Scope section; corpus accepted_extras labeled for paraphrased-defects + realworld-mcp-proxy; 15 unit tests; pytest 639 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #127 opened (draft); awaiting CI.
 - iter 41 (2026-08-03): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#124); Phase 4 picked #124 (SPEC-STORY-COMPOUND — Connextra story opener with "I want to X and Y" bundles ≥2 capabilities; INVEST Small, MAQA Level-2 compound AC); added pitfall + _I_WANT_TO_RE + _COMPOUND_AND_RE constants + _spec_story_compound() helper wired into _spec_checks(); "to" guard avoids adjective-want false positive ("I want fast and intuitive search"); 15 unit tests; pytest 654 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #128 opened (draft); awaiting CI.
 - iter 42 (2026-08-04): Phase 1 merged PR #128 (issue #124 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 0 open loop-candidate issues → Phase 3: promoted 3 pool items to issues (#129 SPEC-FR-NO-STORY, #130 SPEC-AC-VAGUE-OUTCOME, #131 SPEC-AC-NO-FR-LINK). Phase 4 picked #130 (SPEC-AC-VAGUE-OUTCOME — Then clause in formal-Gherkin AC with vague non-observable adverb; MAQA binary-verifiable AC rule; formal-Gherkin guard requires both Given+When line-leaders to suppress false positives on prose ACs); added pitfall + _VAGUE_OUTCOME_RE constant + _spec_ac_vague_outcome() helper wired into _spec_checks(); 14 unit tests (6 fire, 8 silent); pytest 668 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #132 opened (draft); awaiting CI.
+- iter 43 (2026-08-05): Phase 1 merged PR #132 (issue #130 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#129, #131). Phase 4 picked #129 (SPEC-FR-NO-STORY — FR-/NFR- line in spec outside any US-NNN section with no [US#] link; Canon Fit Criterion traceability, ISO 29148 §5.2.6; fills FR→US direction of bidirectional traceability matrix); added pitfall + _US_NNN_TITLE_RE + _FR_NFR_LINE_RE constants + _spec_fr_no_story() helper wired into _spec_checks(); _US_NNN_TITLE_RE guard fires only for specs with literal US-NNN headings (avoids false positives on standard "User Story N" format); section-boundary scan via art.sections; fenced-block exclusion; 13 unit tests (5 fire, 8 silent); pytest 681 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #133 opened (draft); awaiting CI.
