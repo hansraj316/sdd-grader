@@ -457,6 +457,71 @@ _NORMATIVE_LINE_RE = re.compile(
     r"\b(?:shall|must)\b|\b(?:FR|NFR|AC|US)-\d+\b",
     re.IGNORECASE,
 )
+# US-NNN section heading title prefix (SPEC-FR-NO-STORY guard): matches section titles
+# that begin with a US-NNN identifier — e.g. "US-001", "US-001: Login Feature".
+# Applied to art.sections[i].title (the text after stripping leading '#' characters).
+_US_NNN_TITLE_RE = re.compile(r"^US-\d+\b", re.IGNORECASE)
+# FR or NFR identifier on a line (SPEC-FR-NO-STORY):
+_FR_NFR_LINE_RE = re.compile(r"\b(?:FR|NFR)-\d+\b", re.IGNORECASE)
+
+
+def _spec_fr_no_story(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """FR-/NFR- lines in spec outside any US-NNN section with no [US#] link (SPEC-FR-NO-STORY).
+
+    Guard: only fires when the spec has ≥1 section heading whose title begins with
+    'US-NNN' (e.g. '## US-001', '### US-001: Login').  Specs that organise stories
+    under 'User Story N' headings (the common Spec-Kit format) are not subject to this
+    check — it targets the US-NNN-headed layout where every FR is expected to live
+    inside its parent US section or carry an explicit '[US#]' cross-reference tag.
+    """
+    p = catalog.get("SPEC-FR-NO-STORY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: at least one US-NNN section heading must exist.
+    us_sections = [s for s in art.sections if _US_NNN_TITLE_RE.match(s.title)]
+    if not us_sections:
+        return []
+    # Build the set of 0-indexed line numbers that are inside a US-NNN section.
+    # Each US-NNN section spans from its heading line up to (but not including)
+    # the line of the next heading at the same or lower depth.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    us_lines: set[int] = set()
+    for idx, s in enumerate(art.sections):
+        if not _US_NNN_TITLE_RE.match(s.title):
+            continue
+        start = s.line - 1  # 0-indexed heading line
+        # End is the next sibling/ancestor heading line, or EOF.
+        end = len(lines)
+        for following in art.sections[idx + 1:]:
+            if following.level <= s.level:
+                end = following.line - 1  # 0-indexed
+                break
+        for i in range(start, end):
+            us_lines.add(i)
+    # Collect FR-/NFR- lines that are outside all US-NNN sections and have no [US#] tag.
+    orphans: list[int] = []
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if not _FR_NFR_LINE_RE.search(line):
+            continue
+        if i in us_lines:
+            continue
+        if _US_TAG_RE.search(line):
+            continue
+        orphans.append(i + 1)  # 1-indexed
+    if not orphans:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-FR-NO-STORY: {len(orphans)} FR-/NFR- line(s) sit outside any US-NNN section "
+            f"with no [US#] link — unowned requirement(s).",
+            line=orphans[0],
+        )
+    ]
 
 
 def _spec_missing_out_of_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -1279,6 +1344,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_req_no_id(art, catalog))
     out.extend(_spec_missing_out_of_scope(art, catalog))
     out.extend(_spec_ac_vague_outcome(art, catalog))
+    out.extend(_spec_fr_no_story(art, catalog))
     return out
 
 

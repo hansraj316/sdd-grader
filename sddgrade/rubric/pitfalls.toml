@@ -485,6 +485,17 @@ detect = "Scan only specs in formal-Gherkin mode (at least one Given line-leader
 fix = "Replace the vague adverb with a concrete, observable assertion. Instead of 'Then the system correctly processes the payment', write 'Then a 200 OK response is returned and the order status is set to confirmed'. Every Then clause should state a value, status, or visible state that a test can assert without interpretation."
 
 [[pitfall]]
+id = "SPEC-FR-NO-STORY"
+name = "Functional requirement line outside any US-NNN section with no story link"
+dimension = "traceability"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "Canon's requirement-to-story traceability rule and ISO/IEC/IEEE 29148:2018 §5.2.6 require every functional requirement to trace bidirectionally to at least one user story. When a spec organises stories under US-NNN headings (e.g. '## US-001: Login'), an FR-/NFR- line that sits outside every US-NNN section and carries no '[US#]' tag is effectively unowned: it may implement a deleted story, be a misfile, or represent scope-creep with no user value. This fills the FR→US direction of the bidirectional traceability matrix, complementing the existing XREF-DANGLING-REQ-REF (tasks→spec) and XREF-AC-NO-TASK (spec AC→tasks) checks."
+detect = "Guard: spec must have ≥1 section heading whose title begins with 'US-NNN' (e.g. '## US-001', '### US-002: Login Feature'). When the guard fires: for each non-fenced line containing a FR-/NFR-NNN identifier, the line is acceptable if it sits inside a US-NNN headed section (between that heading and the next same-or-higher-level heading) OR if it carries a '[US#]' tag (e.g. '[US1]', '[US12]'). Return one aggregate finding anchored to the first offending line when any orphaned FR-/NFR- lines are found."
+fix = "Move each FR-/NFR- line inside the corresponding '## US-NNN' section that it implements, or add a '[US#]' cross-reference tag: 'FR-001: The system shall ... [US1]'. If the requirement crosses multiple stories, tag all: '[US1][US3]'."
+
+[[pitfall]]
 id = "XREF-CONTRADICTION"
 name = "Cross-artifact contradiction"
 dimension = "consistency"
