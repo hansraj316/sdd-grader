@@ -463,6 +463,49 @@ _NORMATIVE_LINE_RE = re.compile(
 _US_NNN_TITLE_RE = re.compile(r"^US-\d+\b", re.IGNORECASE)
 # FR or NFR identifier on a line (SPEC-FR-NO-STORY):
 _FR_NFR_LINE_RE = re.compile(r"\b(?:FR|NFR)-\d+\b", re.IGNORECASE)
+# FR-NNN only (not NFR-NNN) — used by SPEC-AC-NO-FR-LINK co-reference check.
+# \bFR-\d+\b cannot match NFR-NNN because 'F' in NFR is not at a word boundary.
+_FR_ID_RE = re.compile(r"\bFR-\d+\b", re.IGNORECASE)
+# AC-NNN non-capturing variant for presence checks (SPEC-AC-NO-FR-LINK).
+# (A capturing variant _AC_ID_RE is used by the XREF-AC-NO-TASK cross-artifact check.)
+_AC_NNN_RE = re.compile(r"\bAC-\d+\b", re.IGNORECASE)
+
+
+def _spec_ac_no_fr_link(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with both FR-NNN and AC-NNN identifiers but no line co-referencing both (SPEC-AC-NO-FR-LINK).
+
+    Guard: only fires when both FR-NNN and AC-NNN identifiers appear on non-fenced lines.
+    When the guard fires: scans every non-fenced line for one that contains both an
+    FR-NNN identifier and an AC-NNN identifier.  Returns one aggregate finding if no
+    such co-reference line exists.
+
+    Canon Fit Criterion / MAQA Traceability Level-2: every AC must explicitly reference
+    the FR it validates so coverage completeness can be checked mechanically.
+    """
+    p = catalog.get("SPEC-AC-NO-FR-LINK")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Guard: both identifier types must appear somewhere in the spec.
+    has_fr = any(not fenced[i] and _FR_ID_RE.search(ln) for i, ln in enumerate(lines))
+    has_ac = any(not fenced[i] and _AC_NNN_RE.search(ln) for i, ln in enumerate(lines))
+    if not (has_fr and has_ac):
+        return []
+    # Check: is there any non-fenced line containing both an FR-NNN and an AC-NNN?
+    for i, ln in enumerate(lines):
+        if fenced[i]:
+            continue
+        if _FR_ID_RE.search(ln) and _AC_NNN_RE.search(ln):
+            return []  # co-reference found → silent
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-AC-NO-FR-LINK: spec defines both FR-NNN and AC-NNN identifiers but no line "
+            "co-references both; add explicit FR↔AC links (e.g. 'AC-001 [FR-001]: …').",
+        )
+    ]
 
 
 def _spec_fr_no_story(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -1345,6 +1388,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_out_of_scope(art, catalog))
     out.extend(_spec_ac_vague_outcome(art, catalog))
     out.extend(_spec_fr_no_story(art, catalog))
+    out.extend(_spec_ac_no_fr_link(art, catalog))
     return out
 
 

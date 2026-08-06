@@ -485,6 +485,17 @@ detect = "Scan only specs in formal-Gherkin mode (at least one Given line-leader
 fix = "Replace the vague adverb with a concrete, observable assertion. Instead of 'Then the system correctly processes the payment', write 'Then a 200 OK response is returned and the order status is set to confirmed'. Every Then clause should state a value, status, or visible state that a test can assert without interpretation."
 
 [[pitfall]]
+id = "SPEC-AC-NO-FR-LINK"
+name = "Spec defines both FR-NNN and AC-NNN identifiers but no line co-references both"
+dimension = "traceability"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "Canon's Fit Criterion rule and MAQA's Traceability Level-2 require each acceptance criterion to explicitly reference the functional requirement it validates, so test-coverage completeness can be verified mechanically. Without any line co-referencing an FR-NNN and an AC-NNN, you cannot determine which FR an AC tests, making coverage analysis manual and error-prone — a traceability gap that survives every other requirement-quality check."
+detect = "Guard fires only when both FR-NNN and AC-NNN identifiers appear on non-fenced lines in the spec. When the guard fires, scan for any non-fenced line that contains both an FR-NNN identifier and an AC-NNN identifier on the same line. Fire one aggregate finding if no such co-reference line is found."
+fix = "Add explicit cross-references on each AC line: 'AC-001 [FR-001]: The system shall …' or 'FR-001 … Acceptance: AC-001.' If the spec is section-based, place each AC block inside its parent FR subsection to make the link structural and visible to the automated traceability matrix."
+
+[[pitfall]]
 id = "SPEC-FR-NO-STORY"
 name = "Functional requirement line outside any US-NNN section with no story link"
 dimension = "traceability"
