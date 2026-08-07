@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 44
-Last run: 2026-08-06
-Open loop PRs: 0
+Iteration: 45
+Last run: 2026-08-07
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -27,6 +27,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] pitfall-negative-requirement — see issue #4 → merged in PR #11
 - [x] xref-dangling-req-ref — XREF-DANGLING-REQ-REF: task references undefined requirement ID → issue #111 → PR #114 → merged 2026-07-26
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
+- [x] report-sarif — already implemented as sddgrade/report/sarif.py (closed issue #14)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
 - [x] pitfall-gherkin-acceptance — Deterministic check that acceptance criteria use well-formed Given/When/Then where present. (Gherkin/BDD) → issue #78 → merged in PR #82
@@ -39,6 +40,17 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] feature-rollup — Per-feature rollup scores (group artifacts by feature) in report + dashboard. (sddgrade gap)
 - [ ] trend-regression — Dashboard flags a score regression vs the previous run. (sddgrade gap)
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
+- [~] spec-qvscribe-and-or — SPEC-QVSCRIBE-AND-OR: 'and/or' ambiguous conjunction on requirement lines (QVscribe Level-1 Clarity / ISO 29148 §5.2.5(a)) → issue #135 → PR #140
+- [ ] spec-maqa-ac-conditional — SPEC-MAQA-AC-CONDITIONAL: conditional language (if/unless/may/should) in Gherkin Then clause makes AC non-binary (MAQA binary-verifiability) → issue #136
+- [ ] spec-maqa-missing-priority — SPEC-MAQA-MISSING-PRIORITY: spec with 3+ FR- lines but no priority annotation (MoSCoW/P1-P3/High-Low) → issue #137
+- [ ] spec-missing-glossary — SPEC-MISSING-GLOSSARY: spec with ≥3 FR-/NFR- lines but no Glossary/Definitions section (ISO 29148 §5.2.1) → issue #138
+- [ ] plan-missing-migration — PLAN-MISSING-MIGRATION: plan mentions schema changes (ALTER TABLE/new column) but no data migration strategy (Kiro prod-readiness) → issue #139
+- [ ] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' before EARS trigger keyword (inverted ordering) — from EARS research
+- [ ] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: 'always'/'never'/'at all times' temporal universals (QVscribe Continuance) — from research
+- [ ] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) — from research
+- [ ] spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with requirements but no Problem Statement/Motivation section (Kiro spec template) — from research
+- [ ] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) — from research
+- [ ] spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR with numeric threshold but no measurement unit (Canon Scale/Meter/Must) — from research
 - [x] spec-req-section-prose-only — SPEC-REQ-SECTION-PROSE-ONLY: requirements section with prose but no normative statements (IBM RQA, QVscribe, ISO 29148) → issue #112 → PR #115 → merged 2026-07-27
 - [x] plan-third-party-no-fallback — PLAN-THIRD-PARTY-NO-FALLBACK: plan mentions external service/API but no resilience vocabulary (Kiro, Tessl, ISO 25010) → issue #113 → merged in PR #116
 - [x] plan-missing-health-check — PLAN-MISSING-HEALTH-CHECK: deployment plan with no health-check/liveness/readiness-probe mention (Kiro production-readiness, ISO 25010 Availability) → issue #117 → PR #120 → merged 2026-07-29
@@ -68,7 +80,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #135 → PR #140 spec-qvscribe-and-or — SPEC-QVSCRIBE-AND-OR: 'and/or' ambiguous conjunction on requirement-bearing lines; _AND_OR_RE constant + _spec_qvscribe_and_or() helper; scoped via _requirement_mask() + _fence_mask(); 11 unit tests (5 fire, 6 silent); pytest 702 green; benchmark good=100 bad=56.8 precision=0.971 PASS; awaiting CI.
 
 ## Merged
 
@@ -260,3 +272,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 42 (2026-08-04): Phase 1 merged PR #128 (issue #124 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 0 open loop-candidate issues → Phase 3: promoted 3 pool items to issues (#129 SPEC-FR-NO-STORY, #130 SPEC-AC-VAGUE-OUTCOME, #131 SPEC-AC-NO-FR-LINK). Phase 4 picked #130 (SPEC-AC-VAGUE-OUTCOME — Then clause in formal-Gherkin AC with vague non-observable adverb; MAQA binary-verifiable AC rule; formal-Gherkin guard requires both Given+When line-leaders to suppress false positives on prose ACs); added pitfall + _VAGUE_OUTCOME_RE constant + _spec_ac_vague_outcome() helper wired into _spec_checks(); 14 unit tests (6 fire, 8 silent); pytest 668 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #132 opened (draft); awaiting CI.
 - iter 43 (2026-08-05): Phase 1 merged PR #132 (issue #130 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#129, #131). Phase 4 picked #129 (SPEC-FR-NO-STORY — FR-/NFR- line in spec outside any US-NNN section with no [US#] link; Canon Fit Criterion traceability, ISO 29148 §5.2.6; fills FR→US direction of bidirectional traceability matrix); added pitfall + _US_NNN_TITLE_RE + _FR_NFR_LINE_RE constants + _spec_fr_no_story() helper wired into _spec_checks(); _US_NNN_TITLE_RE guard fires only for specs with literal US-NNN headings (avoids false positives on standard "User Story N" format); section-boundary scan via art.sections; fenced-block exclusion; 13 unit tests (5 fire, 8 silent); pytest 681 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #133 opened (draft); awaiting CI.
 - iter 44 (2026-08-06): Phase 1 merged PR #133 (issue #129 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#131). Phase 4 picked #131 (SPEC-AC-NO-FR-LINK — spec defines both FR-NNN and AC-NNN identifiers but no single non-fenced line co-references both; Canon Fit Criterion / MAQA Traceability Level-2); added pitfall + _FR_ID_RE + _AC_NNN_RE constants + _spec_ac_no_fr_link() helper wired into _spec_checks(); guard fires only when both FR-NNN and AC-NNN identifiers appear; NFR-NNN correctly excluded (\bFR-\d+\b won't match NFR at a word boundary); fenced-block co-references excluded; 10 unit tests (3 fire, 7 silent); pytest 691 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #134 opened; CI green same run; converted + squash-merged; issue #131 closed.
+- iter 45 (2026-08-07): Phase 1 no open loop/* PRs. Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (EARS/QVscribe/MAQA → 9 ideas; ISO 29148/Kiro/Tessl/Canon → 9 ideas); filed 5 new issues (#135 SPEC-QVSCRIBE-AND-OR, #136 SPEC-MAQA-AC-CONDITIONAL, #137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION); also surfaced 6 additional ideas for pool (SPEC-EARS-TRIGGER-INVERSION, SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED, SPEC-QVSCRIBE-WEAKENED-EXCEPT, SPEC-MISSING-MOTIVATION, PLAN-HARDCODED-CONFIG, SPEC-NFR-NO-UNIT). Phase 4 picked #135 (SPEC-QVSCRIBE-AND-OR — 'and/or' ambiguous conjunction on requirement-bearing lines; QVscribe Level-1 Clarity defect, ISO 29148 §5.2.5(a) 'unambiguous'; scoped via _requirement_mask()/_fence_mask(); 11 unit tests (5 fire, 6 silent)); pytest 702 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #140 opened (draft); awaiting CI.
