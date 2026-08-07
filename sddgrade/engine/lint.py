@@ -567,6 +567,47 @@ def _spec_fr_no_story(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     ]
 
 
+# SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
+_AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
+
+
+def _spec_qvscribe_and_or(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """'and/or' ambiguous conjunction on requirement-bearing lines (SPEC-QVSCRIBE-AND-OR).
+
+    QVscribe Level-1 Clarity defect and ISO 29148 §5.2.5(a) 'unambiguous' characteristic.
+    'and/or' is inherently ambiguous — readers cannot determine whether both must be
+    satisfied (AND), either suffices (inclusive OR), or exactly one applies (exclusive OR).
+    Check is scoped to requirement-bearing lines only via _requirement_mask() to avoid
+    false positives in prose paragraphs; fenced code blocks are always excluded.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-AND-OR")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _AND_OR_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-AND-OR: {count} requirement line(s) use ambiguous 'and/or' conjunction; "
+            "replace with 'and' or 'or' depending on intent.",
+            line=first_line,
+        )
+    ]
+
+
 def _spec_missing_out_of_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Spec with ≥3 normative requirement lines but no Out-of-Scope/Non-Goals heading (SPEC-MISSING-OUT-OF-SCOPE)."""
     p = catalog.get("SPEC-MISSING-OUT-OF-SCOPE")
@@ -1389,6 +1430,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ac_vague_outcome(art, catalog))
     out.extend(_spec_fr_no_story(art, catalog))
     out.extend(_spec_ac_no_fr_link(art, catalog))
+    out.extend(_spec_qvscribe_and_or(art, catalog))
     return out
 
 
