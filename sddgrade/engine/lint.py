@@ -567,6 +567,58 @@ def _spec_fr_no_story(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     ]
 
 
+# SPEC-MAQA-AC-CONDITIONAL: conditional or non-normative modal language in Gherkin Then clauses.
+# Explicit conditionals: if, unless, depending, provided that, in the event.
+_THEN_CONDITIONAL_RE = re.compile(
+    r"\b(?:if|unless|depending|provided\s+that|in\s+the\s+event)\b",
+    re.IGNORECASE,
+)
+# Non-normative modals that make the step optional rather than mandatory.
+_THEN_OPTIONAL_MODAL_RE = re.compile(r"\b(?:should|may|might|could)\b", re.IGNORECASE)
+
+
+def _spec_maqa_ac_conditional(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Then clause with conditional or non-normative modal language (SPEC-MAQA-AC-CONDITIONAL).
+
+    MAQA binary-verifiability rule: every Then step must be an unconditional, binary
+    assertion.  Conditional language (if/unless/depending) makes the outcome
+    context-dependent; non-normative modals (should/may/might/could) make it optional.
+    Both make the step impossible to evaluate as a deterministic pass/fail test.
+
+    Guard: only fires in formal-Gherkin mode — at least one Given line-leader AND one
+    When line-leader must each start their own line.  Prose ACs are not checked.
+    """
+    p = catalog.get("SPEC-MAQA-AC-CONDITIONAL")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Require formal Gherkin mode: both a Given and a When line-leader present.
+    if not (_GHERKIN_GIVEN_RE.search(raw) and _GHERKIN_WHEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+    hits: list[int] = []
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if not _GHERKIN_THEN_RE.match(line):
+            continue
+        if _THEN_CONDITIONAL_RE.search(line) or _THEN_OPTIONAL_MODAL_RE.search(line):
+            hits.append(i + 1)  # 1-indexed
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-MAQA-AC-CONDITIONAL: {len(hits)} Then clause(s) use conditional or non-normative "
+            "modal language (if/unless/depending/should/may/might/could); replace with a binary, "
+            "unconditional assertion.",
+            line=hits[0],
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
 _AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
 
@@ -1431,6 +1483,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_fr_no_story(art, catalog))
     out.extend(_spec_ac_no_fr_link(art, catalog))
     out.extend(_spec_qvscribe_and_or(art, catalog))
+    out.extend(_spec_maqa_ac_conditional(art, catalog))
     return out
 
 
