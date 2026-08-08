@@ -740,6 +740,17 @@ detect = "Apply the same deploy-vocabulary guard as PLAN-MISSING-ROLLBACK (any d
 fix = "Add a Health Checks section to the deployment plan describing: (1) the /health or /ready endpoint path, (2) what it checks (DB connection, cache, downstream deps), (3) the liveness probe config (path, initial delay, period), and (4) the readiness probe config used by the orchestrator to gate traffic."
 
 [[pitfall]]
+id = "SPEC-MAQA-AC-CONDITIONAL"
+name = "Conditional or non-normative modal language in Gherkin Then clause"
+dimension = "testability"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "MAQA's binary-verifiability rule for acceptance criteria requires every Then clause to be assertable as pass/fail without domain interpretation. A Then clause containing conditional language (if, unless, depending) or non-normative modals (should, may, might, could) is not a binary assertion — it is either context-dependent (the outcome only applies under certain conditions) or optional (the step may be skipped without breach). This is distinct from SPEC-AC-VAGUE-OUTCOME (which targets non-observable adverbs) — this check catches structural conditionality and modal optionality. ISO/IEC/IEEE 29148:2018 §5.2.5(i) 'verifiable' characteristic: a requirement must be testable by finite means."
+detect = "Guard: formal-Gherkin mode only (at least one Given line-leader AND one When line-leader each on their own line). For each Then line-leader: check for explicit conditionals (\\b(if|unless|depending|provided that|in the event)\\b) or non-normative modals making the step optional (\\b(should|may|might|could)\\b). Fire one aggregate finding anchored at the first offending Then line."
+fix = "Replace conditional or optional language with a definitive, binary assertion. Instead of 'Then the user should receive a confirmation email if payment succeeds', write 'Then a payment-confirmation email is sent to the user and the order status is set to confirmed'. Every Then clause must be unconditionally testable: a fixed observable outcome, not a conditional promise."
+
+[[pitfall]]
 id = "SPEC-QVSCRIBE-AND-OR"
 name = "Ambiguous 'and/or' conjunction in requirement"
 dimension = "clarity"
