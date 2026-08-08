@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 45
-Last run: 2026-08-07
-Open loop PRs: 0
+Iteration: 46
+Last run: 2026-08-08
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -61,7 +61,8 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-story-compound — SPEC-STORY-COMPOUND: user story header with 2+ wants joined by "and" (INVEST Small violation) → issue #124 → PR #128 → merged 2026-08-04
 - [x] spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE: spec with substantial reqs but no out-of-scope/non-goal heading (Kiro, Tessl, ISO 29148) → issue #125 → PR #127 → merged 2026-08-02
 - [x] spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: Gherkin Then clause with vague outcome words (correctly/properly/as expected) with no observable condition (MAQA binary-verifiable AC rule) → issue #130 → PR #132 → merged 2026-08-05
-- [~] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-NNN section and no [US#] tag (Canon/29148 traceability) → issue #129 → PR #133
+- [x] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-NNN section and no [US#] tag (Canon/29148 traceability) → issue #129 → PR #133 → merged 2026-08-06
+- [~] spec-maqa-ac-conditional — SPEC-MAQA-AC-CONDITIONAL: conditional language (if/unless/depending/may/should/might/could) in Gherkin Then clause makes AC non-binary (MAQA binary-verifiability) → issue #136 → PR #141
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
 - [x] spec-future-tense-req — SPEC-FUTURE-TENSE-REQ pitfall: requirement lines using "will be"/"would be" instead of normative "shall"/"must" (ISO 29148, Canon) → issue #106 → PR #109 → merged 2026-07-25
 - [x] plan-missing-capacity — PLAN-MISSING-CAPACITY pitfall: deployment plan with scaling vocab but no capacity numbers (Tessl, ISO 25010 Capacity) → issue #107 → PR #110 → merged 2026-07-25
@@ -80,7 +81,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #136 → PR #141 spec-maqa-ac-conditional (awaiting CI)
 
 ## Merged
 
@@ -274,3 +275,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 43 (2026-08-05): Phase 1 merged PR #132 (issue #130 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 2 open loop-candidate issues (#129, #131). Phase 4 picked #129 (SPEC-FR-NO-STORY — FR-/NFR- line in spec outside any US-NNN section with no [US#] link; Canon Fit Criterion traceability, ISO 29148 §5.2.6; fills FR→US direction of bidirectional traceability matrix); added pitfall + _US_NNN_TITLE_RE + _FR_NFR_LINE_RE constants + _spec_fr_no_story() helper wired into _spec_checks(); _US_NNN_TITLE_RE guard fires only for specs with literal US-NNN headings (avoids false positives on standard "User Story N" format); section-boundary scan via art.sections; fenced-block exclusion; 13 unit tests (5 fire, 8 silent); pytest 681 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #133 opened (draft); awaiting CI.
 - iter 44 (2026-08-06): Phase 1 merged PR #133 (issue #129 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 1 open loop-candidate issue (#131). Phase 4 picked #131 (SPEC-AC-NO-FR-LINK — spec defines both FR-NNN and AC-NNN identifiers but no single non-fenced line co-references both; Canon Fit Criterion / MAQA Traceability Level-2); added pitfall + _FR_ID_RE + _AC_NNN_RE constants + _spec_ac_no_fr_link() helper wired into _spec_checks(); guard fires only when both FR-NNN and AC-NNN identifiers appear; NFR-NNN correctly excluded (\bFR-\d+\b won't match NFR at a word boundary); fenced-block co-references excluded; 10 unit tests (3 fire, 7 silent); pytest 691 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #134 opened; CI green same run; converted + squash-merged; issue #131 closed.
 - iter 45 (2026-08-07): Phase 1 no open loop/* PRs. Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (EARS/QVscribe/MAQA → 9 ideas; ISO 29148/Kiro/Tessl/Canon → 9 ideas); filed 5 new issues (#135 SPEC-QVSCRIBE-AND-OR, #136 SPEC-MAQA-AC-CONDITIONAL, #137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION); also surfaced 6 additional ideas for pool (SPEC-EARS-TRIGGER-INVERSION, SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED, SPEC-QVSCRIBE-WEAKENED-EXCEPT, SPEC-MISSING-MOTIVATION, PLAN-HARDCODED-CONFIG, SPEC-NFR-NO-UNIT). Phase 4 picked #135 (SPEC-QVSCRIBE-AND-OR — 'and/or' ambiguous conjunction on requirement-bearing lines; QVscribe Level-1 Clarity defect, ISO 29148 §5.2.5(a) 'unambiguous'; scoped via _requirement_mask()/_fence_mask(); 11 unit tests (5 fire, 6 silent)); pytest 702 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #140 opened; CI green same run; converted + squash-merged; issue #135 closed.
+- iter 46 (2026-08-08): Phase 1 no open loop/* PRs. Phase 2 found 4 open loop-candidate issues (#136 SPEC-MAQA-AC-CONDITIONAL, #137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #136 (SPEC-MAQA-AC-CONDITIONAL — conditional language (if/unless/depending/provided that/in the event) and non-normative modals (should/may/might/could) in Gherkin Then clauses make ACs non-binary; MAQA binary-verifiability rule + ISO 29148 §5.2.5(i); formal-Gherkin guard requires Given+When line-leaders; _THEN_CONDITIONAL_RE + _THEN_OPTIONAL_MODAL_RE constants; 18 unit tests (9 fire, 9 silent)); pytest 720 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #141 opened (draft); awaiting CI.
