@@ -660,6 +660,54 @@ def _spec_qvscribe_and_or(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fi
     ]
 
 
+# SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
+_PRIORITY_MARKER_RE = re.compile(
+    r"""(?:
+        \b(?:must\s+have|should\s+have|could\s+have|won.?t\s+have)\b
+        | \bMoSCoW\b
+        | \bP[123]\b
+        | \bpriority\s*[:=]\s*(?:high|medium|low|critical)\b
+        | \bHigh\s+Priority\b
+        | \bMedium\s+Priority\b
+        | \bLow\s+Priority\b
+    )""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _spec_maqa_missing_priority(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 FR- requirement lines but no priority annotation (SPEC-MAQA-MISSING-PRIORITY).
+
+    MAQA 'Modifiability' attribute and INVEST 'Negotiable' principle require requirements
+    to carry relative priority so teams can triage scope cuts without full re-analysis.
+    Guard: ≥3 non-fenced lines with \\bFR-\\d+\\b (formal FR identifiers are in use).
+    Check: no priority marker (MoSCoW, P1/P2/P3, High/Medium/Low) anywhere in document.
+    """
+    p = catalog.get("SPEC-MAQA-MISSING-PRIORITY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Guard: ≥3 non-fenced lines with FR- identifiers.
+    fr_count = sum(1 for i, ln in enumerate(lines) if not fenced[i] and _FR_ID_RE.search(ln))
+    if fr_count < 3:
+        return []
+    # Check: any non-fenced line carries a priority marker → silent.
+    for i, ln in enumerate(lines):
+        if not fenced[i] and _PRIORITY_MARKER_RE.search(ln):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MAQA-MISSING-PRIORITY: spec has 3+ FR- requirements but no priority "
+            "annotation (MoSCoW, P1/P2/P3, or High/Medium/Low); add priority labels so "
+            "teams can triage scope cuts without renegotiating the whole spec.",
+            line=1,
+        )
+    ]
+
+
 def _spec_missing_out_of_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Spec with ≥3 normative requirement lines but no Out-of-Scope/Non-Goals heading (SPEC-MISSING-OUT-OF-SCOPE)."""
     p = catalog.get("SPEC-MISSING-OUT-OF-SCOPE")
@@ -1484,6 +1532,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ac_no_fr_link(art, catalog))
     out.extend(_spec_qvscribe_and_or(art, catalog))
     out.extend(_spec_maqa_ac_conditional(art, catalog))
+    out.extend(_spec_maqa_missing_priority(art, catalog))
     return out
 
 
