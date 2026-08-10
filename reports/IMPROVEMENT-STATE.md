@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 47
-Last run: 2026-08-09
-Open loop PRs: 0
+Iteration: 48
+Last run: 2026-08-10
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -280,3 +280,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 45 (2026-08-07): Phase 1 no open loop/* PRs. Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (EARS/QVscribe/MAQA → 9 ideas; ISO 29148/Kiro/Tessl/Canon → 9 ideas); filed 5 new issues (#135 SPEC-QVSCRIBE-AND-OR, #136 SPEC-MAQA-AC-CONDITIONAL, #137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION); also surfaced 6 additional ideas for pool (SPEC-EARS-TRIGGER-INVERSION, SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED, SPEC-QVSCRIBE-WEAKENED-EXCEPT, SPEC-MISSING-MOTIVATION, PLAN-HARDCODED-CONFIG, SPEC-NFR-NO-UNIT). Phase 4 picked #135 (SPEC-QVSCRIBE-AND-OR — 'and/or' ambiguous conjunction on requirement-bearing lines; QVscribe Level-1 Clarity defect, ISO 29148 §5.2.5(a) 'unambiguous'; scoped via _requirement_mask()/_fence_mask(); 11 unit tests (5 fire, 6 silent)); pytest 702 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #140 opened; CI green same run; converted + squash-merged; issue #135 closed.
 - iter 46 (2026-08-08): Phase 1 no open loop/* PRs. Phase 2 found 4 open loop-candidate issues (#136 SPEC-MAQA-AC-CONDITIONAL, #137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #136 (SPEC-MAQA-AC-CONDITIONAL — conditional language (if/unless/depending/provided that/in the event) and non-normative modals (should/may/might/could) in Gherkin Then clauses make ACs non-binary; MAQA binary-verifiability rule + ISO 29148 §5.2.5(i); formal-Gherkin guard requires Given+When line-leaders; _THEN_CONDITIONAL_RE + _THEN_OPTIONAL_MODAL_RE constants; 18 unit tests (9 fire, 9 silent)); pytest 720 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #141 opened; CI green same run; converted + squash-merged; issue #136 closed.
 - iter 47 (2026-08-09): Phase 1 no open loop/* PRs (0). Phase 2 found 3 open loop-candidate issues (#137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #137 (SPEC-MAQA-MISSING-PRIORITY — spec with ≥3 FR-NNN requirement lines but no priority annotation; MAQA Modifiability + INVEST Negotiable + QVscribe Level-2 Prioritization; _PRIORITY_MARKER_RE matches MoSCoW labels/P1-P3/priority[:=]high-low/High-Low-Medium Priority; guard ≥3 non-fenced FR lines; 14 unit tests (5 fire, 9 silent)); pytest 734 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #142 opened; CI green same run; converted + squash-merged; issue #137 closed.
+- iter 48 (2026-08-10): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #138 (SPEC-MISSING-GLOSSARY — spec with ≥3 FR-/NFR- requirement lines but no Glossary/Definitions/Terms-and-Definitions/Abbreviations heading; ISO/IEC/IEEE 29148:2018 §5.2.1; _GLOSSARY_HEADING_RE + _REQ_ID_RE constants + _spec_missing_glossary() helper wired into _spec_checks(); good fixture + benign-lookalike corpus spec updated with ## Glossary; paraphrased-defects + realworld-mcp-proxy corpus accepted_extras labeled; 14 unit tests (6 fire, 8 silent)); pytest 748 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #143 opened (draft); awaiting CI.

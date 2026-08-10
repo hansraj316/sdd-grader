@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-09T07:28:42.488844+00:00",
+  "timestamp": "2026-08-10T07:33:59.493053+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -40,12 +40,12 @@
   },
   "bad": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_bad",
-    "overall": 56.8,
+    "overall": 55.0,
     "artifacts": [
       {
         "type": "spec",
-        "overall": 10.0,
-        "findings": 13
+        "overall": 4.0,
+        "findings": 14
       },
       {
         "type": "plan",
@@ -75,6 +75,7 @@
       "SPEC-LEFTOVER-PLACEHOLDER",
       "SPEC-MISSING-ACCEPTANCE",
       "SPEC-MISSING-EDGE-CASES",
+      "SPEC-MISSING-GLOSSARY",
       "SPEC-MISSING-OUT-OF-SCOPE",
       "SPEC-NON-MEASURABLE-SUCCESS",
       "SPEC-PRONOUN-ANTECEDENT",
@@ -83,7 +84,7 @@
       "TASKS-MALFORMED",
       "TASKS-TESTS-NOT-FIRST"
     ],
-    "finding_count": 22
+    "finding_count": 23
   },
   "extras": [],
   "corpus": {
@@ -337,7 +338,7 @@
         "quality": "medium",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 74.0,
+        "overall": 68.0,
         "score_band": [
           55,
           92
@@ -350,6 +351,7 @@
         "false_negatives": [],
         "accepted_extras_detected": [
           "REQ-WEAK-DIRECTIVE",
+          "SPEC-MISSING-GLOSSARY",
           "SPEC-MISSING-OUT-OF-SCOPE",
           "SPEC-PRONOUN-ANTECEDENT"
         ],
@@ -365,8 +367,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 0.2,
         "precision": 1.0,
-        "correct_detections": 4,
-        "total_detections": 4,
+        "correct_detections": 5,
+        "total_detections": 5,
         "note": "Paraphrase case: the same defect classes as ambiguous/nfr-unquantified/impl-leak, worded to avoid the catalog's trigger regexes. Lint SHOULD ideally catch: 'snappy'/'lightweight'/'smoothly' (ambiguous wording, FR-001/FR-002); 'keep working when the whole company checks it at the same moment' (unquantified load NFR, FR-002); 'could later grow a spreadsheet export' (speculative feature, FR-003); 'CockroachDB'/'Svelte' (impl-detail leak, FR-004). Only the digit-based structural check (non-measurable success) generalizes to this phrasing today. These are labeled known_misses: excluded from gated recall, reported in recall_incl_known_misses so the miss stays visible."
       },
       {
@@ -374,7 +376,7 @@
         "quality": "low",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 58.0,
+        "overall": 52.0,
         "score_band": [
           50,
           70
@@ -389,6 +391,7 @@
         ],
         "false_negatives": [],
         "accepted_extras_detected": [
+          "SPEC-MISSING-GLOSSARY",
           "SPEC-MISSING-OUT-OF-SCOPE"
         ],
         "known_misses_caught": [],
@@ -398,8 +401,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 1.0,
         "precision": 1.0,
-        "correct_detections": 5,
-        "total_detections": 5,
+        "correct_detections": 6,
+        "total_detections": 6,
         "note": "Real-world-derived case (#53c): adapts the flawed spec shape seen in real Spec-Kit repos (e.g. the polymarket-kit MCP-server spec pattern) \u2014 a [NEEDS CLARIFICATION] marker left inside FR-003, the template's '$ARGUMENTS' input line retained, 'REST API' leaked into an FR, and the Review & Acceptance Checklist kept with every box unchecked. Known gap (not a labeled miss because no catalog rule covers it): lint does not flag a retained, fully-unchecked review checklist \u2014 SPEC-LEFTOVER-PLACEHOLDER only fires here because of '$ARGUMENTS'."
       }
     ],
@@ -407,9 +410,9 @@
       "n": 10,
       "mean_recall": 1.0,
       "mean_recall_incl_known_misses": 0.92,
-      "precision": 0.971,
-      "correct_detections": 33,
-      "total_detections": 34,
+      "precision": 0.972,
+      "correct_detections": 35,
+      "total_detections": 36,
       "band_failures": [],
       "unlabeled_unexpected": {},
       "known_false_positives": 1,
