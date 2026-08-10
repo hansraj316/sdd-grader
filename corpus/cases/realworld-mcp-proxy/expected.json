@@ -8,6 +8,6 @@
     "SPEC-IMPL-DETAIL-LEAK",
     "SPEC-MISSING-EDGE-CASES"
   ],
-  "accepted_extras": ["SPEC-MISSING-OUT-OF-SCOPE"],
+  "accepted_extras": ["SPEC-MISSING-OUT-OF-SCOPE", "SPEC-MISSING-GLOSSARY"],
   "note": "Real-world-derived case (#53c): adapts the flawed spec shape seen in real Spec-Kit repos (e.g. the polymarket-kit MCP-server spec pattern) — a [NEEDS CLARIFICATION] marker left inside FR-003, the template's '$ARGUMENTS' input line retained, 'REST API' leaked into an FR, and the Review & Acceptance Checklist kept with every box unchecked. Known gap (not a labeled miss because no catalog rule covers it): lint does not flag a retained, fully-unchecked review checklist — SPEC-LEFTOVER-PLACEHOLDER only fires here because of '$ARGUMENTS'."
 }

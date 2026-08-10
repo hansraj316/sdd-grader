@@ -59,3 +59,10 @@ shared file is scoped to what matters.
 ## Assumptions
 
 - Users have permission to read every task they export.
+
+## Glossary
+
+- CSV: Comma-Separated Values, a plain-text tabular format defined by RFC 4180.
+- FR: Functional Requirement — a statement of behaviour the system must exhibit.
+- NFR: Non-Functional Requirement — a quality attribute (performance, security, etc.).
+- RFC 4180: The IETF memo that specifies CSV field escaping with double-quotes.

@@ -735,6 +735,49 @@ def _spec_missing_out_of_scope(art: Artifact, catalog: dict[str, Pitfall]) -> li
     ]
 
 
+# SPEC-MISSING-GLOSSARY: spec with ≥3 FR-/NFR- lines but no Glossary/Definitions heading.
+_GLOSSARY_HEADING_RE = re.compile(
+    r"(?:glossary|definitions?\b|terms?\s+and\s+definitions?|abbreviations?)",
+    re.IGNORECASE,
+)
+_REQ_ID_RE = re.compile(r"\b(?:FR|NFR)-\d+\b", re.IGNORECASE)
+
+
+def _spec_missing_glossary(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 FR-/NFR- requirement lines but no Glossary/Definitions heading (SPEC-MISSING-GLOSSARY).
+
+    ISO/IEC/IEEE 29148:2018 §5.2.1 mandates a terms-and-definitions clause in every
+    requirements specification. Guard: ≥3 non-fenced lines with formal FR-/NFR- identifiers.
+    Check: no section heading matches glossary/definitions/terms-and-definitions/abbreviations.
+    """
+    p = catalog.get("SPEC-MISSING-GLOSSARY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Guard: ≥3 non-fenced lines with FR- or NFR- identifiers.
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    # Check: any section heading that matches the glossary/definitions pattern → silent.
+    for s in art.sections:
+        if _GLOSSARY_HEADING_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-GLOSSARY: spec has 3+ FR-/NFR- requirements but no Glossary or "
+            "Definitions section; add a shared vocabulary so all readers interpret terms "
+            "identically (ISO/IEC/IEEE 29148:2018 §5.2.1).",
+            line=1,
+        )
+    ]
+
+
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
     p = catalog.get("PLAN-MISSING-ROLLBACK")
@@ -1533,6 +1576,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_and_or(art, catalog))
     out.extend(_spec_maqa_ac_conditional(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
+    out.extend(_spec_missing_glossary(art, catalog))
     return out
 
 
