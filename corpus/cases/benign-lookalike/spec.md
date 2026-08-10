@@ -39,3 +39,10 @@ products appear without manual entry.
 
 - A simple quick-add form for single products (the existing manual flow already covers this).
 - Making the import faster than the 10-minute target is not a goal for this release.
+
+## Glossary
+
+- SKU: Stock Keeping Unit — the unique identifier for a product in the catalog.
+- FR: Functional Requirement — a statement of system behaviour.
+- NFR: Non-Functional Requirement — a quality attribute (performance, latency, etc.).
+- p95 latency: the 95th-percentile import-status API response time under load.
