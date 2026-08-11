@@ -974,6 +974,61 @@ def _plan_third_party_no_fallback(art: Artifact, catalog: dict[str, Pitfall]) ->
     return [_from_pitfall(p, art.path, "Integration plan names an external service or API but has no resilience vocabulary (retry, timeout, fallback, circuit breaker, or graceful degradation).")]
 
 
+# Schema-change vocabulary: signs a plan alters the persistent data model (PLAN-MISSING-MIGRATION guard).
+_SCHEMA_CHANGE_RE = re.compile(
+    r"\bschema[\s_-]change\b"
+    r"|\balter\s+table\b"
+    r"|\badd\s+(?:column|field|table)\b"
+    r"|\bnew\s+table\b"
+    r"|\bdrop\s+(?:column|table)\b"
+    r"|\brename\s+(?:column|table)\b"
+    r"|\bdatabase[\s_-](?:change|update|migration)\b"
+    r"|\bdb[\s_-]migration\b"
+    r"|\badd\s+index\b",
+    re.IGNORECASE,
+)
+# Migration-strategy vocabulary: any mention of a data migration plan (PLAN-MISSING-MIGRATION).
+_MIGRATION_STRATEGY_RE = re.compile(
+    r"\bmigration[\s_-](?:script|plan|strategy|step|guide)\b"
+    r"|\bmigrate[\s_-]data\b"
+    r"|\bdata[\s_-]migration\b"
+    r"|\bbackfill\b"
+    r"|\balembic\b"
+    r"|\bflyway\b"
+    r"|\bliquibase\b"
+    r"|\bschema[\s_-]version\b"
+    r"|\brollback[\s_-](?:migration|schema)\b"
+    r"|\bup\.sql\b"
+    r"|\bdown\.sql\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_migration(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Plans that mention schema changes but have no data-migration strategy (PLAN-MISSING-MIGRATION)."""
+    p = catalog.get("PLAN-MISSING-MIGRATION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: only fire when the plan references schema-change operations on non-fenced lines.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    schema_hit = next(
+        (i + 1 for i, line in enumerate(lines) if not fenced[i] and _SCHEMA_CHANGE_RE.search(line)),
+        None,
+    )
+    if schema_hit is None:
+        return []
+    # Silent when any migration-strategy vocabulary is present anywhere in the document.
+    if _MIGRATION_STRATEGY_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Plan mentions schema changes (ALTER TABLE / new column / new table) but has no data-migration strategy.",
+        line=schema_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -1621,6 +1676,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_capacity(art, catalog))
     out.extend(_plan_third_party_no_fallback(art, catalog))
     out.extend(_plan_missing_health_check(art, catalog))
+    out.extend(_plan_missing_migration(art, catalog))
     return out
 
 

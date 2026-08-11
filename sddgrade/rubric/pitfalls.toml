@@ -782,3 +782,14 @@ method = "lint"
 why = "ISO/IEC/IEEE 29148:2018 §5.2.1 mandates a terms-and-definitions clause in every requirements specification. Without a shared vocabulary section, domain abbreviations (FR-001, NFR, SLA) and technical terms are interpreted independently by each reader, producing divergent implementations and test suites. SPEC-AMBIGUOUS-WORDING catches vague adjectives; this catches the upstream cause — no shared vocabulary was defined at all."
 detect = "Guard: ≥3 non-fenced lines matching \\b(FR|NFR)-\\d+\\b (formal requirement identifiers are in use). Check: scan # section headings for any of: 'glossary', 'definitions', 'terms and definitions', 'abbreviations' (case-insensitive). Fire once at file level when the guard fires and no matching heading is found."
 fix = "Add a '## Glossary' or '## Definitions' section to the spec and define each domain term and abbreviation used in the requirements. At minimum list all FR-/NFR- identifier expansions, acronyms, and any domain-specific terms that could be interpreted differently by different readers. Example heading: '## Glossary' with entries: 'FR — Functional Requirement', 'NFR — Non-Functional Requirement', 'SLA — Service Level Agreement', plus business-domain terms."
+
+[[pitfall]]
+id = "PLAN-MISSING-MIGRATION"
+name = "Plan mentions schema changes but has no data-migration strategy"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "high"
+method = "lint"
+why = "Amazon Kiro's production-readiness checklist treats data migration as a named gate: a plan that adds tables, renames columns, or runs backfills without a migration section will apply schema changes without rollback, versioning, or sequencing, causing irreversible production incidents. PLAN-MISSING-ROLLBACK covers deploy-level reversal; this covers the data-layer equivalent. ISO/IEC 25010 Maintainability → Modifiability (§4.2.5.2) requires that changes to the persistent schema be tracked and reversible."
+detect = "Guard (schema-change vocab): case-insensitive match against 'schema change/alter table/add column/new table/drop column/rename column/db migration/add index' on non-fenced plan lines. If guard fires, check for absence of migration-strategy vocab: 'migration script/plan/strategy/step/migrate data/backfill/alembic/flyway/liquibase/schema version/data migration/up.sql/down.sql'. Fire one finding at file level."
+fix = "Add a 'Data Migration' or 'Migration Strategy' section to the plan covering: (1) the migration tool (Alembic, Flyway, Liquibase, or raw SQL files up.sql/down.sql), (2) the rollback/down migration, (3) sequencing relative to code deploy (before, during, or after), and (4) backfill strategy for existing rows. Link to the migration script in the tasks list."
