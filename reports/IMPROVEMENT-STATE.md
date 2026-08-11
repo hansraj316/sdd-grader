@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 48
-Last run: 2026-08-10
-Open loop PRs: 0
+Iteration: 49
+Last run: 2026-08-11
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -44,7 +44,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] spec-maqa-ac-conditional — SPEC-MAQA-AC-CONDITIONAL: conditional language (if/unless/may/should) in Gherkin Then clause makes AC non-binary (MAQA binary-verifiability) → issue #136
 - [ ] spec-maqa-missing-priority — SPEC-MAQA-MISSING-PRIORITY: spec with 3+ FR- lines but no priority annotation (MoSCoW/P1-P3/High-Low) → issue #137
 - [ ] spec-missing-glossary — SPEC-MISSING-GLOSSARY: spec with ≥3 FR-/NFR- lines but no Glossary/Definitions section (ISO 29148 §5.2.1) → issue #138
-- [ ] plan-missing-migration — PLAN-MISSING-MIGRATION: plan mentions schema changes (ALTER TABLE/new column) but no data migration strategy (Kiro prod-readiness) → issue #139
+- [~] plan-missing-migration — PLAN-MISSING-MIGRATION: plan mentions schema changes (ALTER TABLE/new column) but no data migration strategy (Kiro prod-readiness) → issue #139 → PR #144
 - [ ] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' before EARS trigger keyword (inverted ordering) — from EARS research
 - [ ] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: 'always'/'never'/'at all times' temporal universals (QVscribe Continuance) — from research
 - [ ] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) — from research
@@ -82,7 +82,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #139 → PR #144 plan-missing-migration — PLAN-MISSING-MIGRATION: plan with schema-change vocab (ALTER TABLE/add column/new table/drop column/rename column/add index/db migration) but no migration-strategy vocab (alembic/flyway/liquibase/migration script/backfill/up.sql/down.sql); _SCHEMA_CHANGE_RE guard (non-fenced lines) + _MIGRATION_STRATEGY_RE silence; fires one finding anchored at first schema-change line; 15 unit tests (7 fire, 8 silent); pytest 763 green; benchmark good=100 bad=55.0 precision=0.972 PASS; awaiting CI.
 
 ## Merged
 
@@ -281,3 +281,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 46 (2026-08-08): Phase 1 no open loop/* PRs. Phase 2 found 4 open loop-candidate issues (#136 SPEC-MAQA-AC-CONDITIONAL, #137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #136 (SPEC-MAQA-AC-CONDITIONAL — conditional language (if/unless/depending/provided that/in the event) and non-normative modals (should/may/might/could) in Gherkin Then clauses make ACs non-binary; MAQA binary-verifiability rule + ISO 29148 §5.2.5(i); formal-Gherkin guard requires Given+When line-leaders; _THEN_CONDITIONAL_RE + _THEN_OPTIONAL_MODAL_RE constants; 18 unit tests (9 fire, 9 silent)); pytest 720 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #141 opened; CI green same run; converted + squash-merged; issue #136 closed.
 - iter 47 (2026-08-09): Phase 1 no open loop/* PRs (0). Phase 2 found 3 open loop-candidate issues (#137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #137 (SPEC-MAQA-MISSING-PRIORITY — spec with ≥3 FR-NNN requirement lines but no priority annotation; MAQA Modifiability + INVEST Negotiable + QVscribe Level-2 Prioritization; _PRIORITY_MARKER_RE matches MoSCoW labels/P1-P3/priority[:=]high-low/High-Low-Medium Priority; guard ≥3 non-fenced FR lines; 14 unit tests (5 fire, 9 silent)); pytest 734 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #142 opened; CI green same run; converted + squash-merged; issue #137 closed.
 - iter 48 (2026-08-10): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #138 (SPEC-MISSING-GLOSSARY — spec with ≥3 FR-/NFR- requirement lines but no Glossary/Definitions/Terms-and-Definitions/Abbreviations heading; ISO/IEC/IEEE 29148:2018 §5.2.1; _GLOSSARY_HEADING_RE + _REQ_ID_RE constants + _spec_missing_glossary() helper wired into _spec_checks(); good fixture + benign-lookalike corpus spec updated with ## Glossary; paraphrased-defects + realworld-mcp-proxy corpus accepted_extras labeled; 14 unit tests (6 fire, 8 silent)); pytest 748 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #143 opened; CI green same run; converted + squash-merged; issue #138 closed.
+- iter 49 (2026-08-11): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#139 PLAN-MISSING-MIGRATION). Phase 4 picked #139 (PLAN-MISSING-MIGRATION — plan with schema-change vocab (ALTER TABLE/add column/new table/drop column/rename column/add index/db migration) but no migration-strategy vocab (alembic/flyway/liquibase/migration script/backfill/up.sql/down.sql); Amazon Kiro production-readiness gate, ISO 25010 Maintainability Modifiability; _SCHEMA_CHANGE_RE guard non-fenced lines only + _MIGRATION_STRATEGY_RE silence; fires one finding anchored at first schema-change line; 15 unit tests (7 fire, 8 silent)); pytest 763 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #144 opened (draft); awaiting CI.
