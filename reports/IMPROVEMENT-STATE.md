@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 49
-Last run: 2026-08-11
-Open loop PRs: 0
+Iteration: 50
+Last run: 2026-08-12
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -46,11 +46,14 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] spec-missing-glossary — SPEC-MISSING-GLOSSARY: spec with ≥3 FR-/NFR- lines but no Glossary/Definitions section (ISO 29148 §5.2.1) → issue #138
 - [x] plan-missing-migration — PLAN-MISSING-MIGRATION: plan mentions schema changes (ALTER TABLE/new column) but no data migration strategy (Kiro prod-readiness) → issue #139 → PR #144 → merged 2026-08-11
 - [ ] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' before EARS trigger keyword (inverted ordering) — from EARS research
-- [ ] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: 'always'/'never'/'at all times' temporal universals (QVscribe Continuance) — from research
 - [ ] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) — from research
-- [ ] spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with requirements but no Problem Statement/Motivation section (Kiro spec template) — from research
 - [ ] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) — from research
-- [ ] spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR with numeric threshold but no measurement unit (Canon Scale/Meter/Must) — from research
+- [~] spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR with numeric threshold but no measurement unit → issue #145 → PR #151
+- [ ] spec-qvscribe-temporal-unbounded — promoted to issue #146
+- [ ] spec-missing-motivation — promoted to issue #147
+- [ ] spec-qvscribe-shall-be-able-to — promoted to issue #148 (research: QVscribe capability optionality defect)
+- [ ] plan-missing-runbook — promoted to issue #149 (research: Kiro production-readiness gate)
+- [ ] plan-async-no-dlq — promoted to issue #150 (research: Kiro DLQ production gate)
 - [x] spec-req-section-prose-only — SPEC-REQ-SECTION-PROSE-ONLY: requirements section with prose but no normative statements (IBM RQA, QVscribe, ISO 29148) → issue #112 → PR #115 → merged 2026-07-27
 - [x] plan-third-party-no-fallback — PLAN-THIRD-PARTY-NO-FALLBACK: plan mentions external service/API but no resilience vocabulary (Kiro, Tessl, ISO 25010) → issue #113 → merged in PR #116
 - [x] plan-missing-health-check — PLAN-MISSING-HEALTH-CHECK: deployment plan with no health-check/liveness/readiness-probe mention (Kiro production-readiness, ISO 25010 Availability) → issue #117 → PR #120 → merged 2026-07-29
@@ -82,7 +85,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #145 → PR #151 spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR line with numeric threshold but no measurement unit; _NFR_UNIT_RE uses (?:(?<=\d)\s*|\b)unit\b to handle digit-glued abbreviations; wired into _spec_checks() + _plan_checks(); 19 unit tests; pytest 782 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-12)
 
 ## Merged
 
@@ -283,3 +286,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 47 (2026-08-09): Phase 1 no open loop/* PRs (0). Phase 2 found 3 open loop-candidate issues (#137 SPEC-MAQA-MISSING-PRIORITY, #138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #137 (SPEC-MAQA-MISSING-PRIORITY — spec with ≥3 FR-NNN requirement lines but no priority annotation; MAQA Modifiability + INVEST Negotiable + QVscribe Level-2 Prioritization; _PRIORITY_MARKER_RE matches MoSCoW labels/P1-P3/priority[:=]high-low/High-Low-Medium Priority; guard ≥3 non-fenced FR lines; 14 unit tests (5 fire, 9 silent)); pytest 734 green; benchmark good=100 bad=56.8 precision=0.971 PASS; PR #142 opened; CI green same run; converted + squash-merged; issue #137 closed.
 - iter 48 (2026-08-10): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#138 SPEC-MISSING-GLOSSARY, #139 PLAN-MISSING-MIGRATION). Phase 4 picked #138 (SPEC-MISSING-GLOSSARY — spec with ≥3 FR-/NFR- requirement lines but no Glossary/Definitions/Terms-and-Definitions/Abbreviations heading; ISO/IEC/IEEE 29148:2018 §5.2.1; _GLOSSARY_HEADING_RE + _REQ_ID_RE constants + _spec_missing_glossary() helper wired into _spec_checks(); good fixture + benign-lookalike corpus spec updated with ## Glossary; paraphrased-defects + realworld-mcp-proxy corpus accepted_extras labeled; 14 unit tests (6 fire, 8 silent)); pytest 748 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #143 opened; CI green same run; converted + squash-merged; issue #138 closed.
 - iter 49 (2026-08-11): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#139 PLAN-MISSING-MIGRATION). Phase 4 picked #139 (PLAN-MISSING-MIGRATION — plan with schema-change vocab (ALTER TABLE/add column/new table/drop column/rename column/add index/db migration) but no migration-strategy vocab (alembic/flyway/liquibase/migration script/backfill/up.sql/down.sql); Amazon Kiro production-readiness gate, ISO 25010 Maintainability Modifiability; _SCHEMA_CHANGE_RE guard non-fenced lines only + _MIGRATION_STRATEGY_RE silence; fires one finding anchored at first schema-change line; 15 unit tests (7 fire, 8 silent)); pytest 763 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #144 opened; CI green same run; converted + squash-merged; issue #139 closed.
+- iter 50 (2026-08-12): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (EARS/QVscribe/Canon → 3 new ideas; Kiro/Tessl/ISO-25010 → 3 new ideas); promoted 3 pool items + 3 research findings to issues (#145 SPEC-NFR-NO-UNIT, #146 SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED, #147 SPEC-MISSING-MOTIVATION, #148 SPEC-QVSCRIBE-SHALL-BE-ABLE-TO, #149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #145 (SPEC-NFR-NO-UNIT — NFR line has numeric threshold but no measurement unit; _NFR_UNIT_RE uses (?:(?<=\d)\s*|\b)unit\b to handle digit-glued abbreviations like '200ms'; Canon Scale/Meter/Must / QVscribe Level-1 / ISO 29148 §5.2.5(i); complements SPEC-NFR-NO-THRESHOLD; 19 unit tests (7 fire, 12 silent)); pytest 782 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #151 opened; awaiting CI.
