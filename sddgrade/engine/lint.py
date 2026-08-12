@@ -778,6 +778,67 @@ def _spec_missing_glossary(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     ]
 
 
+# SPEC-NFR-NO-UNIT: NFR line with a numeric threshold but no measurement unit.
+# Complements SPEC-NFR-NO-THRESHOLD (no number at all) — fires when a number IS
+# present but has no unit, leaving the threshold unverifiable ("200 what?").
+_NFR_UNIT_RE = re.compile(
+    # Abbreviated units that often appear glued to digits (e.g. "200ms", "4GB"):
+    # match either immediately after a digit (optional space) OR at a word boundary.
+    r"(?:(?<=\d)\s*|\b)(?:ms|MB|GB|KB|TB|GiB|MiB|KiB)\b"
+    r"|\bmilliseconds?\b"                              # milliseconds written out
+    r"|\bsecs?\b|\bsecond(?:s)?\b"                    # seconds
+    r"|\bmin(?:ute)?s?\b"                              # minutes
+    r"|\bhours?\b"                                     # hours
+    r"|\bdays?\b"                                      # days
+    r"|\bweeks?\b"                                     # weeks
+    r"|\bpercent(?:age)?\b"                            # percent written out
+    r"|(?<=\d)\s*%"                                    # digit followed by %
+    r"|\bbytes?\b"                                     # bytes
+    r"|\brps\b|\brpm\b|\btps\b|\bqps\b"               # rate abbreviations
+    r"|\bper\s+second\b|\bper\s+minute\b|\bper\s+hour\b"  # "per X" time rates
+    r"|\bvCPU\b|\bcores?\b",                           # compute units
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_no_unit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """NFR line with a numeric threshold but no measurement unit (SPEC-NFR-NO-UNIT).
+
+    Canon's Scale/Meter/Must rule: every numeric NFR threshold must carry a unit.
+    Guard: non-fenced line matches _NFR_RE + _REQUIREMENTish_RE and has a digit
+    after stripping requirement IDs (so the digit is a threshold, not an ID).
+    Check: no recognized unit token on the same line.
+    Distinct from SPEC-NFR-NO-THRESHOLD (no number at all) — this fires when a
+    number exists but lacks a unit (Canon, QVscribe Level-1, ISO 29148 §5.2.5(i)).
+    """
+    p = catalog.get("SPEC-NFR-NO-UNIT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    for i, (line, in_fence) in enumerate(zip(lines, fenced), start=1):
+        if in_fence:
+            continue
+        # Strip requirement IDs so their digits don't count as a threshold.
+        without_ids = re.sub(r"\b(?:FR|NFR|US|T)-?\d+\b", "", line, flags=re.IGNORECASE)
+        if (
+            _NFR_RE.search(line)
+            and _REQUIREMENTish_RE.search(line)
+            and _DIGIT_RE.search(without_ids)
+            and not _NFR_UNIT_RE.search(line)
+        ):
+            return [
+                _from_pitfall(
+                    p, art.path,
+                    "SPEC-NFR-NO-UNIT: non-functional requirement states a numeric threshold "
+                    "with no measurement unit (Canon Scale/Meter/Must; ISO 29148 §5.2.5(i)). "
+                    "Qualify the number — e.g. '200ms', '99.9%', '500 req/s'.",
+                    line=i,
+                )
+            ]
+    return []
+
+
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
     p = catalog.get("PLAN-MISSING-ROLLBACK")
@@ -1632,6 +1693,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_maqa_ac_conditional(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
+    out.extend(_spec_nfr_no_unit(art, catalog))
     return out
 
 
@@ -1677,6 +1739,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_third_party_no_fallback(art, catalog))
     out.extend(_plan_missing_health_check(art, catalog))
     out.extend(_plan_missing_migration(art, catalog))
+    out.extend(_spec_nfr_no_unit(art, catalog))
     return out
 
 
