@@ -660,6 +660,50 @@ def _spec_qvscribe_and_or(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fi
     ]
 
 
+# SPEC-QVSCRIBE-SHALL-BE-ABLE-TO: "shall be able to" dilutes mandatory obligation to a latent capability.
+_SHALL_BE_ABLE_TO_RE = re.compile(r"\bshall\s+be\s+able\s+to\b", re.IGNORECASE)
+
+
+def _spec_qvscribe_shall_be_able_to(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """'shall be able to' capability phrasing dilutes mandatory obligation (SPEC-QVSCRIBE-SHALL-BE-ABLE-TO).
+
+    QVscribe's Level-1 Capability/Optionality defect: 'shall' mandates that an action
+    *occurs*; 'shall be able to' only mandates that the *capability exists* — a system
+    could pass acceptance if the capability is wired up but never exercised. IBM RQA
+    enforceability check and ISO/IEC/IEEE 29148:2018 §5.2.5(i) 'verifiable' both require
+    the requirement to state what the system *does*, not merely what it *can do*.
+    Check is scoped to requirement-bearing lines via _requirement_mask(); fenced blocks
+    are always excluded.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-SHALL-BE-ABLE-TO")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _SHALL_BE_ABLE_TO_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-SHALL-BE-ABLE-TO: {count} requirement line(s) use 'shall be able to', "
+            "diluting a mandatory obligation to a latent capability; "
+            "replace with 'shall <verb>' to state what the system does, not what it can do.",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
 _PRIORITY_MARKER_RE = re.compile(
     r"""(?:
@@ -1694,6 +1738,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
+    out.extend(_spec_qvscribe_shall_be_able_to(art, catalog))
     return out
 
 
