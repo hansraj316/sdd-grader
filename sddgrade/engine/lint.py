@@ -704,6 +704,67 @@ def _spec_qvscribe_shall_be_able_to(art: Artifact, catalog: dict[str, Pitfall]) 
     ]
 
 
+# SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines.
+# QVscribe Continuance defect: 'always'/'never'/'at all times'/'continuously' on a normative
+# line cannot be verified by any finite test suite (ISO 29148 §5.2.5(i) verifiability).
+_TEMPORAL_UNIVERSAL_RE = re.compile(
+    r"""(?:
+        \balways\b
+        | \bnever\b
+        | \bat\s+all\s+times?\b
+        | \bcontinuously\b
+        | \bat\s+every\b
+        | \bat\s+no\s+time\b
+        | \binvariably\b
+        | \bperpetually\b
+        | \bwithout\s+exception\b
+    )""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _spec_qvscribe_temporal_unbounded(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Temporal universal in a requirement line makes it unverifiable (SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED).
+
+    QVscribe's Continuance defect class: words like 'always', 'never', 'at all times',
+    'continuously' appear on requirement-bearing lines and render the requirement
+    unverifiable — no finite test suite can prove a system 'always' behaves correctly.
+    ISO/IEC/IEEE 29148:2018 §5.2.5(i) 'verifiable' requires each requirement to allow
+    a concrete pass/fail decision; temporal universals only permit falsification.
+    The correct form is a measurable threshold (uptime %, RTO, RPO) or a scoped assertion.
+    Check is scoped to requirement-bearing lines via _requirement_mask(); fenced blocks
+    are always excluded.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _TEMPORAL_UNIVERSAL_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: {count} requirement line(s) use a temporal universal "
+            "('always', 'never', 'at all times', 'continuously', etc.) that cannot be verified by a "
+            "finite test suite; replace with a measurable threshold (e.g. '99.9% uptime per month', "
+            "'within 5 seconds', 'zero data loss on graceful shutdown').",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
 _PRIORITY_MARKER_RE = re.compile(
     r"""(?:
@@ -1739,6 +1800,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_qvscribe_shall_be_able_to(art, catalog))
+    out.extend(_spec_qvscribe_temporal_unbounded(art, catalog))
     return out
 
 

@@ -815,3 +815,14 @@ method = "lint"
 why = "QVscribe's Level-1 Capability/Optionality defect: 'shall' mandates that an action *occurs*; 'shall be able to' only mandates that the *capability exists* — a system could pass acceptance if the capability is wired up but never exercised. IBM RQA's enforceability check and ISO/IEC/IEEE 29148:2018 §5.2.5(i) 'verifiable' both require the requirement to state what the system *does*, not merely what it *can do*. The existing SPEC-FUTURE-TENSE-REQ and SPEC-PASSIVE-VOICE checks do not match this construct; test_passive_voice.py explicitly verifies that 'shall be able to' does NOT trigger SPEC-PASSIVE-VOICE, confirming this is an undetected gap."
 detect = "Scan non-fenced requirement-bearing lines (matching _REQUIREMENTish_RE: shall/must/FR-/NFR-) for the pattern \\bshall\\s+be\\s+able\\s+to\\b (case-insensitive). Fire one aggregate finding anchored at the first offending line."
 fix = "Replace 'shall be able to <verb>' with 'shall <verb>' to state the mandatory behaviour directly. Instead of 'The system shall be able to handle 10,000 concurrent requests', write 'The system shall handle 10,000 concurrent requests under peak load'. If the capability is genuinely optional, use SHOULD instead of SHALL."
+
+[[pitfall]]
+id = "SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED"
+name = "Temporal universal ('always'/'never') in requirement lines"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "QVscribe's Continuance defect class: temporal universals (always, never, at all times, continuously) make requirements unverifiable — no finite test suite can prove a system 'always' behaves correctly or 'never' fails. ISO/IEC/IEEE 29148:2018 §5.2.5(i) requires requirements to be verifiable; a requirement that can only be falsified, never proven, does not satisfy the standard. These should instead be expressed as a measurable threshold (uptime %, RTO, RPO) or a constrained assertion (e.g. 'on graceful shutdown, no committed transaction is lost')."
+detect = "Scan non-fenced requirement-bearing lines (matching _requirement_mask(): shall/must/FR-/NFR- lines in a Requirements/Acceptance/Scenario section, or any line that looks like a requirement) for temporal universal words: always, never, at all times, continuously, at every, at no time, invariably, perpetually, without exception. Fire one aggregate finding anchored at the first offending line."
+fix = "Replace the temporal universal with a measurable threshold. Instead of 'The system shall always be available', write 'The system shall achieve 99.9% uptime per calendar month'. Instead of 'The system must never lose data', write 'The system shall retain all committed transactions durably (zero data loss on graceful shutdown)'. Instead of 'The system shall continuously synchronize state', write 'The system shall synchronize state within 5 seconds of any change'."
