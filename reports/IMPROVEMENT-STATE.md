@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 52
 Last run: 2026-08-14
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -49,7 +49,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) — from research
 - [ ] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) — from research
 - [x] spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR with numeric threshold but no measurement unit → issue #145 → PR #151 → merged 2026-08-12
-- [~] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines → issue #146 → PR #153
+- [x] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines → issue #146 → PR #153 → merged 2026-08-14
 - [ ] spec-missing-motivation — promoted to issue #147
 - [x] spec-qvscribe-shall-be-able-to — SPEC-QVSCRIBE-SHALL-BE-ABLE-TO → issue #148 → PR #152 → merged 2026-08-13
 - [ ] plan-missing-runbook — promoted to issue #149 (research: Kiro production-readiness gate)
@@ -85,10 +85,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #146 → PR #153 spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universal ('always'/'never'/'at all times'/'continuously') on requirement-bearing lines cannot be verified by a finite test suite; _TEMPORAL_UNIVERSAL_RE (9 patterns) + _spec_qvscribe_temporal_unbounded() scoped via _requirement_mask() + _fence_mask(); 20 unit tests (9 fire, 11 silent); pytest 818 green; benchmark good=100 bad=55.0 precision=0.972 PASS
+(none)
 
 ## Merged
 
+- #146 → PR #153 spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universal ('always'/'never'/'at all times'/'continuously'/'at every'/'at no time'/'invariably'/'perpetually'/'without exception') on requirement-bearing lines; _TEMPORAL_UNIVERSAL_RE VERBOSE 9-pattern regex; scoped via _requirement_mask() + _fence_mask(); one aggregate finding anchored at first offending line; 20 unit tests (9 fire, 11 silent); pytest 818 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-14, CI was green; squash-merged same run).
 - #148 → PR #152 spec-qvscribe-shall-be-able-to — SPEC-QVSCRIBE-SHALL-BE-ABLE-TO: 'shall be able to' capability phrasing dilutes mandatory obligation to latent capability; _SHALL_BE_ABLE_TO_RE + _requirement_mask() scoping; fenced-block exclusion; one aggregate finding at first offending line; 16 unit tests (7 fire, 9 silent); pytest 798 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-13, CI was green; squash-merged same run).
 - #145 → PR #151 spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR line with numeric threshold but no measurement unit; _NFR_UNIT_RE uses (?:(?<=\d)\s*|\b)unit\b to handle digit-glued abbreviations (200ms vs terms); wired into _spec_checks() + _plan_checks(); 19 unit tests (7 fire, 12 silent); pytest 782 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-12, CI was green; squash-merged same run).
 - #139 → PR #144 plan-missing-migration — PLAN-MISSING-MIGRATION: plan with schema-change vocab (ALTER TABLE/add column/new table/drop column/rename column/add index/db migration) but no migration-strategy vocab (alembic/flyway/liquibase/migration script/backfill/up.sql/down.sql); _SCHEMA_CHANGE_RE guard non-fenced lines + _MIGRATION_STRATEGY_RE silence; fires one finding anchored at first schema-change line; 15 unit tests (7 fire, 8 silent); pytest 763 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-11, CI was green; squash-merged same run).
