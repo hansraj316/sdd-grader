@@ -1,5 +1,12 @@
 # Feature Specification: Catalog Bulk Import
 
+## Problem Statement
+
+Operations teams currently add new products one at a time through a manual entry form.
+When a supplier sends a catalog update with thousands of SKUs, the manual flow is
+impractical — taking days and introducing data-entry errors. A bulk import capability
+lets operations upload a file and have the catalog updated automatically and reliably.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Import a catalog file (Priority: P1)
