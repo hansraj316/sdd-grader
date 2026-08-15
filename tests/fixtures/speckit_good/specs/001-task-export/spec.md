@@ -1,5 +1,11 @@
 # Feature Specification: Task Export
 
+## Problem Statement
+
+Project members need to share task progress with stakeholders who do not use the app.
+Without an export capability, teams resort to manual copy-paste, which is error-prone
+and breaks reporting workflows that rely on spreadsheet data.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Export tasks to CSV (Priority: P1)

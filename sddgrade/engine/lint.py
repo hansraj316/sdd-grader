@@ -883,6 +883,53 @@ def _spec_missing_glossary(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     ]
 
 
+# SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- lines but no Problem Statement /
+# Motivation / Background heading.  Kiro spec template + Tessl spec-first + ISO 29148 §5.2.4.
+_MOTIVATION_HEADING_RE = re.compile(
+    r"(?:problem\s+statement|motivation|background|rationale|context|purpose"
+    r"|^why$|^problem$)",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_motivation(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 FR-/NFR- lines but no Problem Statement / Motivation heading.
+
+    Amazon Kiro mandates a "Problem" section before requirements; Tessl requires the
+    spec to explain the *why* before the *what*; ISO/IEC/IEEE 29148:2018 §5.2.4
+    mandates a scope/purpose clause.  Guard: ≥3 non-fenced lines with FR-/NFR-
+    identifiers.  Check: no section heading matches the motivation-keyword set.
+    Distinct from SPEC-MISSING-OUT-OF-SCOPE (non-goals) and SPEC-MISSING-GLOSSARY.
+    """
+    p = catalog.get("SPEC-MISSING-MOTIVATION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Guard: ≥3 non-fenced lines with FR- or NFR- identifiers.
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    # Check: any section heading that matches the motivation/problem pattern → silent.
+    for s in art.sections:
+        if _MOTIVATION_HEADING_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-MOTIVATION: spec has 3+ FR-/NFR- requirements but no "
+            "Problem Statement, Motivation, or Background section; add a section "
+            "explaining the user need so implementers understand the intent behind "
+            "the requirements (Kiro spec template / ISO/IEC/IEEE 29148:2018 §5.2.4).",
+            line=1,
+        )
+    ]
+
+
 # SPEC-NFR-NO-UNIT: NFR line with a numeric threshold but no measurement unit.
 # Complements SPEC-NFR-NO-THRESHOLD (no number at all) — fires when a number IS
 # present but has no unit, leaving the threshold unverifiable ("200 what?").
@@ -1801,6 +1848,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_qvscribe_shall_be_able_to(art, catalog))
     out.extend(_spec_qvscribe_temporal_unbounded(art, catalog))
+    out.extend(_spec_missing_motivation(art, catalog))
     return out
 
 
