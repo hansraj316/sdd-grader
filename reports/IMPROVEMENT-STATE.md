@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 53
 Last run: 2026-08-15
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -65,7 +65,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE: spec with substantial reqs but no out-of-scope/non-goal heading (Kiro, Tessl, ISO 29148) → issue #125 → PR #127 → merged 2026-08-02
 - [x] spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: Gherkin Then clause with vague outcome words (correctly/properly/as expected) with no observable condition (MAQA binary-verifiable AC rule) → issue #130 → PR #132 → merged 2026-08-05
 - [x] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-NNN section and no [US#] tag (Canon/29148 traceability) → issue #129 → PR #133 → merged 2026-08-06
-- [~] spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- lines but no Problem Statement / Motivation / Background heading → issue #147 → PR #154
+- [x] spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- lines but no Problem Statement / Motivation / Background heading → issue #147 → PR #154 → merged 2026-08-15
 - [~] spec-maqa-ac-conditional — SPEC-MAQA-AC-CONDITIONAL: conditional language (if/unless/depending/may/should/might/could) in Gherkin Then clause makes AC non-binary (MAQA binary-verifiability) → issue #136 → PR #141
 - [x] spec-maqa-missing-priority — SPEC-MAQA-MISSING-PRIORITY: spec with 3+ FR reqs but no priority annotation (MoSCoW/P1-P3/High-Low) → issue #137 → PR #142 → merged 2026-08-09
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
@@ -86,10 +86,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #147 → PR #154 spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- lines but no Problem Statement / Motivation / Background / Rationale / Context / Purpose heading; _MOTIVATION_HEADING_RE; guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding anchored at line 1; 16 unit tests (6 fire, 10 silent); good fixture + benign-lookalike spec updated with Problem Statement; paraphrased-defects + realworld-mcp-proxy accepted_extras updated; pytest 834 green; benchmark good=100 bad=53.8 precision=0.974 PASS
+(none)
 
 ## Merged
 
+- #147 → PR #154 spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- requirement lines but no Problem Statement / Motivation / Background / Rationale / Context / Purpose section heading; _MOTIVATION_HEADING_RE; _REQ_ID_RE guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding at line 1; good fixture + benign-lookalike updated with Problem Statement; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; realworld-mcp-proxy floor 50→40; 16 unit tests (6 fire, 10 silent); pytest 834 green; benchmark good=100 bad=53.8 precision=0.974 PASS (2026-08-15, CI was green; squash-merged same run).
 - #146 → PR #153 spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universal ('always'/'never'/'at all times'/'continuously'/'at every'/'at no time'/'invariably'/'perpetually'/'without exception') on requirement-bearing lines; _TEMPORAL_UNIVERSAL_RE VERBOSE 9-pattern regex; scoped via _requirement_mask() + _fence_mask(); one aggregate finding anchored at first offending line; 20 unit tests (9 fire, 11 silent); pytest 818 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-14, CI was green; squash-merged same run).
 - #148 → PR #152 spec-qvscribe-shall-be-able-to — SPEC-QVSCRIBE-SHALL-BE-ABLE-TO: 'shall be able to' capability phrasing dilutes mandatory obligation to latent capability; _SHALL_BE_ABLE_TO_RE + _requirement_mask() scoping; fenced-block exclusion; one aggregate finding at first offending line; 16 unit tests (7 fire, 9 silent); pytest 798 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-13, CI was green; squash-merged same run).
 - #145 → PR #151 spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR line with numeric threshold but no measurement unit; _NFR_UNIT_RE uses (?:(?<=\d)\s*|\b)unit\b to handle digit-glued abbreviations (200ms vs terms); wired into _spec_checks() + _plan_checks(); 19 unit tests (7 fire, 12 silent); pytest 782 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-12, CI was green; squash-merged same run).
