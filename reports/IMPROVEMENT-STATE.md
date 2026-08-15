@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 52
-Last run: 2026-08-14
-Open loop PRs: 0
+Iteration: 53
+Last run: 2026-08-15
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -65,6 +65,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-missing-out-of-scope — SPEC-MISSING-OUT-OF-SCOPE: spec with substantial reqs but no out-of-scope/non-goal heading (Kiro, Tessl, ISO 29148) → issue #125 → PR #127 → merged 2026-08-02
 - [x] spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: Gherkin Then clause with vague outcome words (correctly/properly/as expected) with no observable condition (MAQA binary-verifiable AC rule) → issue #130 → PR #132 → merged 2026-08-05
 - [x] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-NNN section and no [US#] tag (Canon/29148 traceability) → issue #129 → PR #133 → merged 2026-08-06
+- [~] spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- lines but no Problem Statement / Motivation / Background heading → issue #147 → PR #154
 - [~] spec-maqa-ac-conditional — SPEC-MAQA-AC-CONDITIONAL: conditional language (if/unless/depending/may/should/might/could) in Gherkin Then clause makes AC non-binary (MAQA binary-verifiability) → issue #136 → PR #141
 - [x] spec-maqa-missing-priority — SPEC-MAQA-MISSING-PRIORITY: spec with 3+ FR reqs but no priority annotation (MoSCoW/P1-P3/High-Low) → issue #137 → PR #142 → merged 2026-08-09
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
@@ -85,7 +86,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #147 → PR #154 spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- lines but no Problem Statement / Motivation / Background / Rationale / Context / Purpose heading; _MOTIVATION_HEADING_RE; guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding anchored at line 1; 16 unit tests (6 fire, 10 silent); good fixture + benign-lookalike spec updated with Problem Statement; paraphrased-defects + realworld-mcp-proxy accepted_extras updated; pytest 834 green; benchmark good=100 bad=53.8 precision=0.974 PASS
 
 ## Merged
 
@@ -291,5 +292,6 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 50 (2026-08-12): CI green same run; PR #151 squash-merged; issue #145 closed.
 - iter 51 (2026-08-13): Phase 1 no open loop/* PRs (0). Phase 2 found 5 open loop-candidate issues (#146-#150). Phase 4 picked #148 (SPEC-QVSCRIBE-SHALL-BE-ABLE-TO — 'shall be able to' dilutes mandatory obligation to latent capability; QVscribe Level-1 Capability/Optionality defect, IBM RQA enforceability, ISO 29148 §5.2.5(i) verifiable; _SHALL_BE_ABLE_TO_RE = \\bshall\\s+be\\s+able\\s+to\\b; scoped via _requirement_mask() + fenced-block exclusion; fires one aggregate finding at first offending line; 16 unit tests (7 fire, 9 silent)); pytest 798 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #152 opened; CI green same run; converted + squash-merged; issue #148 closed.
 - iter 52 (2026-08-14): Phase 1 no open loop/* PRs (0). Phase 2 found 4 open loop-candidate issues (#146, #147, #149, #150). Phase 4 picked #146 (SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED — temporal universal words 'always'/'never'/'at all times'/'continuously'/'at every'/'at no time'/'invariably'/'perpetually'/'without exception' on normative requirement lines; QVscribe Continuance defect, ISO 29148 §5.2.5(i) verifiability; _TEMPORAL_UNIVERSAL_RE VERBOSE regex 9 patterns; scoped via _requirement_mask() + _fence_mask(); fires one aggregate finding anchored at first offending line; 20 unit tests (9 fire, 11 silent)); pytest 818 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #153 opened (draft); awaiting CI.
+- iter 53 (2026-08-15): Phase 1 no open loop/* PRs (0). Phase 2 found 3 open loop-candidate issues (#147 SPEC-MISSING-MOTIVATION, #149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #147 (SPEC-MISSING-MOTIVATION — spec with ≥3 FR-/NFR- requirement lines but no Problem Statement / Motivation / Background / Rationale / Context / Purpose section heading; Amazon Kiro spec template, Tessl spec-first, ISO/IEC/IEEE 29148:2018 §5.2.4, INVEST Valuable; _MOTIVATION_HEADING_RE; guard via _REQ_ID_RE count ≥3 non-fenced lines; one aggregate finding at line 1; good fixture + benign-lookalike updated with Problem Statement section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; realworld-mcp-proxy floor 50→40 (score 64→46); 16 unit tests (6 fire, 10 silent)); pytest 834 green; benchmark good=100 bad=53.8 precision=0.974 PASS; PR #154 opened (draft); issue #147 commented.
 - iter 49 (2026-08-11): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#139 PLAN-MISSING-MIGRATION). Phase 4 picked #139 (PLAN-MISSING-MIGRATION — plan with schema-change vocab (ALTER TABLE/add column/new table/drop column/rename column/add index/db migration) but no migration-strategy vocab (alembic/flyway/liquibase/migration script/backfill/up.sql/down.sql); Amazon Kiro production-readiness gate, ISO 25010 Maintainability Modifiability; _SCHEMA_CHANGE_RE guard non-fenced lines only + _MIGRATION_STRATEGY_RE silence; fires one finding anchored at first schema-change line; 15 unit tests (7 fire, 8 silent)); pytest 763 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #144 opened; CI green same run; converted + squash-merged; issue #139 closed.
 - iter 50 (2026-08-12): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (EARS/QVscribe/Canon → 3 new ideas; Kiro/Tessl/ISO-25010 → 3 new ideas); promoted 3 pool items + 3 research findings to issues (#145 SPEC-NFR-NO-UNIT, #146 SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED, #147 SPEC-MISSING-MOTIVATION, #148 SPEC-QVSCRIBE-SHALL-BE-ABLE-TO, #149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #145 (SPEC-NFR-NO-UNIT — NFR line has numeric threshold but no measurement unit; _NFR_UNIT_RE uses (?:(?<=\d)\s*|\b)unit\b to handle digit-glued abbreviations like '200ms'; Canon Scale/Meter/Must / QVscribe Level-1 / ISO 29148 §5.2.5(i); complements SPEC-NFR-NO-THRESHOLD; 19 unit tests (7 fire, 12 silent)); pytest 782 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #151 opened; awaiting CI.
