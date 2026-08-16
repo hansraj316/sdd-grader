@@ -1242,6 +1242,40 @@ def _plan_missing_migration(art: Artifact, catalog: dict[str, Pitfall]) -> list[
     )]
 
 
+# Runbook / incident-response vocabulary (PLAN-MISSING-RUNBOOK).
+_RUNBOOK_RE = re.compile(
+    r"\brunbook\b"
+    r"|\bplaybook\b"
+    r"|\bincident[- ]response\b"
+    r"|\bon[- ]?call\b"
+    r"|\boncall\b"
+    r"|\bescalation\s+(?:proc\w*|path|guide)\b"
+    r"|\bops\s+(?:guide|procedure)\b"
+    r"|\boperational\s+(?:guide|procedure|playbook)\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_runbook(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plans with no runbook or incident-response reference (PLAN-MISSING-RUNBOOK)."""
+    p = catalog.get("PLAN-MISSING-RUNBOOK")
+    if p is None or not p.applies_to(art.type):
+        return []
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    if _RUNBOOK_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan mentions deploying/releasing to production but has no runbook or incident-response reference.",
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -1894,6 +1928,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_third_party_no_fallback(art, catalog))
     out.extend(_plan_missing_health_check(art, catalog))
     out.extend(_plan_missing_migration(art, catalog))
+    out.extend(_plan_missing_runbook(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     return out
 
