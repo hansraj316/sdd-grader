@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 53
-Last run: 2026-08-15
-Open loop PRs: 0
+Iteration: 54
+Last run: 2026-08-16
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -52,7 +52,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines → issue #146 → PR #153 → merged 2026-08-14
 - [ ] spec-missing-motivation — promoted to issue #147
 - [x] spec-qvscribe-shall-be-able-to — SPEC-QVSCRIBE-SHALL-BE-ABLE-TO → issue #148 → PR #152 → merged 2026-08-13
-- [ ] plan-missing-runbook — promoted to issue #149 (research: Kiro production-readiness gate)
+- [~] plan-missing-runbook — promoted to issue #149 (research: Kiro production-readiness gate) → PR #155
 - [ ] plan-async-no-dlq — promoted to issue #150 (research: Kiro DLQ production gate)
 - [x] spec-req-section-prose-only — SPEC-REQ-SECTION-PROSE-ONLY: requirements section with prose but no normative statements (IBM RQA, QVscribe, ISO 29148) → issue #112 → PR #115 → merged 2026-07-27
 - [x] plan-third-party-no-fallback — PLAN-THIRD-PARTY-NO-FALLBACK: plan mentions external service/API but no resilience vocabulary (Kiro, Tessl, ISO 25010) → issue #113 → merged in PR #116
@@ -86,7 +86,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] plan-missing-runbook — PLAN-MISSING-RUNBOOK: deployment plan with deploy/release/production/staging vocab but no runbook/playbook/on-call/incident-response/escalation reference (Kiro production-readiness) → issue #149 → PR #155
 
 ## Merged
 
@@ -296,3 +296,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 53 (2026-08-15): Phase 1 no open loop/* PRs (0). Phase 2 found 3 open loop-candidate issues (#147 SPEC-MISSING-MOTIVATION, #149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #147 (SPEC-MISSING-MOTIVATION — spec with ≥3 FR-/NFR- requirement lines but no Problem Statement / Motivation / Background / Rationale / Context / Purpose section heading; Amazon Kiro spec template, Tessl spec-first, ISO/IEC/IEEE 29148:2018 §5.2.4, INVEST Valuable; _MOTIVATION_HEADING_RE; guard via _REQ_ID_RE count ≥3 non-fenced lines; one aggregate finding at line 1; good fixture + benign-lookalike updated with Problem Statement section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; realworld-mcp-proxy floor 50→40 (score 64→46); 16 unit tests (6 fire, 10 silent)); pytest 834 green; benchmark good=100 bad=53.8 precision=0.974 PASS; PR #154 opened (draft); issue #147 commented.
 - iter 49 (2026-08-11): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#139 PLAN-MISSING-MIGRATION). Phase 4 picked #139 (PLAN-MISSING-MIGRATION — plan with schema-change vocab (ALTER TABLE/add column/new table/drop column/rename column/add index/db migration) but no migration-strategy vocab (alembic/flyway/liquibase/migration script/backfill/up.sql/down.sql); Amazon Kiro production-readiness gate, ISO 25010 Maintainability Modifiability; _SCHEMA_CHANGE_RE guard non-fenced lines only + _MIGRATION_STRATEGY_RE silence; fires one finding anchored at first schema-change line; 15 unit tests (7 fire, 8 silent)); pytest 763 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #144 opened; CI green same run; converted + squash-merged; issue #139 closed.
 - iter 50 (2026-08-12): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (EARS/QVscribe/Canon → 3 new ideas; Kiro/Tessl/ISO-25010 → 3 new ideas); promoted 3 pool items + 3 research findings to issues (#145 SPEC-NFR-NO-UNIT, #146 SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED, #147 SPEC-MISSING-MOTIVATION, #148 SPEC-QVSCRIBE-SHALL-BE-ABLE-TO, #149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #145 (SPEC-NFR-NO-UNIT — NFR line has numeric threshold but no measurement unit; _NFR_UNIT_RE uses (?:(?<=\d)\s*|\b)unit\b to handle digit-glued abbreviations like '200ms'; Canon Scale/Meter/Must / QVscribe Level-1 / ISO 29148 §5.2.5(i); complements SPEC-NFR-NO-THRESHOLD; 19 unit tests (7 fire, 12 silent)); pytest 782 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #151 opened; awaiting CI.
+- iter 54 (2026-08-16): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #149 (PLAN-MISSING-RUNBOOK — deployment plan with deploy/release/production/staging vocab but no runbook/playbook/on-call/incident-response/escalation reference; Amazon Kiro production-readiness gate; _RUNBOOK_RE constant + _plan_missing_runbook() helper; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 15 unit tests (6 fire, 9 silent)); pytest 849 green; benchmark good=100 bad=53.8 precision=0.974 PASS; PR #155 opened (draft); issue #149 commented.
