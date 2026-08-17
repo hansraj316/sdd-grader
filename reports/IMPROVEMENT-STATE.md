@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 55
 Last run: 2026-08-17
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -86,10 +86,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- [~] plan-async-no-dlq — PLAN-ASYNC-NO-DLQ: async messaging plan with no dead-letter queue strategy → issue #150 → PR #156 (awaiting CI)
+(none)
 
 ## Merged
 
+- #150 → PR #156 plan-async-no-dlq — PLAN-ASYNC-NO-DLQ: plan describes async messaging (queue/consumer/kafka/sqs/sns/rabbitmq/pub-sub/event-bus/celery/worker-queue/async task|job) but no DLQ vocabulary; _ASYNC_MESSAGING_RE bare-form guard avoids negation false positives; _DLQ_RE silences on DLQ/dead-letter/poison-message/nack; 17 unit tests (6 fire, 11 silent); pytest 866 green; benchmark good=100 bad=50.8 precision=0.974 PASS (2026-08-17, CI was green; squash-merged same run).
 - #149 → PR #155 plan-missing-runbook — PLAN-MISSING-RUNBOOK: deployment plan with deploy/release/production/staging vocab but no runbook/playbook/on-call/incident-response/escalation reference; _RUNBOOK_RE; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 15 unit tests (6 fire, 9 silent); pytest 849 green; benchmark good=100 bad=53.8 precision=0.974 PASS (2026-08-16, CI was green; squash-merged same run).
 - #147 → PR #154 spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- requirement lines but no Problem Statement / Motivation / Background / Rationale / Context / Purpose section heading; _MOTIVATION_HEADING_RE; _REQ_ID_RE guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding at line 1; good fixture + benign-lookalike updated with Problem Statement; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; realworld-mcp-proxy floor 50→40; 16 unit tests (6 fire, 10 silent); pytest 834 green; benchmark good=100 bad=53.8 precision=0.974 PASS (2026-08-15, CI was green; squash-merged same run).
 - #146 → PR #153 spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universal ('always'/'never'/'at all times'/'continuously'/'at every'/'at no time'/'invariably'/'perpetually'/'without exception') on requirement-bearing lines; _TEMPORAL_UNIVERSAL_RE VERBOSE 9-pattern regex; scoped via _requirement_mask() + _fence_mask(); one aggregate finding anchored at first offending line; 20 unit tests (9 fire, 11 silent); pytest 818 green; benchmark good=100 bad=55.0 precision=0.972 PASS (2026-08-14, CI was green; squash-merged same run).
