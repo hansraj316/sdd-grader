@@ -848,3 +848,14 @@ method = "lint"
 why = "Amazon Kiro's production-readiness gate separates three distinct operational artifacts: rollback procedure (covered by PLAN-MISSING-ROLLBACK), observability dashboards (covered by PLAN-MISSING-OBSERVABILITY), and the runbook — what operators *do* when dashboards alert. Without a runbook or incident-response reference, the team has no documented escalation path when alerts fire. Kiro's checklist explicitly asks 'Is there a runbook for common failure modes?' as a production-readiness gate, distinct from the rollback or observability checks."
 detect = "Guard: same deploy-vocabulary guard as PLAN-MISSING-ROLLBACK (any deploy/release/production/staging/ship word, or a Deployment/Release section heading). Check (silence): any non-fenced line contains runbook, playbook, incident response, on-call, oncall, escalation procedure, ops guide, operational guide, or operational procedure. Fire once at file level when guard fires and no runbook vocabulary is found."
 fix = "Add a runbook or incident-response reference to your deployment plan. For example: '## Incident Response\nSee the on-call runbook at docs/runbooks/task-export-service.md. Escalation path: on-call engineer → team lead → SRE.' This ensures the team knows what to do when observability dashboards alert."
+
+[[pitfall]]
+id = "PLAN-ASYNC-NO-DLQ"
+name = "Async messaging plan with no dead-letter queue strategy"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "high"
+method = "lint"
+why = "Amazon Kiro's production-readiness gate asks: 'What happens to a message that cannot be processed?' Without a dead-letter queue (DLQ), unprocessable messages are silently dropped or trigger an infinite retry loop — both are production incidents invisible during functional testing. ISO/IEC 25010 Fault Tolerance §4.2.1.4 requires the system to state how partial failures in async processing are contained. This is distinct from PLAN-THIRD-PARTY-NO-FALLBACK (outbound HTTP resilience) — this covers async message-processing failures."
+detect = "Guard: any non-fenced line matches async-messaging vocabulary (queue/consumer/producer/kafka/sqs/sns/rabbitmq/pub-sub/event bus/message broker/celery/worker queue/async task-job-message-process). Silence: any line matches DLQ vocabulary (DLQ, dead-letter, poison-message, poison-pill, unprocessable, message-requeue, nack, break-queue). Fire once at file level when guard fires and no DLQ vocabulary is found."
+fix = "Add an error-handling section that names the dead-letter queue and the retry policy. For example: '## Error Handling\nFailed messages are routed to a dead-letter queue (SQS: task-export-dlq) after 3 retry attempts. The on-call runbook describes manual inspection and requeue steps.' Every async consumer should specify: (1) max retry count, (2) DLQ destination, (3) monitoring/alerting on DLQ depth, and (4) the requeue/discard policy for inspected messages."

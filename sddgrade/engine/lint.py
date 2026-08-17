@@ -1276,6 +1276,65 @@ def _plan_missing_runbook(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fi
     )]
 
 
+# Async messaging vocabulary: signs a plan describes asynchronous processing (PLAN-ASYNC-NO-DLQ guard).
+# Uses the bare form of each word (no plural/inflected variants) to avoid matching negation
+# contexts such as "async/queueing is unjustified" in plans that explicitly opt out of messaging.
+_ASYNC_MESSAGING_RE = re.compile(
+    r"\bqueue\b"
+    r"|\bconsumer\b"
+    r"|\bproducer\b"
+    r"|\bkafka\b"
+    r"|\bsqs\b"
+    r"|\bsns\b"
+    r"|\brabbitmq\b"
+    r"|\bpub[/\s-]?sub\b"
+    r"|\bevent[- ]?bus\b"
+    r"|\bmessage[- ]?broker\b"
+    r"|\bcelery\b"
+    r"|\bworker[- ]?queue\b"
+    r"|\basync(?:hronous)?\s+(?:task|job|message|process)s?\b",
+    re.IGNORECASE,
+)
+
+# DLQ / poison-message vocabulary: silence the check when any of these are present (PLAN-ASYNC-NO-DLQ).
+_DLQ_RE = re.compile(
+    r"\bDLQ\b"
+    r"|\bdead[- ]letter\b"
+    r"|\bpoison[- ](?:message|pill)\b"
+    r"|\bunprocessable\b"
+    r"|\bmessage[- ]requeue\b"
+    r"|\bnack\b"
+    r"|\bbreak[- ]queue\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_async_no_dlq(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Plans that describe async messaging but have no dead-letter queue strategy (PLAN-ASYNC-NO-DLQ)."""
+    p = catalog.get("PLAN-ASYNC-NO-DLQ")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Guard: any non-fenced line mentions async messaging.
+    async_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _ASYNC_MESSAGING_RE.search(line):
+            async_hit = i + 1
+            break
+    if async_hit is None:
+        return []
+    # Silence: any line (fenced or not) mentions DLQ / poison-message handling.
+    if _DLQ_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Plan describes async messaging but has no dead-letter queue or poison-message handling strategy.",
+        line=async_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -1929,6 +1988,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_health_check(art, catalog))
     out.extend(_plan_missing_migration(art, catalog))
     out.extend(_plan_missing_runbook(art, catalog))
+    out.extend(_plan_async_no_dlq(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     return out
 
