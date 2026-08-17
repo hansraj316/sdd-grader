@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 54
-Last run: 2026-08-16
-Open loop PRs: 0
+Iteration: 55
+Last run: 2026-08-17
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -86,7 +86,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] plan-async-no-dlq — PLAN-ASYNC-NO-DLQ: async messaging plan with no dead-letter queue strategy → issue #150 → PR #156 (awaiting CI)
 
 ## Merged
 
@@ -298,3 +298,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 49 (2026-08-11): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#139 PLAN-MISSING-MIGRATION). Phase 4 picked #139 (PLAN-MISSING-MIGRATION — plan with schema-change vocab (ALTER TABLE/add column/new table/drop column/rename column/add index/db migration) but no migration-strategy vocab (alembic/flyway/liquibase/migration script/backfill/up.sql/down.sql); Amazon Kiro production-readiness gate, ISO 25010 Maintainability Modifiability; _SCHEMA_CHANGE_RE guard non-fenced lines only + _MIGRATION_STRATEGY_RE silence; fires one finding anchored at first schema-change line; 15 unit tests (7 fire, 8 silent)); pytest 763 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #144 opened; CI green same run; converted + squash-merged; issue #139 closed.
 - iter 50 (2026-08-12): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (EARS/QVscribe/Canon → 3 new ideas; Kiro/Tessl/ISO-25010 → 3 new ideas); promoted 3 pool items + 3 research findings to issues (#145 SPEC-NFR-NO-UNIT, #146 SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED, #147 SPEC-MISSING-MOTIVATION, #148 SPEC-QVSCRIBE-SHALL-BE-ABLE-TO, #149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #145 (SPEC-NFR-NO-UNIT — NFR line has numeric threshold but no measurement unit; _NFR_UNIT_RE uses (?:(?<=\d)\s*|\b)unit\b to handle digit-glued abbreviations like '200ms'; Canon Scale/Meter/Must / QVscribe Level-1 / ISO 29148 §5.2.5(i); complements SPEC-NFR-NO-THRESHOLD; 19 unit tests (7 fire, 12 silent)); pytest 782 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #151 opened; awaiting CI.
 - iter 54 (2026-08-16): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #149 (PLAN-MISSING-RUNBOOK — deployment plan with deploy/release/production/staging vocab but no runbook/playbook/on-call/incident-response/escalation reference; Amazon Kiro production-readiness gate; _RUNBOOK_RE constant + _plan_missing_runbook() helper; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 15 unit tests (6 fire, 9 silent)); pytest 849 green; benchmark good=100 bad=53.8 precision=0.974 PASS; PR #155 opened (draft); issue #149 commented.
+- iter 55 (2026-08-17): Phase 1 no open loop/* PRs (0); PR #155 merged (plan-missing-runbook, issue #149 closed — recorded in Merged). Phase 2 found 1 open loop-candidate issue (#150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #150 (PLAN-ASYNC-NO-DLQ — plan with async messaging vocab (queue/consumer/producer/kafka/sqs/sns/rabbitmq/pub-sub/event-bus/message-broker/celery/worker-queue/async task|job|message|process) but no DLQ vocabulary; _ASYNC_MESSAGING_RE uses bare forms to avoid false positives on negation contexts like 'async/queueing is unjustified'; _DLQ_RE silences on DLQ/dead-letter/poison-message/nack etc.; fires one finding anchored at first async line; 17 unit tests (6 fire, 11 silent)); pytest 866 green; benchmark good=100 bad=50.8 precision=0.974 PASS; PR #156 opened (draft); issue #150 commented.

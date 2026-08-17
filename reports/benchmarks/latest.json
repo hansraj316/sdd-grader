@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T07:26:09.967580+00:00",
+  "timestamp": "2026-08-17T07:34:36.151669+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -40,7 +40,7 @@
   },
   "bad": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_bad",
-    "overall": 53.8,
+    "overall": 50.8,
     "artifacts": [
       {
         "type": "spec",
@@ -49,8 +49,8 @@
       },
       {
         "type": "plan",
-        "overall": 70.0,
-        "findings": 3
+        "overall": 58.0,
+        "findings": 4
       },
       {
         "type": "tasks",
@@ -66,6 +66,7 @@
     "pitfalls": [
       "CONST-PLACEHOLDER",
       "CONST-UNVERSIONED",
+      "PLAN-ASYNC-NO-DLQ",
       "PLAN-CONSTITUTION-UNCHECKED",
       "REQ-COMPOUND",
       "REQ-WEAK-DIRECTIVE",
@@ -85,7 +86,7 @@
       "TASKS-MALFORMED",
       "TASKS-TESTS-NOT-FIRST"
     ],
-    "finding_count": 24
+    "finding_count": 25
   },
   "extras": [],
   "corpus": {
