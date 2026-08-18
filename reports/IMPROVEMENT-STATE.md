@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 55
-Last run: 2026-08-17
-Open loop PRs: 0
+Iteration: 56
+Last run: 2026-08-18
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -53,7 +53,8 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] spec-missing-motivation — promoted to issue #147
 - [x] spec-qvscribe-shall-be-able-to — SPEC-QVSCRIBE-SHALL-BE-ABLE-TO → issue #148 → PR #152 → merged 2026-08-13
 - [x] plan-missing-runbook — promoted to issue #149 (research: Kiro production-readiness gate) → PR #155 → merged 2026-08-16
-- [ ] plan-async-no-dlq — promoted to issue #150 (research: Kiro DLQ production gate)
+- [x] plan-async-no-dlq — promoted to issue #150 (research: Kiro DLQ production gate) → merged in PR #156
+- [~] spec-qvscribe-vague-quantifier — SPEC-QVSCRIBE-VAGUE-QUANTIFIER: indefinite quantity words (several/many/few/some/various/numerous/'a number of'/'a variety of') in SHALL/MUST requirements → issue #157 → PR #160
 - [x] spec-req-section-prose-only — SPEC-REQ-SECTION-PROSE-ONLY: requirements section with prose but no normative statements (IBM RQA, QVscribe, ISO 29148) → issue #112 → PR #115 → merged 2026-07-27
 - [x] plan-third-party-no-fallback — PLAN-THIRD-PARTY-NO-FALLBACK: plan mentions external service/API but no resilience vocabulary (Kiro, Tessl, ISO 25010) → issue #113 → merged in PR #116
 - [x] plan-missing-health-check — PLAN-MISSING-HEALTH-CHECK: deployment plan with no health-check/liveness/readiness-probe mention (Kiro production-readiness, ISO 25010 Availability) → issue #117 → PR #120 → merged 2026-07-29
@@ -86,7 +87,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #157 → PR #160 spec-qvscribe-vague-quantifier — SPEC-QVSCRIBE-VAGUE-QUANTIFIER: requirement lines with indefinite quantity words; _VAGUE_QUANTIFIER_RE; scoped via _requirement_mask()/_fence_mask(); 14 unit tests (7 fire, 7 silent); pytest 880 green; benchmark good=100 bad=50.8 precision=0.974 PASS; awaiting CI.
 
 ## Merged
 
@@ -300,3 +301,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 50 (2026-08-12): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (EARS/QVscribe/Canon → 3 new ideas; Kiro/Tessl/ISO-25010 → 3 new ideas); promoted 3 pool items + 3 research findings to issues (#145 SPEC-NFR-NO-UNIT, #146 SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED, #147 SPEC-MISSING-MOTIVATION, #148 SPEC-QVSCRIBE-SHALL-BE-ABLE-TO, #149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #145 (SPEC-NFR-NO-UNIT — NFR line has numeric threshold but no measurement unit; _NFR_UNIT_RE uses (?:(?<=\d)\s*|\b)unit\b to handle digit-glued abbreviations like '200ms'; Canon Scale/Meter/Must / QVscribe Level-1 / ISO 29148 §5.2.5(i); complements SPEC-NFR-NO-THRESHOLD; 19 unit tests (7 fire, 12 silent)); pytest 782 green; benchmark good=100 bad=55.0 precision=0.972 PASS; PR #151 opened; awaiting CI.
 - iter 54 (2026-08-16): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#149 PLAN-MISSING-RUNBOOK, #150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #149 (PLAN-MISSING-RUNBOOK — deployment plan with deploy/release/production/staging vocab but no runbook/playbook/on-call/incident-response/escalation reference; Amazon Kiro production-readiness gate; _RUNBOOK_RE constant + _plan_missing_runbook() helper; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 15 unit tests (6 fire, 9 silent)); pytest 849 green; benchmark good=100 bad=53.8 precision=0.974 PASS; PR #155 opened (draft); issue #149 commented.
 - iter 55 (2026-08-17): Phase 1 no open loop/* PRs (0); PR #155 merged (plan-missing-runbook, issue #149 closed — recorded in Merged). Phase 2 found 1 open loop-candidate issue (#150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #150 (PLAN-ASYNC-NO-DLQ — plan with async messaging vocab (queue/consumer/producer/kafka/sqs/sns/rabbitmq/pub-sub/event-bus/message-broker/celery/worker-queue/async task|job|message|process) but no DLQ vocabulary; _ASYNC_MESSAGING_RE uses bare forms to avoid false positives on negation contexts like 'async/queueing is unjustified'; _DLQ_RE silences on DLQ/dead-letter/poison-message/nack etc.; fires one finding anchored at first async line; 17 unit tests (6 fire, 11 silent)); pytest 866 green; benchmark good=100 bad=50.8 precision=0.974 PASS; PR #156 opened (draft); issue #150 commented.
+- iter 56 (2026-08-18): Phase 1 no open loop/* PRs (0); PR #156 merged (plan-async-no-dlq, issue #150 closed). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (QVscribe/EARS/ISO-29148 → 3 ideas; Kiro/Tessl/Canon → 3 ideas); filed 3 new issues (#157 SPEC-QVSCRIBE-VAGUE-QUANTIFIER, #158 SPEC-QVSCRIBE-WEAKENED-EXCEPT, #159 SPEC-EARS-TRIGGER-INVERSION). Phase 4 picked #157 (SPEC-QVSCRIBE-VAGUE-QUANTIFIER — indefinite quantity words (several/many/few/some/various/numerous/'a number of'/'a variety of') on requirement-bearing lines; QVscribe Rule QV-112 Level-1 Clarity defect; _VAGUE_QUANTIFIER_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 14 unit tests (7 fire, 7 silent)); pytest 880 green; benchmark good=100 bad=50.8 precision=0.974 PASS; PR #160 opened (draft); issue #157 commented.
