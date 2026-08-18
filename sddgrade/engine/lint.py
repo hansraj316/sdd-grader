@@ -765,6 +765,52 @@ def _spec_qvscribe_temporal_unbounded(art: Artifact, catalog: dict[str, Pitfall]
     ]
 
 
+# SPEC-QVSCRIBE-VAGUE-QUANTIFIER: indefinite quantity words in requirement-bearing lines.
+_VAGUE_QUANTIFIER_RE = re.compile(
+    r"\b(?:several|many|few|some|various|numerous|a\s+number\s+of|a\s+variety\s+of)\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_qvscribe_vague_quantifier(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Indefinite quantity words in SHALL/MUST requirements (SPEC-QVSCRIBE-VAGUE-QUANTIFIER).
+
+    QVscribe Rule QV-112 classifies indefinite quantifiers as Level-1 clarity defects.
+    Words like 'several', 'many', 'few', 'some', 'various', 'numerous', 'a number of',
+    and 'a variety of' leave the pass/fail criterion undefined — testers cannot determine
+    when the requirement is satisfied. ISO/IEC/IEEE 29148:2018 §5.2.5 requires every
+    requirement to be verifiable; an indefinite quantity provides no stopping condition.
+    Scoped to requirement-bearing lines via _requirement_mask(); fenced blocks excluded.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-VAGUE-QUANTIFIER")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _VAGUE_QUANTIFIER_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-VAGUE-QUANTIFIER: {count} requirement line(s) use an indefinite "
+            "quantity word (several/many/few/some/various/numerous/a number of/a variety of); "
+            "replace with a measurable threshold (e.g. 'at least 50', 'a minimum of 200').",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
 _PRIORITY_MARKER_RE = re.compile(
     r"""(?:
@@ -1942,6 +1988,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_shall_be_able_to(art, catalog))
     out.extend(_spec_qvscribe_temporal_unbounded(art, catalog))
     out.extend(_spec_missing_motivation(art, catalog))
+    out.extend(_spec_qvscribe_vague_quantifier(art, catalog))
     return out
 
 
