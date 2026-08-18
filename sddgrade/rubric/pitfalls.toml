@@ -828,6 +828,17 @@ detect = "Scan non-fenced requirement-bearing lines (matching _requirement_mask(
 fix = "Replace the temporal universal with a measurable threshold. Instead of 'The system shall always be available', write 'The system shall achieve 99.9% uptime per calendar month'. Instead of 'The system must never lose data', write 'The system shall retain all committed transactions durably (zero data loss on graceful shutdown)'. Instead of 'The system shall continuously synchronize state', write 'The system shall synchronize state within 5 seconds of any change'."
 
 [[pitfall]]
+id = "SPEC-QVSCRIBE-VAGUE-QUANTIFIER"
+name = "Indefinite quantity words in SHALL/MUST requirements"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "QVscribe Rule QV-112 classifies indefinite quantifiers as Level-1 clarity defects. Words such as 'several', 'many', 'few', 'some', 'various', and 'numerous' leave the pass/fail criterion undefined — testers cannot determine when the requirement is satisfied. ISO/IEC/IEEE 29148:2018 §5.2.5 requires every requirement to be verifiable; a requirement that says 'the system shall support several concurrent users' gives no stopping condition for acceptance testing. Distinct from SPEC-NFR-NO-THRESHOLD (which targets NFR-labelled lines lacking a numeric value) and SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED (which targets temporal universals): this fires on any requirement-bearing line where the quantity itself is left indefinite."
+detect = "Scan non-fenced requirement-bearing lines (scoped via _requirement_mask()) for indefinite cardinal quantity words: several, many, few, some, various, numerous, 'a number of', 'a variety of'. Fire one aggregate finding anchored at the first offending line."
+fix = "Replace indefinite quantifiers with measurable thresholds. Instead of 'the system shall support several concurrent users', write 'the system shall support at least 500 concurrent users'. Instead of 'various export formats', write 'PDF, CSV, and XLSX export formats'. When the exact number is unknown, state a minimum: 'at least N' or 'a minimum of N'."
+
+[[pitfall]]
 id = "SPEC-MISSING-MOTIVATION"
 name = "Spec with requirements but no Problem Statement / Motivation section"
 dimension = "completeness"
