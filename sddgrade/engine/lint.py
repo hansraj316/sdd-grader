@@ -811,6 +811,53 @@ def _spec_qvscribe_vague_quantifier(art: Artifact, catalog: dict[str, Pitfall]) 
     ]
 
 
+# SPEC-QVSCRIBE-WEAKENED-EXCEPT: open-ended carve-out on requirement-bearing lines.
+_WEAKENED_EXCEPT_RE = re.compile(
+    r"\b(?:except(?:\s+(?:when|where|as|in\s+cases?\s+where))?|unless(?:\s+otherwise)?)\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_qvscribe_weakened_except(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement line weakened by open-ended 'except'/'unless' carve-out (SPEC-QVSCRIBE-WEAKENED-EXCEPT).
+
+    QVscribe classifies open-ended qualifiers as a Weakness (Level-2 Completeness defect).
+    Phrases like 'except when', 'except where', 'unless', 'unless otherwise' silently expand
+    non-compliance scope without bounding the carve-out conditions, making the requirement
+    untestable. ISO/IEC/IEEE 29148:2018 §5.2.5(b) requires every requirement to be complete.
+    Scoped to requirement-bearing lines via _requirement_mask(); fenced blocks excluded.
+    One aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-WEAKENED-EXCEPT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _WEAKENED_EXCEPT_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-WEAKENED-EXCEPT: {count} requirement line(s) contain an open-ended "
+            "carve-out (except/except when/except where/unless/unless otherwise) that leaves "
+            "the non-compliance boundary undefined and untestable; enumerate all exception "
+            "conditions explicitly or remove the carve-out.",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
 _PRIORITY_MARKER_RE = re.compile(
     r"""(?:
@@ -1989,6 +2036,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_temporal_unbounded(art, catalog))
     out.extend(_spec_missing_motivation(art, catalog))
     out.extend(_spec_qvscribe_vague_quantifier(art, catalog))
+    out.extend(_spec_qvscribe_weakened_except(art, catalog))
     return out
 
 

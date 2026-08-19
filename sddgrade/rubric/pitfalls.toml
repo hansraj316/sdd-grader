@@ -870,3 +870,25 @@ method = "lint"
 why = "Amazon Kiro's production-readiness gate asks: 'What happens to a message that cannot be processed?' Without a dead-letter queue (DLQ), unprocessable messages are silently dropped or trigger an infinite retry loop — both are production incidents invisible during functional testing. ISO/IEC 25010 Fault Tolerance §4.2.1.4 requires the system to state how partial failures in async processing are contained. This is distinct from PLAN-THIRD-PARTY-NO-FALLBACK (outbound HTTP resilience) — this covers async message-processing failures."
 detect = "Guard: any non-fenced line matches async-messaging vocabulary (queue/consumer/producer/kafka/sqs/sns/rabbitmq/pub-sub/event bus/message broker/celery/worker queue/async task-job-message-process). Silence: any line matches DLQ vocabulary (DLQ, dead-letter, poison-message, poison-pill, unprocessable, message-requeue, nack, break-queue). Fire once at file level when guard fires and no DLQ vocabulary is found."
 fix = "Add an error-handling section that names the dead-letter queue and the retry policy. For example: '## Error Handling\nFailed messages are routed to a dead-letter queue (SQS: task-export-dlq) after 3 retry attempts. The on-call runbook describes manual inspection and requeue steps.' Every async consumer should specify: (1) max retry count, (2) DLQ destination, (3) monitoring/alerting on DLQ depth, and (4) the requeue/discard policy for inspected messages."
+
+[[pitfall]]
+id = "SPEC-QVSCRIBE-WEAKENED-EXCEPT"
+name = "Requirement weakened by open-ended 'except'/'unless' carve-out"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "QVscribe classifies open-ended qualifiers as a 'Weakness' defect (Level-2 Completeness). Words like 'except', 'except when', 'except where', 'unless', and 'unless otherwise' silently expand the scope of non-compliance without bounding the carve-out conditions. ISO/IEC/IEEE 29148:2018 §5.2.5(b) requires every requirement to be complete — a requirement that says 'FR-001 The API must respond within 200 ms except when under maintenance' leaves 'maintenance' undefined and untestable. The carve-out becomes a loophole that nullifies the threshold. This is distinct from SPEC-ESCAPE-CLAUSE (which targets explicit opt-out phrases like 'unless otherwise agreed') — this targets carve-outs applied directly to normative shall/must lines."
+detect = "Scan non-fenced requirement-bearing lines (scoped via _requirement_mask()) for open-ended carve-out patterns: 'except', 'except when', 'except where', 'except as', 'except in cases where', 'unless', 'unless otherwise'. Fire one aggregate finding anchored at the first offending line."
+fix = "Replace open-ended carve-outs with bounded conditions. Instead of 'FR-001 The API must respond within 200 ms except when under maintenance', write 'FR-001 The API must respond within 200 ms during normal operation; during scheduled maintenance windows (notified 24 h in advance via status.example.com), availability SLOs are suspended.' If a carve-out is unavoidable, enumerate all conditions exhaustively so testers know the full set of exceptions."
+
+[[pitfall]]
+id = "SPEC-EARS-TRIGGER-INVERSION"
+name = "EARS trigger keyword placed after 'shall' (inverted ordering)"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "low"
+method = "lint"
+why = "EARS (Easy Approach to Requirements Syntax, Mavin et al. 2009; adapted by ISO/IEC/IEEE 29148:2018) places the trigger keyword (When/While/If/Where) before the normative modal (shall): 'When X occurs, the system shall Y'. A common authoring error inverts this to 'The system shall Y, when X' — placing 'shall' before the trigger. This inversion breaks the EARS grammar, makes automated classification ambiguous, and hampers traceability tooling that relies on trigger position as a structural signal."
+detect = "Scan non-fenced requirement-bearing lines (scoped via _requirement_mask()) for the pattern: \\bshall\\b followed by up to 80 non-sentence-ending characters, then an EARS trigger keyword (when|while|if|where). Fire one aggregate finding anchored at the first offending line."
+fix = "Reorder requirements to place the EARS trigger before the normative modal. Change 'The system shall respond, when the user submits the form, within 200 ms' to 'When the user submits the form, the system shall respond within 200 ms'. The trigger clause (When/While/If/Where) should always open the sentence."
