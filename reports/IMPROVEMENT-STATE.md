@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 57
-Last run: 2026-08-19
-Open loop PRs: 0
+Iteration: 58
+Last run: 2026-08-20
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -88,7 +88,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' placed before EARS trigger keyword (when/while/if/where); inverted EARS ordering → issue #159 → PR #162
 
 ## Merged
 
@@ -306,3 +306,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 55 (2026-08-17): Phase 1 no open loop/* PRs (0); PR #155 merged (plan-missing-runbook, issue #149 closed — recorded in Merged). Phase 2 found 1 open loop-candidate issue (#150 PLAN-ASYNC-NO-DLQ). Phase 4 picked #150 (PLAN-ASYNC-NO-DLQ — plan with async messaging vocab (queue/consumer/producer/kafka/sqs/sns/rabbitmq/pub-sub/event-bus/message-broker/celery/worker-queue/async task|job|message|process) but no DLQ vocabulary; _ASYNC_MESSAGING_RE uses bare forms to avoid false positives on negation contexts like 'async/queueing is unjustified'; _DLQ_RE silences on DLQ/dead-letter/poison-message/nack etc.; fires one finding anchored at first async line; 17 unit tests (6 fire, 11 silent)); pytest 866 green; benchmark good=100 bad=50.8 precision=0.974 PASS; PR #156 opened (draft); issue #150 commented.
 - iter 56 (2026-08-18): Phase 1 no open loop/* PRs (0); PR #156 merged (plan-async-no-dlq, issue #150 closed). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (QVscribe/EARS/ISO-29148 → 3 ideas; Kiro/Tessl/Canon → 3 ideas); filed 3 new issues (#157 SPEC-QVSCRIBE-VAGUE-QUANTIFIER, #158 SPEC-QVSCRIBE-WEAKENED-EXCEPT, #159 SPEC-EARS-TRIGGER-INVERSION). Phase 4 picked #157 (SPEC-QVSCRIBE-VAGUE-QUANTIFIER — indefinite quantity words (several/many/few/some/various/numerous/'a number of'/'a variety of') on requirement-bearing lines; QVscribe Rule QV-112 Level-1 Clarity defect; _VAGUE_QUANTIFIER_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 14 unit tests (7 fire, 7 silent)); pytest 880 green; benchmark good=100 bad=50.8 precision=0.974 PASS; PR #160 opened (draft); CI green same run; converted + squash-merged; issue #157 closed.
 - iter 57 (2026-08-19): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#158 SPEC-QVSCRIBE-WEAKENED-EXCEPT, #159 SPEC-EARS-TRIGGER-INVERSION). Phase 4 picked #158 (SPEC-QVSCRIBE-WEAKENED-EXCEPT — normative requirement lines with open-ended carve-out phrase (except/except when/except where/except as/except in cases where/unless/unless otherwise); QVscribe Weakness Level-2 Completeness defect; ISO 29148 §5.2.5(b); _WEAKENED_EXCEPT_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (8 fire, 5 silent)); pytest 893 green; benchmark good=100 bad=50.8 precision=0.974 PASS; PR #161 opened (draft); CI green same run; converted + squash-merged; issue #158 closed.
+- iter 58 (2026-08-20): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#159 SPEC-EARS-TRIGGER-INVERSION). Phase 4 picked #159 (SPEC-EARS-TRIGGER-INVERSION — 'shall' placed before EARS trigger keyword (when/while/if/where); EARS syntax requires trigger before modal: 'When X, system shall Y'; inverted ordering 'system shall Y, when X' breaks EARS grammar; _EARS_TRIGGER_INVERSION_RE = \\bshall\\b[^.;!?\\n]{1,80}\\b(?:when|while|if|where)\\b; scoped via _requirement_mask()/_fence_mask(); one aggregate finding anchored at first offending line; 14 unit tests (8 fire, 6 silent); corpus: benign-lookalike + paraphrased-defects accepted_extras updated); pytest 907 green; benchmark good=100 bad=50.8 precision=0.975 PASS; PR #162 opened (draft); awaiting CI.
