@@ -817,6 +817,14 @@ _WEAKENED_EXCEPT_RE = re.compile(
     re.IGNORECASE,
 )
 
+# SPEC-EARS-TRIGGER-INVERSION: 'shall' placed before EARS trigger keyword (when/while/if/where).
+# EARS syntax (Mavin et al. 2009; ISO/IEC/IEEE 29148:2018) requires the trigger to open the
+# sentence: "When X, the system shall Y".  Inverted ordering "shall … when" is a structural defect.
+_EARS_TRIGGER_INVERSION_RE = re.compile(
+    r"\bshall\b[^.;!?\n]{1,80}\b(?:when|while|if|where)\b",
+    re.IGNORECASE,
+)
+
 
 def _spec_qvscribe_weakened_except(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Requirement line weakened by open-ended 'except'/'unless' carve-out (SPEC-QVSCRIBE-WEAKENED-EXCEPT).
@@ -853,6 +861,47 @@ def _spec_qvscribe_weakened_except(art: Artifact, catalog: dict[str, Pitfall]) -
             "carve-out (except/except when/except where/unless/unless otherwise) that leaves "
             "the non-compliance boundary undefined and untestable; enumerate all exception "
             "conditions explicitly or remove the carve-out.",
+            line=first_line,
+        )
+    ]
+
+
+def _spec_ears_trigger_inversion(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement line with EARS trigger keyword placed after 'shall' (SPEC-EARS-TRIGGER-INVERSION).
+
+    EARS (Easy Approach to Requirements Syntax, Mavin et al. 2009; ISO/IEC/IEEE 29148:2018)
+    places the trigger keyword (When/While/If/Where) before the normative modal (shall):
+    'When X, the system shall Y'.  A common authoring error inverts this to
+    'The system shall Y, when X', placing 'shall' before the trigger.  This inversion breaks
+    the EARS grammar and hampers traceability tooling that relies on trigger position as a
+    structural signal.
+    Scoped to requirement-bearing lines via _requirement_mask(); fenced blocks excluded.
+    One aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-EARS-TRIGGER-INVERSION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _EARS_TRIGGER_INVERSION_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-EARS-TRIGGER-INVERSION: {count} requirement line(s) place 'shall' before an "
+            "EARS trigger keyword (when/while/if/where); move the trigger clause to the start of "
+            "the sentence: 'When X, the system shall Y'.",
             line=first_line,
         )
     ]
@@ -2037,6 +2086,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_motivation(art, catalog))
     out.extend(_spec_qvscribe_vague_quantifier(art, catalog))
     out.extend(_spec_qvscribe_weakened_except(art, catalog))
+    out.extend(_spec_ears_trigger_inversion(art, catalog))
     return out
 
 
