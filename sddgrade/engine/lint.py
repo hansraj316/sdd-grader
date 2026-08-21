@@ -907,6 +907,59 @@ def _spec_ears_trigger_inversion(art: Artifact, catalog: dict[str, Pitfall]) -> 
     ]
 
 
+# SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement lines.
+# The exact phrase is a formal logic biconditional that creates two unstated test obligations
+# (A→B and B→A).  Testers routinely verify only the forward direction; the reverse constraint
+# is silently skipped in acceptance test suites. QVscribe Level-1 Clarity defect;
+# ISO/IEC/IEEE 29148:2018 §5.2.5(a) 'unambiguous'.
+_BICONDITIONAL_RE = re.compile(
+    r"\bif\s+and\s+only\s+if\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_qvscribe_biconditional(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement line containing biconditional 'if and only if' (SPEC-QVSCRIBE-BICONDITIONAL).
+
+    A biconditional in a requirement creates two implicit test obligations: the forward
+    implication (condition → outcome) and the reverse (outcome absent → condition absent).
+    Natural-language readers typically verify only the forward direction, leaving the
+    reverse obligation untested.  QVscribe classifies this as a Level-1 Clarity defect.
+    ISO/IEC/IEEE 29148:2018 §5.2.5(a) requires every requirement to be unambiguous —
+    interpretable in exactly one way.
+    Scoped to requirement-bearing lines via _requirement_mask(); fenced blocks excluded.
+    One aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-BICONDITIONAL")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _BICONDITIONAL_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-BICONDITIONAL: {count} requirement line(s) use 'if and only if', "
+            "creating two implicit test obligations (forward and reverse implication) that are "
+            "not individually labeled; split into two explicit one-directional requirements "
+            "with distinct identifiers so each direction can be traced to a test case.",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
 _PRIORITY_MARKER_RE = re.compile(
     r"""(?:
@@ -2087,6 +2140,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_vague_quantifier(art, catalog))
     out.extend(_spec_qvscribe_weakened_except(art, catalog))
     out.extend(_spec_ears_trigger_inversion(art, catalog))
+    out.extend(_spec_qvscribe_biconditional(art, catalog))
     return out
 
 
