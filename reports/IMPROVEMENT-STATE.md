@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 59
 Last run: 2026-08-21
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -48,7 +48,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' before EARS trigger keyword (inverted ordering) — from EARS research
 - [ ] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) — from research
 - [~] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) → issue #165
-- [~] spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement (QVscribe Level-1 Clarity, ISO 29148 §5.2.5(a)) → issue #163 → PR #167
+- [x] spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement (QVscribe Level-1 Clarity, ISO 29148 §5.2.5(a)) → issue #163 → PR #167 → merged 2026-08-21
 - [~] spec-qvscribe-absolute-term — SPEC-QVSCRIBE-ABSOLUTE-TERM: 100%/zero/fully perfection claim in quality requirement → issue #164
 - [~] spec-nfr-no-load-context — SPEC-NFR-NO-LOAD-CONTEXT: performance NFR with no load/scale context (Canon Volere) → issue #166
 - [x] spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR with numeric threshold but no measurement unit → issue #145 → PR #151 → merged 2026-08-12
@@ -91,10 +91,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #163 → PR #167 spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement lines; _BICONDITIONAL_RE = \\bif\\s+and\\s+only\\s+if\\b; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent); pytest 920 green; benchmark good=100 bad=50.8 precision=0.975 PASS
+(none)
 
 ## Merged
 
+- #163 → PR #167 spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement lines; _BICONDITIONAL_RE = \\bif\\s+and\\s+only\\s+if\\b; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent); pytest 920 green; benchmark good=100 bad=50.8 precision=0.975 PASS (2026-08-21, CI was green; squash-merged same run).
 - #159 → PR #162 spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' placed before EARS trigger keyword (when/while/if/where); _EARS_TRIGGER_INVERSION_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 14 unit tests (8 fire, 6 silent); benign-lookalike + paraphrased-defects accepted_extras updated; pytest 907 green; benchmark good=100 bad=50.8 precision=0.975 PASS (2026-08-20, CI was green; squash-merged same run).
 - #158 → PR #161 spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: normative requirement lines with open-ended carve-out (except/except when/except where/except as/except in cases where/unless/unless otherwise); _WEAKENED_EXCEPT_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (8 fire, 5 silent); pytest 893 green; benchmark good=100 bad=50.8 precision=0.974 PASS (2026-08-19, CI was green; squash-merged same run).
 - #157 → PR #160 spec-qvscribe-vague-quantifier — SPEC-QVSCRIBE-VAGUE-QUANTIFIER: requirement lines with indefinite quantity words (several/many/few/some/various/numerous/'a number of'/'a variety of'); _VAGUE_QUANTIFIER_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 14 unit tests (7 fire, 7 silent); pytest 880 green; benchmark good=100 bad=50.8 precision=0.974 PASS (2026-08-18, CI was green; squash-merged same run).
