@@ -892,3 +892,14 @@ method = "lint"
 why = "EARS (Easy Approach to Requirements Syntax, Mavin et al. 2009; adapted by ISO/IEC/IEEE 29148:2018) places the trigger keyword (When/While/If/Where) before the normative modal (shall): 'When X occurs, the system shall Y'. A common authoring error inverts this to 'The system shall Y, when X' — placing 'shall' before the trigger. This inversion breaks the EARS grammar, makes automated classification ambiguous, and hampers traceability tooling that relies on trigger position as a structural signal."
 detect = "Scan non-fenced requirement-bearing lines (scoped via _requirement_mask()) for the pattern: \\bshall\\b followed by up to 80 non-sentence-ending characters, then an EARS trigger keyword (when|while|if|where). Fire one aggregate finding anchored at the first offending line."
 fix = "Reorder requirements to place the EARS trigger before the normative modal. Change 'The system shall respond, when the user submits the form, within 200 ms' to 'When the user submits the form, the system shall respond within 200 ms'. The trigger clause (When/While/If/Where) should always open the sentence."
+
+[[pitfall]]
+id = "SPEC-QVSCRIBE-BICONDITIONAL"
+name = "Biconditional ('if and only if') in normative requirement"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "QVscribe Level-1 Clarity defect 'Ambiguous Logic': biconditional statements in natural language ('if and only if') are interpreted asymmetrically by different readers. The phrase creates two simultaneous implications (A→B and B→A), but requirement testers routinely verify only the forward direction; the reverse constraint is silently omitted from acceptance test suites. ISO/IEC/IEEE 29148:2018 §5.2.5(a) requires every requirement to be 'unambiguous' — interpretable in exactly one way. A requirement that says 'the system shall grant access if and only if the user has role X' imposes two separate test obligations but labels neither, causing test-coverage gaps that are invisible until a production incident reveals the untested direction."
+detect = "Scan non-fenced requirement-bearing lines (scoped via _requirement_mask()) for the exact phrase 'if and only if' (case-insensitive). Fire one aggregate finding anchored at the first offending line. False-positive rate is extremely low: the phrase is a formal logic term that almost never appears in spec prose for a legitimate reason."
+fix = "Split the biconditional into two explicit one-directional requirements: one stating the positive condition that grants the outcome (FR-005a: the system shall grant access when the user holds both role X and an active MFA session) and one stating the negative condition that denies it (FR-005b: the system shall deny access when the user lacks role X or has no active MFA session). Label each direction with a distinct identifier so both can be traced to test cases independently."
