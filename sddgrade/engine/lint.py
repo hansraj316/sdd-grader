@@ -960,6 +960,83 @@ def _spec_qvscribe_biconditional(art: Artifact, catalog: dict[str, Pitfall]) -> 
     ]
 
 
+# SPEC-QVSCRIBE-ABSOLUTE-TERM: unprovable absolute perfection claim in normative requirement.
+# Pattern A — '100 %' + quality-attribute word.
+_ABSOLUTE_100PCT_RE = re.compile(
+    r"""
+    \b100\s*%\s*
+    (?:uptime|availability|reliability|accuracy|consistency|coverage|fault[\s-]?free|error[\s-]?free|complian)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+# Pattern B — 'zero' + failure-mode word.
+_ABSOLUTE_ZERO_RE = re.compile(
+    r"""
+    \bzero\s+
+    (?:downtime|errors?|defects?|failures?|data\s+loss|latency)
+    \b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+# Pattern C — absolute adverb + quality term.
+_ABSOLUTE_ADVERB_RE = re.compile(
+    r"""
+    \b(?:fully|completely|perfectly)\s+
+    (?:operational|compliant|functional|consistent|reliable|available|accurate)
+    \b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _spec_qvscribe_absolute_term(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Requirement line asserting absolute perfection (100%/zero/fully) (SPEC-QVSCRIBE-ABSOLUTE-TERM).
+
+    Three distinct patterns fire this check:
+      A) '100 %' adjacent to a quality-attribute word (uptime, availability, …)
+      B) 'zero' adjacent to a failure-mode word (errors, defects, data loss, …)
+      C) adverbs 'fully'/'completely'/'perfectly' modifying a system quality term.
+
+    Each pattern imposes a standard no finite test suite can confirm.  QVscribe classifies
+    this as a Verifiability defect.  ISO/IEC/IEEE 29148:2018 §5.2.5(i) requires requirements
+    to be verifiable by finite means.
+    Scoped to requirement-bearing lines via _requirement_mask(); fenced blocks excluded.
+    One aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-ABSOLUTE-TERM")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if (
+            _ABSOLUTE_100PCT_RE.search(line)
+            or _ABSOLUTE_ZERO_RE.search(line)
+            or _ABSOLUTE_ADVERB_RE.search(line)
+        ):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-ABSOLUTE-TERM: {count} requirement line(s) claim absolute perfection "
+            "('100%', 'zero failures', 'fully compliant', etc.) — no finite test suite can "
+            "confirm such a standard; replace with a bounded, measurable threshold "
+            "(e.g. '99.95% uptime per month', 'RPO=0 for committed transactions').",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
 _PRIORITY_MARKER_RE = re.compile(
     r"""(?:
@@ -2141,6 +2218,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_weakened_except(art, catalog))
     out.extend(_spec_ears_trigger_inversion(art, catalog))
     out.extend(_spec_qvscribe_biconditional(art, catalog))
+    out.extend(_spec_qvscribe_absolute_term(art, catalog))
     return out
 
 
