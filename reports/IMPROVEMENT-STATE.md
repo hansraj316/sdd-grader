@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 60
-Last run: 2026-08-22
-Open loop PRs: 0
+Iteration: 61
+Last run: 2026-08-23
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -47,7 +47,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] plan-missing-migration — PLAN-MISSING-MIGRATION: plan mentions schema changes (ALTER TABLE/new column) but no data migration strategy (Kiro prod-readiness) → issue #139 → PR #144 → merged 2026-08-11
 - [ ] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' before EARS trigger keyword (inverted ordering) — from EARS research
 - [ ] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) — from research
-- [~] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) → issue #165
+- [~] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) → issue #165 → PR #169
 - [x] spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement (QVscribe Level-1 Clarity, ISO 29148 §5.2.5(a)) → issue #163 → PR #167 → merged 2026-08-21
 - [x] spec-qvscribe-absolute-term — SPEC-QVSCRIBE-ABSOLUTE-TERM: 100%/zero/fully perfection claim in quality requirement → issue #164 → PR #168 → merged 2026-08-22
 - [~] spec-nfr-no-load-context — SPEC-NFR-NO-LOAD-CONTEXT: performance NFR with no load/scale context (Canon Volere) → issue #166
@@ -91,7 +91,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #165 → PR #169 plan-hardcoded-config — PLAN-HARDCODED-CONFIG: literal IPv4:port or non-placeholder credential assignment in non-fenced plan.md line; _IPV4_PORT_RE + _CREDENTIAL_ASSIGN_RE + _EXAMPLE_SECTION_RE; fenced-block exclusion; example/sample/reference sections skipped; placeholder silence (*****, <...>, ${...}); 17 unit tests (7 fire, 10 silent); pytest 950 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (awaiting CI)
 
 ## Merged
 
@@ -315,3 +315,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 58 (2026-08-20): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#159 SPEC-EARS-TRIGGER-INVERSION). Phase 4 picked #159 (SPEC-EARS-TRIGGER-INVERSION — 'shall' placed before EARS trigger keyword (when/while/if/where); EARS syntax requires trigger before modal: 'When X, system shall Y'; inverted ordering 'system shall Y, when X' breaks EARS grammar; _EARS_TRIGGER_INVERSION_RE = \\bshall\\b[^.;!?\\n]{1,80}\\b(?:when|while|if|where)\\b; scoped via _requirement_mask()/_fence_mask(); one aggregate finding anchored at first offending line; 14 unit tests (8 fire, 6 silent); corpus: benign-lookalike + paraphrased-defects accepted_extras updated); pytest 907 green; benchmark good=100 bad=50.8 precision=0.975 PASS; PR #162 opened (draft); CI green same run; converted + squash-merged; issue #159 closed.
 - iter 59 (2026-08-21): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 3 parallel research agents (QVscribe/EARS/ISO-29148, Kiro/Tessl/Canon/MAQA/INVEST, OpenSpec/Spec-Kit/AIDE); filed 4 new issues (#163 SPEC-QVSCRIBE-BICONDITIONAL, #164 SPEC-QVSCRIBE-ABSOLUTE-TERM, #165 PLAN-HARDCODED-CONFIG, #166 SPEC-NFR-NO-LOAD-CONTEXT). Phase 4 picked #163 (SPEC-QVSCRIBE-BICONDITIONAL — 'if and only if' in normative requirement creates two implicit test obligations; _BICONDITIONAL_RE = \\bif\\s+and\\s+only\\s+if\\b; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent)); pytest 920 green; benchmark good=100 bad=50.8 precision=0.975 PASS; PR #167 opened (draft); issue #163 commented.
 - iter 60 (2026-08-22): Phase 1 no open loop/* PRs (0); PR #167 was already merged to main in prior run. Phase 2 found 3 open loop-candidate issues (#164, #165, #166). Phase 4 picked #164 (SPEC-QVSCRIBE-ABSOLUTE-TERM — normative requirement lines asserting absolute perfection via three patterns: A) '100%' + quality-attribute word (uptime/availability/reliability/accuracy/consistency/coverage/fault-free/error-free); B) 'zero' + failure-mode word (downtime/errors/defects/failures/data loss/latency); C) 'fully'/'completely'/'perfectly' + quality term (operational/compliant/functional/consistent/reliable/available/accurate); _ABSOLUTE_100PCT_RE + _ABSOLUTE_ZERO_RE + _ABSOLUTE_ADVERB_RE constants; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent)); pytest 933 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #168 opened (draft); issue #164 commented.
+- iter 61 (2026-08-23): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#165 PLAN-HARDCODED-CONFIG, #166 SPEC-NFR-NO-LOAD-CONTEXT). Phase 4 picked #165 (PLAN-HARDCODED-CONFIG — non-fenced plan.md line with literal IPv4:port or non-placeholder credential assignment; Tessl spec-first/Twelve-Factor Factor III; _IPV4_PORT_RE + _CREDENTIAL_ASSIGN_RE + _EXAMPLE_SECTION_RE; fenced-block + example-section exclusion; placeholder silence (***, <...>, ${...}); fires one aggregate finding at first offending line; 17 unit tests (7 fire, 10 silent)); pytest 950 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #169 opened (draft); issue #165 commented.
