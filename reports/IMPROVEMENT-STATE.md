@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 61
 Last run: 2026-08-23
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -47,7 +47,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] plan-missing-migration — PLAN-MISSING-MIGRATION: plan mentions schema changes (ALTER TABLE/new column) but no data migration strategy (Kiro prod-readiness) → issue #139 → PR #144 → merged 2026-08-11
 - [ ] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' before EARS trigger keyword (inverted ordering) — from EARS research
 - [ ] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) — from research
-- [~] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) → issue #165 → PR #169
+- [x] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) → issue #165 → PR #169 → merged 2026-08-23
 - [x] spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement (QVscribe Level-1 Clarity, ISO 29148 §5.2.5(a)) → issue #163 → PR #167 → merged 2026-08-21
 - [x] spec-qvscribe-absolute-term — SPEC-QVSCRIBE-ABSOLUTE-TERM: 100%/zero/fully perfection claim in quality requirement → issue #164 → PR #168 → merged 2026-08-22
 - [~] spec-nfr-no-load-context — SPEC-NFR-NO-LOAD-CONTEXT: performance NFR with no load/scale context (Canon Volere) → issue #166
@@ -91,10 +91,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #165 → PR #169 plan-hardcoded-config — PLAN-HARDCODED-CONFIG: literal IPv4:port or non-placeholder credential assignment in non-fenced plan.md line; _IPV4_PORT_RE + _CREDENTIAL_ASSIGN_RE + _EXAMPLE_SECTION_RE; fenced-block exclusion; example/sample/reference sections skipped; placeholder silence (*****, <...>, ${...}); 17 unit tests (7 fire, 10 silent); pytest 950 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (awaiting CI)
+(none)
 
 ## Merged
 
+- #165 → PR #169 plan-hardcoded-config — PLAN-HARDCODED-CONFIG: non-fenced plan.md line with literal IPv4:port or non-placeholder credential assignment; _IPV4_PORT_RE + _CREDENTIAL_ASSIGN_RE + _EXAMPLE_SECTION_RE; fenced-block exclusion; example/sample/reference sections skipped; placeholder silence (***, <...>, ${...}); fires one aggregate finding at first offending line; 17 unit tests (7 fire, 10 silent); pytest 950 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-23, CI was green; squash-merged same run).
 - #164 → PR #168 spec-qvscribe-absolute-term — SPEC-QVSCRIBE-ABSOLUTE-TERM: unprovable absolute perfection claim ('100% uptime', 'zero data loss', 'fully compliant') in normative requirement; _ABSOLUTE_100PCT_RE + _ABSOLUTE_ZERO_RE + _ABSOLUTE_ADVERB_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent); pytest 933 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-22, CI was green; squash-merged same run).
 - #163 → PR #167 spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement lines; _BICONDITIONAL_RE = \\bif\\s+and\\s+only\\s+if\\b; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent); pytest 920 green; benchmark good=100 bad=50.8 precision=0.975 PASS (2026-08-21, CI was green; squash-merged same run).
 - #159 → PR #162 spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' placed before EARS trigger keyword (when/while/if/where); _EARS_TRIGGER_INVERSION_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 14 unit tests (8 fire, 6 silent); benign-lookalike + paraphrased-defects accepted_extras updated; pytest 907 green; benchmark good=100 bad=50.8 precision=0.975 PASS (2026-08-20, CI was green; squash-merged same run).
