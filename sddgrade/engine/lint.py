@@ -1607,6 +1607,68 @@ def _plan_async_no_dlq(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findi
     )]
 
 
+# Literal IPv4:port pattern on a plan prose line (PLAN-HARDCODED-CONFIG guard A).
+_IPV4_PORT_RE = re.compile(
+    r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{2,5}\b",
+)
+
+# Credential assignment that is not a placeholder (PLAN-HARDCODED-CONFIG guard B).
+# Silenced when value starts with *, < or ${ (masked / templated / env-var reference).
+_CREDENTIAL_ASSIGN_RE = re.compile(
+    r"\b(?:password|api_key|secret_key|db_pass(?:word)?|private_key|access_key)"
+    r"\s*=\s*"
+    r"(?!\*+|<|\$\{)"   # negative lookahead: not a placeholder
+    r"[^\s]",            # must be followed by a non-space character
+    re.IGNORECASE,
+)
+
+# Section headings that deliberately contain examples — skip them to avoid false positives.
+_EXAMPLE_SECTION_RE = re.compile(r"\b(?:example|sample|reference|demo)\b", re.IGNORECASE)
+
+
+def _plan_hardcoded_config(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Plan lines with a literal IPv4:port or non-placeholder credential assignment (PLAN-HARDCODED-CONFIG).
+
+    Tessl spec-first / Twelve-Factor App Factor III (Config): plans that hard-code a
+    server address or credential are environment-specific and create a secret-leak risk.
+    Fenced blocks and 'example'/'sample'/'reference' sections are excluded to avoid
+    flagging intentionally illustrative content.
+    """
+    p = catalog.get("PLAN-HARDCODED-CONFIG")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    # Build a mask of lines that belong to intentionally illustrative sections.
+    example_section: list[bool] = [False] * len(lines)
+    secs = art.sections
+    for idx, s in enumerate(secs):
+        if _EXAMPLE_SECTION_RE.search(s.title):
+            start = s.line - 1
+            end = secs[idx + 1].line - 1 if idx + 1 < len(secs) else len(lines)
+            for i in range(start, min(end, len(lines))):
+                example_section[i] = True
+
+    first_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i] or example_section[i]:
+            continue
+        if _IPV4_PORT_RE.search(line) or _CREDENTIAL_ASSIGN_RE.search(line):
+            first_hit = i + 1
+            break
+
+    if first_hit is None:
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Plan contains a hard-coded IP address:port or credential assignment; "
+        "use environment variables or a secrets manager instead (Twelve-Factor Factor III).",
+        line=first_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -2266,6 +2328,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_migration(art, catalog))
     out.extend(_plan_missing_runbook(art, catalog))
     out.extend(_plan_async_no_dlq(art, catalog))
+    out.extend(_plan_hardcoded_config(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     return out
 
