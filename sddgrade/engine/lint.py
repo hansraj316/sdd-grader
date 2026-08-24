@@ -1263,6 +1263,81 @@ def _spec_nfr_no_unit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     return []
 
 
+# SPEC-NFR-NO-LOAD-CONTEXT: performance/latency NFR with a unit'd threshold but no
+# stated load or measurement context. Complements SPEC-NFR-NO-THRESHOLD (no number)
+# and SPEC-NFR-NO-UNIT (number, no unit): fires when number + unit are both present
+# but the measurement context (concurrent users, RPS, peak load, p95, ...) is not.
+_LATENCY_NFR_VOCAB_RE = re.compile(
+    r"\b(?:latency|throughput|response\s+time|response\s+latency|uptime|availability)\b"
+    # Also cover the canonical "shall respond within/in/by <N><time-unit>" idiom.
+    r"|\brespond(?:s|ing)?\s+(?:within|in|by|under|after|before)\b",
+    re.IGNORECASE,
+)
+# Time-unit token attached to a digit (200ms, 2 seconds, 30s). Kept narrow so the
+# check only fires for latency/throughput thresholds; storage/rate units live under
+# other pitfalls (SPEC-NFR-NO-UNIT covers those).
+_TIME_THRESHOLD_UNIT_RE = re.compile(
+    r"\d+(?:\.\d+)?\s*(?:ms|milliseconds?|secs?|seconds?|s\b)"
+    r"|\d+(?:\.\d+)?\s*(?:mins?|minutes?|hours?|hrs?|days?)",
+    re.IGNORECASE,
+)
+# Load / measurement context: concurrent users, RPS/TPS/QPS, peak/load, p95/p99,
+# "at N users/requests/concurrent". Any hit silences the check.
+_LOAD_CONTEXT_RE = re.compile(
+    r"\bconcurrent\b|\busers?\b"
+    r"|\brequests?\s+per\s+second\b|\brps\b|\btps\b|\bqps\b"
+    r"|\bpeak\b|\bload\b"
+    r"|\bp9[0-9]\b|\bpercentile\b"
+    r"|\bat\s+\d+\s+(?:users?|requests?|concurrent)\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_no_load_context(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Performance NFR states unit'd time threshold but no load/scale context.
+
+    Canon Volere fit-criterion rule: every NFR needs Scale/Meter/Must AND the
+    measurement context (at what load level the threshold applies). A "200ms" that
+    is unitised (SPEC-NFR-NO-UNIT silent) and present (SPEC-NFR-NO-THRESHOLD silent)
+    is still unverifiable if the tester does not know the load conditions.
+
+    Guards (all must fire):
+      1. non-fenced line, and
+      2. matches performance vocabulary (_LATENCY_NFR_VOCAB_RE), and
+      3. matches a normative modal / requirement id (_REQUIREMENTish_RE), and
+      4. has a digit+time-unit threshold (_TIME_THRESHOLD_UNIT_RE).
+    Silence: any load-context token on the same line (_LOAD_CONTEXT_RE).
+
+    Fire one aggregate finding, anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-NFR-NO-LOAD-CONTEXT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    for i, (line, in_fence) in enumerate(zip(lines, fenced), start=1):
+        if in_fence:
+            continue
+        if not _LATENCY_NFR_VOCAB_RE.search(line):
+            continue
+        if not _REQUIREMENTish_RE.search(line):
+            continue
+        if not _TIME_THRESHOLD_UNIT_RE.search(line):
+            continue
+        if _LOAD_CONTEXT_RE.search(line):
+            continue
+        return [
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-NO-LOAD-CONTEXT: performance requirement states a unit'd threshold "
+                "with no load/scale context (Canon Volere fit-criterion; MAQA verifiability). "
+                "Qualify the measurement — e.g. 'at 500 concurrent users', 'p95 under peak load'.",
+                line=i,
+            )
+        ]
+    return []
+
+
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
     p = catalog.get("PLAN-MISSING-ROLLBACK")
@@ -2273,6 +2348,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
+    out.extend(_spec_nfr_no_load_context(art, catalog))
     out.extend(_spec_qvscribe_shall_be_able_to(art, catalog))
     out.extend(_spec_qvscribe_temporal_unbounded(art, catalog))
     out.extend(_spec_missing_motivation(art, catalog))
@@ -2330,6 +2406,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_async_no_dlq(art, catalog))
     out.extend(_plan_hardcoded_config(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
+    out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
 
 
