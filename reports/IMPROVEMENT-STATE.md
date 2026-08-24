@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 61
-Last run: 2026-08-23
-Open loop PRs: 0
+Iteration: 62
+Last run: 2026-08-24
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -50,7 +50,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) → issue #165 → PR #169 → merged 2026-08-23
 - [x] spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement (QVscribe Level-1 Clarity, ISO 29148 §5.2.5(a)) → issue #163 → PR #167 → merged 2026-08-21
 - [x] spec-qvscribe-absolute-term — SPEC-QVSCRIBE-ABSOLUTE-TERM: 100%/zero/fully perfection claim in quality requirement → issue #164 → PR #168 → merged 2026-08-22
-- [~] spec-nfr-no-load-context — SPEC-NFR-NO-LOAD-CONTEXT: performance NFR with no load/scale context (Canon Volere) → issue #166
+- [~] spec-nfr-no-load-context — SPEC-NFR-NO-LOAD-CONTEXT: performance NFR with no load/scale context (Canon Volere) → issue #166 → PR #170 (in review)
 - [x] spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR with numeric threshold but no measurement unit → issue #145 → PR #151 → merged 2026-08-12
 - [x] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines → issue #146 → PR #153 → merged 2026-08-14
 - [ ] spec-missing-motivation — promoted to issue #147
@@ -317,3 +317,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 59 (2026-08-21): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 3 parallel research agents (QVscribe/EARS/ISO-29148, Kiro/Tessl/Canon/MAQA/INVEST, OpenSpec/Spec-Kit/AIDE); filed 4 new issues (#163 SPEC-QVSCRIBE-BICONDITIONAL, #164 SPEC-QVSCRIBE-ABSOLUTE-TERM, #165 PLAN-HARDCODED-CONFIG, #166 SPEC-NFR-NO-LOAD-CONTEXT). Phase 4 picked #163 (SPEC-QVSCRIBE-BICONDITIONAL — 'if and only if' in normative requirement creates two implicit test obligations; _BICONDITIONAL_RE = \\bif\\s+and\\s+only\\s+if\\b; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent)); pytest 920 green; benchmark good=100 bad=50.8 precision=0.975 PASS; PR #167 opened (draft); issue #163 commented.
 - iter 60 (2026-08-22): Phase 1 no open loop/* PRs (0); PR #167 was already merged to main in prior run. Phase 2 found 3 open loop-candidate issues (#164, #165, #166). Phase 4 picked #164 (SPEC-QVSCRIBE-ABSOLUTE-TERM — normative requirement lines asserting absolute perfection via three patterns: A) '100%' + quality-attribute word (uptime/availability/reliability/accuracy/consistency/coverage/fault-free/error-free); B) 'zero' + failure-mode word (downtime/errors/defects/failures/data loss/latency); C) 'fully'/'completely'/'perfectly' + quality term (operational/compliant/functional/consistent/reliable/available/accurate); _ABSOLUTE_100PCT_RE + _ABSOLUTE_ZERO_RE + _ABSOLUTE_ADVERB_RE constants; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent)); pytest 933 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #168 opened (draft); issue #164 commented.
 - iter 61 (2026-08-23): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#165 PLAN-HARDCODED-CONFIG, #166 SPEC-NFR-NO-LOAD-CONTEXT). Phase 4 picked #165 (PLAN-HARDCODED-CONFIG — non-fenced plan.md line with literal IPv4:port or non-placeholder credential assignment; Tessl spec-first/Twelve-Factor Factor III; _IPV4_PORT_RE + _CREDENTIAL_ASSIGN_RE + _EXAMPLE_SECTION_RE; fenced-block + example-section exclusion; placeholder silence (***, <...>, ${...}); fires one aggregate finding at first offending line; 17 unit tests (7 fire, 10 silent)); pytest 950 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #169 opened (draft); issue #165 commented.
+- iter 62 (2026-08-24): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#166 SPEC-NFR-NO-LOAD-CONTEXT). Phase 4 picked #166 (SPEC-NFR-NO-LOAD-CONTEXT — performance NFR with unit'd time threshold (200ms/2 seconds/N minutes/hours/days) but no load-context word (concurrent/users/rps/tps/qps/peak/load/p95/p99/percentile/"at N users|requests|concurrent"); Canon Volere fit-criterion + MAQA Verifiability Level 2; third distinct verifiability gap after SPEC-NFR-NO-THRESHOLD and SPEC-NFR-NO-UNIT; _LATENCY_NFR_VOCAB_RE (latency|throughput|response time|response latency|uptime|availability plus "respond within/in/by/under/after/before" idiom) + _TIME_THRESHOLD_UNIT_RE + _LOAD_CONTEXT_RE constants; fires one aggregate finding at first offending line; applies to spec+plan artifacts; wired into _spec_checks() and _plan_checks(); 20 unit tests (7 fire, 13 silent) including a regression pinning benign-lookalike line 34 (p95 silences); pytest 970 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #170 opened (draft); issue #166 commented.
