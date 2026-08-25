@@ -1744,6 +1744,81 @@ def _plan_hardcoded_config(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     )]
 
 
+# Feature-launch vocabulary: signs a plan introduces a user-visible feature (PLAN-NO-FEATURE-FLAG guard).
+# Uses anchored word forms to avoid matching "re-introduce" or "introductory" as launch signals.
+_FEATURE_LAUNCH_RE = re.compile(
+    r"\bintroduc(?:e|ing|es|ed)\b"
+    r"|\bnew\s+feature\b"
+    r"|\blaunch(?:es|ing|ed)?\b"
+    r"|\broll(?:ing|ed)?\s+out\b"
+    r"|\brollout\b"
+    r"|\bnew\s+capability\b"
+    r"|\bnew\s+endpoint\b"
+    r"|\bnew\s+functionality\b"
+    r"|\bship(?:ping|ped|s)?\s+(?:the\s+)?(?:new\s+)?feature\b",
+    re.IGNORECASE,
+)
+
+# Silence tokens: any phased-rollout or feature-flag vocabulary makes the plan safe (PLAN-NO-FEATURE-FLAG).
+_FEATURE_FLAG_RE = re.compile(
+    r"\bfeature[\s_-]?flag\b"
+    r"|\bfeature[\s_-]?toggle\b"
+    r"|\bcanary\b"
+    r"|\bdark[\s-]launch\w*\b"
+    r"|\bblue[\s-]?green\b"
+    r"|\bphased[\s-]?rollout\b"
+    r"|\bphased[\s-]?deploy\w*\b"
+    r"|\bkill[\s_-]switch\b"
+    r"|\bpercent(?:age)?\s+of\s+(?:users?|traffic|requests?)\b"
+    r"|\btraffic[\s-]?split\b"
+    r"|\bflag[\s_-]?(?:gate|guard)\b"
+    r"|\blaunch[\s_-]?darkly\b"
+    r"|\bgradual[\s-]rollout\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_feature_flag(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan introduces a user-visible feature with no phased-rollout strategy (PLAN-NO-FEATURE-FLAG).
+
+    Amazon Kiro production-readiness and Tessl spec-first require plans that ship a new
+    feature to state how the rollout will be staged (feature flags, canary releases,
+    dark-launch, blue-green, or percentage-based traffic splits). This is distinct from
+    PLAN-MISSING-ROLLBACK (recovery after a bad deploy) and PLAN-MISSING-HEALTH-CHECK
+    (detecting a bad deploy via probes). A plan that exposes a new feature to the full user
+    base at once forfeits the ability to limit blast radius if the feature malfunctions.
+    """
+    p = catalog.get("PLAN-NO-FEATURE-FLAG")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard A: deployment vocabulary must be present (reuse existing deploy guard constants).
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Guard B: find the first non-fenced line with feature-launch vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    launch_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _FEATURE_LAUNCH_RE.search(line):
+            launch_hit = i + 1
+            break
+    if launch_hit is None:
+        return []
+    # Silence: any phased-rollout or feature-flag token anywhere in the document.
+    if _FEATURE_FLAG_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan introduces a new feature or capability but has no phased-rollout or feature-flag strategy.",
+        line=launch_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -2405,6 +2480,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_runbook(art, catalog))
     out.extend(_plan_async_no_dlq(art, catalog))
     out.extend(_plan_hardcoded_config(art, catalog))
+    out.extend(_plan_no_feature_flag(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
