@@ -806,6 +806,17 @@ detect = "Guard: non-fenced line matches _NFR_RE (latency/throughput/response ti
 fix = "Add a measurement unit to the numeric threshold. Examples: '200ms' (milliseconds), '99.9%' (percentage), '500 req/s' (requests per second), '50 MB' (megabytes), '2 cores' (CPU cores). Every numeric NFR threshold needs a quantity, a unit, and ideally a measurement context (e.g. 'under 200ms at the 95th percentile at peak load')."
 
 [[pitfall]]
+id = "SPEC-NFR-NO-LOAD-CONTEXT"
+name = "Performance NFR states a unit'd threshold with no load or scale context"
+dimension = "testability"
+artifacts = ["spec", "plan"]
+severity = "medium"
+method = "lint"
+why = "Canon Volere's fit-criterion rule (Alexander & Stevens, Writing Better Requirements) requires every non-functional requirement to specify a Scale (metric), a Meter (measurement method), a Must (threshold), AND the measurement context — at what load level the threshold is expected to hold. A response-time threshold that is quantified and unitised ('200ms') is still unverifiable if no load context is stated, because 200ms at 5 users tells a tester nothing about 200ms at 5,000 users. MAQA's Verifiability (Level 2) attribute treats missing measurement preconditions as an acceptance-testing defect. This check is the third distinct verifiability gap: SPEC-NFR-NO-THRESHOLD fires when no number is present at all, SPEC-NFR-NO-UNIT fires when a number lacks a unit, and this fires when both are present but the load context is not."
+detect = "Guard: non-fenced line matches performance vocabulary (latency|throughput|response time|response latency|uptime|availability) AND a normative indicator (shall|must|should|FR-\\d|NFR-\\d) AND a digit followed by a time unit (ms|milliseconds?|secs?|seconds?|\\bs\\b|mins?|minutes?|hours?|hrs?|days?). Silence: any load-context token on the same line — 'concurrent', 'users', 'requests per second', rps|tps|qps, 'peak'|'load', p95|p99|percentile, or 'at N users/requests/concurrent'. Fire one aggregate finding anchored at the first offending line."
+fix = "State the load or measurement context alongside the threshold so the requirement is testable. Examples: 'The API shall respond within 200ms (P95 latency) at 500 concurrent users under peak load', 'Response time shall stay under 2 seconds while the system handles 1000 requests per second', or 'P99 latency shall remain under 300ms during peak-hour load'. Every unit'd performance threshold needs both the metric and its measurement preconditions."
+
+[[pitfall]]
 id = "SPEC-QVSCRIBE-SHALL-BE-ABLE-TO"
 name = "'shall be able to' capability phrasing dilutes mandatory obligation"
 dimension = "clarity"
