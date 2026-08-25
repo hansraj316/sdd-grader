@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 63
 Last run: 2026-08-25
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -51,7 +51,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement (QVscribe Level-1 Clarity, ISO 29148 §5.2.5(a)) → issue #163 → PR #167 → merged 2026-08-21
 - [x] spec-qvscribe-absolute-term — SPEC-QVSCRIBE-ABSOLUTE-TERM: 100%/zero/fully perfection claim in quality requirement → issue #164 → PR #168 → merged 2026-08-22
 - [x] spec-nfr-no-load-context — SPEC-NFR-NO-LOAD-CONTEXT: performance NFR with no load/scale context (Canon Volere) → issue #166 → PR #170 → merged 2026-08-25
-- [~] plan-no-feature-flag — PLAN-NO-FEATURE-FLAG: deployment plan launches feature with no phased-rollout or feature-flag mention (Kiro/Tessl) → issue #171 → PR #174 (in review)
+- [x] plan-no-feature-flag — PLAN-NO-FEATURE-FLAG: deployment plan launches feature with no phased-rollout or feature-flag mention (Kiro/Tessl) → issue #171 → PR #174 → merged 2026-08-25
 - [x] spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR with numeric threshold but no measurement unit → issue #145 → PR #151 → merged 2026-08-12
 - [x] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines → issue #146 → PR #153 → merged 2026-08-14
 - [ ] spec-missing-motivation — promoted to issue #147
@@ -92,10 +92,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #171 → PR #174 plan-no-feature-flag — PLAN-NO-FEATURE-FLAG: deployment plan launches feature with no phased-rollout or feature-flag (Kiro production-readiness, Tessl spec-first); _FEATURE_LAUNCH_RE + _FEATURE_FLAG_RE; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fenced-block exclusion; 20 unit tests (7 fire, 13 silent); pytest 990 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (awaiting CI)
+(none)
 
 ## Merged
 
+- #171 → PR #174 plan-no-feature-flag — PLAN-NO-FEATURE-FLAG: deployment plan introduces feature with no phased-rollout or feature-flag strategy; _FEATURE_LAUNCH_RE + _FEATURE_FLAG_RE; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fenced-block exclusion; dark-launch\w* suffix fix; 20 unit tests (7 fire, 13 silent); pytest 990 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-25, CI was green; squash-merged same run).
 - #166 → PR #170 spec-nfr-no-load-context — SPEC-NFR-NO-LOAD-CONTEXT: performance NFR with unit'd time threshold but no load/scale context; _LATENCY_NFR_VOCAB_RE + _TIME_THRESHOLD_UNIT_RE + _LOAD_CONTEXT_RE; 20 unit tests; pytest 970 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-25, CI was green; squash-merged same run).
 - #165 → PR #169 plan-hardcoded-config — PLAN-HARDCODED-CONFIG: non-fenced plan.md line with literal IPv4:port or non-placeholder credential assignment; _IPV4_PORT_RE + _CREDENTIAL_ASSIGN_RE + _EXAMPLE_SECTION_RE; fenced-block exclusion; example/sample/reference sections skipped; placeholder silence (***, <...>, ${...}); fires one aggregate finding at first offending line; 17 unit tests (7 fire, 10 silent); pytest 950 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-23, CI was green; squash-merged same run).
 - #164 → PR #168 spec-qvscribe-absolute-term — SPEC-QVSCRIBE-ABSOLUTE-TERM: unprovable absolute perfection claim ('100% uptime', 'zero data loss', 'fully compliant') in normative requirement; _ABSOLUTE_100PCT_RE + _ABSOLUTE_ZERO_RE + _ABSOLUTE_ADVERB_RE; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; 13 unit tests (7 fire, 6 silent); pytest 933 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-22, CI was green; squash-merged same run).
