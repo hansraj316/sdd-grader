@@ -1037,6 +1037,82 @@ def _spec_qvscribe_absolute_term(art: Artifact, catalog: dict[str, Pitfall]) -> 
     ]
 
 
+# SPEC-QVSCRIBE-TIMEBOX-VAGUE: vague timing constraint in normative requirement.
+# Matches qualitative timing phrases that give no numeric bound.
+_TIMEBOX_VAGUE_RE = re.compile(
+    r"""
+    \b(?:
+        as\s+soon\s+as\s+possible
+        | ASAP
+        | promptly
+        | in\s+a\s+timely\s+manner
+        | without\s+(?:undue\s+)?delay
+        | at\s+the\s+earliest\s+(?:opportunity|convenience)
+    )\b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+# Silence when a numeric time unit appears on the same line (concrete bound present).
+_TIMEBOX_NUMERIC_UNIT_RE = re.compile(
+    r"""
+    \d+\s*
+    (?:ms|milliseconds?|seconds?|secs?|minutes?|mins?|hours?|hrs?|days?)\b
+    | per\s+(?:second|minute|hour|day)\b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _spec_qvscribe_timebox_vague(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Vague timing constraint on a requirement-bearing line (SPEC-QVSCRIBE-TIMEBOX-VAGUE).
+
+    QVscribe 'Imprecise Timebox' defect class — fires when a requirement line
+    substitutes a qualitative timing phrase ('as soon as possible', 'ASAP',
+    'promptly', 'in a timely manner', 'without delay') for a numeric bound.
+    ISO/IEC/IEEE 29148:2018 §5.2.5(i) requires every requirement to be verifiable
+    by finite means; 'promptly' supplies no stopping condition for acceptance
+    testing.
+
+    Distinct from SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED (temporal universals like
+    'always'/'never') and SPEC-NFR-NO-THRESHOLD (missing numeric value entirely).
+    This fires on any requirement-bearing line using a vague time adverb.
+
+    Scoped to non-fenced requirement-bearing lines via _requirement_mask().
+    Silenced when the same line also contains a numeric time unit (the concrete
+    bound makes the requirement verifiable despite the qualifier).
+    One aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-TIMEBOX-VAGUE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _TIMEBOX_VAGUE_RE.search(line) and not _TIMEBOX_NUMERIC_UNIT_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-TIMEBOX-VAGUE: {count} requirement line(s) use a vague timing "
+            "phrase ('as soon as possible', 'promptly', 'without delay', etc.) with no "
+            "numeric bound — no finite acceptance test can determine when the requirement "
+            "is satisfied; replace with a measurable threshold "
+            "(e.g. 'within 2 seconds', 'within 500 ms at ≤200 req/s').",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
 _PRIORITY_MARKER_RE = re.compile(
     r"""(?:
@@ -2432,6 +2508,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ears_trigger_inversion(art, catalog))
     out.extend(_spec_qvscribe_biconditional(art, catalog))
     out.extend(_spec_qvscribe_absolute_term(art, catalog))
+    out.extend(_spec_qvscribe_timebox_vague(art, catalog))
     return out
 
 
