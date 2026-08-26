@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 64
 Last run: 2026-08-26
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -41,7 +41,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] trend-regression — Dashboard flags a score regression vs the previous run. (sddgrade gap)
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
 - [x] spec-qvscribe-and-or — SPEC-QVSCRIBE-AND-OR: 'and/or' ambiguous conjunction on requirement lines (QVscribe Level-1 Clarity / ISO 29148 §5.2.5(a)) → issue #135 → PR #140 → merged 2026-08-07
-- [~] spec-qvscribe-timebox-vague — SPEC-QVSCRIBE-TIMEBOX-VAGUE: vague timing constraint ('as soon as possible', 'promptly', 'without delay') in normative requirement (QVscribe Imprecise Timebox, ISO 29148 §5.2.5(i)) → issue #175 → PR #178
+- [x] spec-qvscribe-timebox-vague — SPEC-QVSCRIBE-TIMEBOX-VAGUE: vague timing constraint ('as soon as possible', 'promptly', 'without delay') in normative requirement (QVscribe Imprecise Timebox, ISO 29148 §5.2.5(i)) → issue #175 → PR #178 → merged 2026-08-26
 - [ ] spec-maqa-ac-conditional — SPEC-MAQA-AC-CONDITIONAL: conditional language (if/unless/may/should) in Gherkin Then clause makes AC non-binary (MAQA binary-verifiability) → issue #136
 - [ ] spec-maqa-missing-priority — SPEC-MAQA-MISSING-PRIORITY: spec with 3+ FR- lines but no priority annotation (MoSCoW/P1-P3/High-Low) → issue #137
 - [ ] spec-missing-glossary — SPEC-MISSING-GLOSSARY: spec with ≥3 FR-/NFR- lines but no Glossary/Definitions section (ISO 29148 §5.2.1) → issue #138
@@ -93,10 +93,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #175 → PR #178 spec-qvscribe-timebox-vague — awaiting CI (2026-08-26)
+(none)
 
 ## Merged
 
+- #175 → PR #178 spec-qvscribe-timebox-vague — SPEC-QVSCRIBE-TIMEBOX-VAGUE: vague timing constraint ('as soon as possible'/'ASAP'/'promptly'/'in a timely manner'/'without delay'/'without undue delay'/'at the earliest opportunity/convenience') in normative requirement; _TIMEBOX_VAGUE_RE + _TIMEBOX_NUMERIC_UNIT_RE; scoped via _requirement_mask()/_fence_mask(); silent when numeric time unit on same line; 15 unit tests (8 fire, 7 silent); pytest 1005 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-26, CI was green; squash-merged same run).
 - #171 → PR #174 plan-no-feature-flag — PLAN-NO-FEATURE-FLAG: deployment plan introduces feature with no phased-rollout or feature-flag strategy; _FEATURE_LAUNCH_RE + _FEATURE_FLAG_RE; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fenced-block exclusion; dark-launch\w* suffix fix; 20 unit tests (7 fire, 13 silent); pytest 990 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-25, CI was green; squash-merged same run).
 - #166 → PR #170 spec-nfr-no-load-context — SPEC-NFR-NO-LOAD-CONTEXT: performance NFR with unit'd time threshold but no load/scale context; _LATENCY_NFR_VOCAB_RE + _TIME_THRESHOLD_UNIT_RE + _LOAD_CONTEXT_RE; 20 unit tests; pytest 970 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-25, CI was green; squash-merged same run).
 - #165 → PR #169 plan-hardcoded-config — PLAN-HARDCODED-CONFIG: non-fenced plan.md line with literal IPv4:port or non-placeholder credential assignment; _IPV4_PORT_RE + _CREDENTIAL_ASSIGN_RE + _EXAMPLE_SECTION_RE; fenced-block exclusion; example/sample/reference sections skipped; placeholder silence (***, <...>, ${...}); fires one aggregate finding at first offending line; 17 unit tests (7 fire, 10 silent); pytest 950 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-23, CI was green; squash-merged same run).
