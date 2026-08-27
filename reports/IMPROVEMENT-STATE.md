@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 64
-Last run: 2026-08-26
-Open loop PRs: 0
+Iteration: 65
+Last run: 2026-08-27
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -42,6 +42,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [ ] fix-mode — `--fix` writes improved sections/acceptance criteria to disk (guarded). (roadmap)
 - [x] spec-qvscribe-and-or — SPEC-QVSCRIBE-AND-OR: 'and/or' ambiguous conjunction on requirement lines (QVscribe Level-1 Clarity / ISO 29148 §5.2.5(a)) → issue #135 → PR #140 → merged 2026-08-07
 - [x] spec-qvscribe-timebox-vague — SPEC-QVSCRIBE-TIMEBOX-VAGUE: vague timing constraint ('as soon as possible', 'promptly', 'without delay') in normative requirement (QVscribe Imprecise Timebox, ISO 29148 §5.2.5(i)) → issue #175 → PR #178 → merged 2026-08-26
+- [~] spec-nfr-statistical-ambiguity — SPEC-NFR-STATISTICAL-AMBIGUITY: latency NFR uses mean/average instead of percentile specifier (ISO 29148 §5.2.5(a)/(i), QVscribe Imprecise Measurement) → issue #177 → PR #179
 - [ ] spec-maqa-ac-conditional — SPEC-MAQA-AC-CONDITIONAL: conditional language (if/unless/may/should) in Gherkin Then clause makes AC non-binary (MAQA binary-verifiability) → issue #136
 - [ ] spec-maqa-missing-priority — SPEC-MAQA-MISSING-PRIORITY: spec with 3+ FR- lines but no priority annotation (MoSCoW/P1-P3/High-Low) → issue #137
 - [ ] spec-missing-glossary — SPEC-MISSING-GLOSSARY: spec with ≥3 FR-/NFR- lines but no Glossary/Definitions section (ISO 29148 §5.2.1) → issue #138
@@ -93,7 +94,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #177 → PR #179 spec-nfr-statistical-ambiguity — SPEC-NFR-STATISTICAL-AMBIGUITY: latency NFR uses mean/average instead of percentile specifier; _LATENCY_QUALITY_RE + _MEAN_AVERAGE_RE + _PERCENTILE_SPECIFIER_RE + _NORMATIVE_MODAL_RE; scoped via _requirement_mask()/_fence_mask(); fires even when load IS stated (statistical qualifier is the problem); 18 unit tests (8 fire, 10 silent); pytest 1023 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS
 
 ## Merged
 
@@ -325,3 +326,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 63 (2026-08-25): Phase 1 merged PR #170 (SPEC-NFR-NO-LOAD-CONTEXT, issue #166 closed, CI was green; converted draft → ready + squash-merged via MCP). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 3 parallel research agents (QVscribe/EARS/ISO-29148 → 3 ideas; Kiro/Tessl/Canon → 3 ideas; INVEST/MAQA/IBM-RQA → 3 ideas); filed 6 new issues (#171 PLAN-NO-FEATURE-FLAG, #172 SPEC-MISSING-PII-HANDLING, #173 SPEC-GHERKIN-MISSING-GIVEN, #175 SPEC-QVSCRIBE-TIMEBOX-VAGUE, #176 SPEC-EARS-VAGUE-TRIGGER, #177 SPEC-NFR-STATISTICAL-AMBIGUITY). Phase 4 picked #171 (PLAN-NO-FEATURE-FLAG — deployment plan introduces user-visible feature/capability with no phased-rollout or feature-flag strategy; Amazon Kiro/Tessl spec-first; _FEATURE_LAUNCH_RE + _FEATURE_FLAG_RE; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; 20 unit tests (7 fire, 13 silent)); pytest 990 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #174 opened (draft); issue #171 commented.
 - iter 62 (2026-08-24): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#166 SPEC-NFR-NO-LOAD-CONTEXT). Phase 4 picked #166 (SPEC-NFR-NO-LOAD-CONTEXT — performance NFR with unit'd time threshold (200ms/2 seconds/N minutes/hours/days) but no load-context word (concurrent/users/rps/tps/qps/peak/load/p95/p99/percentile/"at N users|requests|concurrent"); Canon Volere fit-criterion + MAQA Verifiability Level 2; third distinct verifiability gap after SPEC-NFR-NO-THRESHOLD and SPEC-NFR-NO-UNIT; _LATENCY_NFR_VOCAB_RE (latency|throughput|response time|response latency|uptime|availability plus "respond within/in/by/under/after/before" idiom) + _TIME_THRESHOLD_UNIT_RE + _LOAD_CONTEXT_RE constants; fires one aggregate finding at first offending line; applies to spec+plan artifacts; wired into _spec_checks() and _plan_checks(); 20 unit tests (7 fire, 13 silent) including a regression pinning benign-lookalike line 34 (p95 silences); pytest 970 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #170 opened (draft); issue #166 commented.
 - iter 64 (2026-08-26): Phase 1 no open loop/* PRs (0). Phase 2 found 5 open loop-candidate issues (#172-#173, #175-#177). Phase 4 picked #175 (SPEC-QVSCRIBE-TIMEBOX-VAGUE — qualitative timing phrase with no numeric bound in normative requirement lines: 'as soon as possible'/'ASAP'/'promptly'/'in a timely manner'/'without delay'/'without undue delay'/'at the earliest opportunity/convenience'; QVscribe Imprecise Timebox defect class; ISO 29148 §5.2.5(i); distinct from SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED and SPEC-NFR-NO-THRESHOLD; _TIMEBOX_VAGUE_RE + _TIMEBOX_NUMERIC_UNIT_RE constants; _spec_qvscribe_timebox_vague() wired into _spec_checks(); silent when numeric time unit on same line; 15 unit tests (8 fire, 7 silent)); pytest 1005 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #178 opened (draft); issue #175 commented.
+- iter 65 (2026-08-27): Phase 1 no open loop/* PRs (0); PR #178 appears already merged (squash-merged in prior run). Phase 2 found 4 open loop-candidate issues (#172-#173, #176-#177). Phase 4 picked #177 (SPEC-NFR-STATISTICAL-AMBIGUITY — latency NFR uses 'average'/'mean' as statistical qualifier instead of percentile specifier; mean masks tail behaviour, p99 can be order-of-magnitude higher; ISO 29148 §5.2.5(a)/(i) unambiguous+verifiable; QVscribe Imprecise Measurement; fires even when load IS stated; _LATENCY_QUALITY_RE + _MEAN_AVERAGE_RE + _PERCENTILE_SPECIFIER_RE + _NORMATIVE_MODAL_RE constants; _spec_nfr_statistical_ambiguity() wired into _spec_checks(); 18 unit tests (8 fire, 10 silent)); pytest 1023 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #179 opened (draft); issue #177 commented.
