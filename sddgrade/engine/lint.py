@@ -1414,6 +1414,78 @@ def _spec_nfr_no_load_context(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     return []
 
 
+# SPEC-NFR-STATISTICAL-AMBIGUITY: latency NFR qualified by "average"/"mean" instead
+# of a percentile specifier. The mean masks tail behaviour; p99 can be an order of
+# magnitude higher than the mean under realistic load distributions (Google SRE Book,
+# Ch.4). ISO 29148 §5.2.5(a) unambiguous + §5.2.5(i) verifiable. Distinct from
+# SPEC-NFR-NO-LOAD-CONTEXT (fires even when load IS stated, because the statistical
+# qualifier is the problem) and from SPEC-QVSCRIBE-TIMEBOX-VAGUE (fires on vague
+# adverbs, not on a present but statistically misleading qualifier).
+_LATENCY_QUALITY_RE = re.compile(
+    r"\b(?:latency|response[\s-]?time|throughput|query\s+time|processing\s+time)\b",
+    re.IGNORECASE,
+)
+_MEAN_AVERAGE_RE = re.compile(
+    r"\b(?:average|mean)\b",
+    re.IGNORECASE,
+)
+_PERCENTILE_SPECIFIER_RE = re.compile(
+    r"\b(?:p\d{2,3}|percentile|median|p99|p95|p50)\b",
+    re.IGNORECASE,
+)
+_NORMATIVE_MODAL_RE = re.compile(
+    r"\b(?:shall|must)\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_statistical_ambiguity(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Latency NFR uses mean/average instead of a percentile specifier (SPEC-NFR-STATISTICAL-AMBIGUITY).
+
+    ISO 29148 §5.2.5(a) unambiguous + §5.2.5(i) verifiable: a latency threshold
+    stated as "average" or "mean" is ambiguous because mean latency masks tail
+    behaviour. This check fires even when load IS stated ('at 100 rps, average
+    response time shall be < 200ms') because the statistical qualifier itself is the
+    problem. QVscribe Imprecise Measurement defect.
+
+    Guards (all must fire on the same non-fenced line):
+      1. Latency/performance vocabulary (_LATENCY_QUALITY_RE)
+      2. Mean/average qualifier (_MEAN_AVERAGE_RE)
+      3. Normative modal: shall/must (_NORMATIVE_MODAL_RE)
+    Silence: any percentile specifier on the same line (_PERCENTILE_SPECIFIER_RE).
+    Fire one aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-NFR-STATISTICAL-AMBIGUITY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _LATENCY_QUALITY_RE.search(line):
+            continue
+        if not _MEAN_AVERAGE_RE.search(line):
+            continue
+        if not _NORMATIVE_MODAL_RE.search(line):
+            continue
+        if _PERCENTILE_SPECIFIER_RE.search(line):
+            continue
+        return [
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-STATISTICAL-AMBIGUITY: latency/performance NFR uses 'average' or "
+                "'mean' as the statistical qualifier, which masks tail behaviour and is "
+                "ambiguous (ISO 29148 §5.2.5(a)/(i); QVscribe Imprecise Measurement). "
+                "Replace with a percentile specifier — e.g. 'p95 response time shall be "
+                "≤ 200ms at 500 concurrent users'.",
+                line=i,
+            )
+        ]
+    return []
+
+
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
     p = catalog.get("PLAN-MISSING-ROLLBACK")
@@ -2509,6 +2581,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_biconditional(art, catalog))
     out.extend(_spec_qvscribe_absolute_term(art, catalog))
     out.extend(_spec_qvscribe_timebox_vague(art, catalog))
+    out.extend(_spec_nfr_statistical_ambiguity(art, catalog))
     return out
 
 
