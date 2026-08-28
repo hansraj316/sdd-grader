@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 65
-Last run: 2026-08-27
-Open loop PRs: 0
+Iteration: 66
+Last run: 2026-08-28
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -74,6 +74,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-ac-vague-outcome — SPEC-AC-VAGUE-OUTCOME: Gherkin Then clause with vague outcome words (correctly/properly/as expected) with no observable condition (MAQA binary-verifiable AC rule) → issue #130 → PR #132 → merged 2026-08-05
 - [x] spec-fr-no-story — SPEC-FR-NO-STORY: FR-/NFR- line in spec outside any US-NNN section and no [US#] tag (Canon/29148 traceability) → issue #129 → PR #133 → merged 2026-08-06
 - [x] spec-missing-motivation — SPEC-MISSING-MOTIVATION: spec with ≥3 FR-/NFR- lines but no Problem Statement / Motivation / Background heading → issue #147 → PR #154 → merged 2026-08-15
+- [~] spec-missing-pii-handling — SPEC-MISSING-PII-HANDLING: spec references personal data or regulated data category (GDPR/CCPA/HIPAA/email address/phone number/user profile/PII) but no privacy or data-retention statement → issue #172 → PR #180
 - [~] spec-maqa-ac-conditional — SPEC-MAQA-AC-CONDITIONAL: conditional language (if/unless/depending/may/should/might/could) in Gherkin Then clause makes AC non-binary (MAQA binary-verifiability) → issue #136 → PR #141
 - [x] spec-maqa-missing-priority — SPEC-MAQA-MISSING-PRIORITY: spec with 3+ FR reqs but no priority annotation (MoSCoW/P1-P3/High-Low) → issue #137 → PR #142 → merged 2026-08-09
 - [x] tasks-untraced-task — TASKS-UNTRACED-TASK pitfall: checkbox task with T## id but no [US#] tag and no FR-/NFR-/AC-/US- reference (ISO 29148 bidirectional traceability, Kiro/MAQA/Canon) → issue #105 → PR #108 → merged 2026-07-24
@@ -94,7 +95,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #172 → PR #180 spec-missing-pii-handling — awaiting CI
 
 ## Merged
 
@@ -328,3 +329,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 62 (2026-08-24): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#166 SPEC-NFR-NO-LOAD-CONTEXT). Phase 4 picked #166 (SPEC-NFR-NO-LOAD-CONTEXT — performance NFR with unit'd time threshold (200ms/2 seconds/N minutes/hours/days) but no load-context word (concurrent/users/rps/tps/qps/peak/load/p95/p99/percentile/"at N users|requests|concurrent"); Canon Volere fit-criterion + MAQA Verifiability Level 2; third distinct verifiability gap after SPEC-NFR-NO-THRESHOLD and SPEC-NFR-NO-UNIT; _LATENCY_NFR_VOCAB_RE (latency|throughput|response time|response latency|uptime|availability plus "respond within/in/by/under/after/before" idiom) + _TIME_THRESHOLD_UNIT_RE + _LOAD_CONTEXT_RE constants; fires one aggregate finding at first offending line; applies to spec+plan artifacts; wired into _spec_checks() and _plan_checks(); 20 unit tests (7 fire, 13 silent) including a regression pinning benign-lookalike line 34 (p95 silences); pytest 970 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #170 opened (draft); issue #166 commented.
 - iter 64 (2026-08-26): Phase 1 no open loop/* PRs (0). Phase 2 found 5 open loop-candidate issues (#172-#173, #175-#177). Phase 4 picked #175 (SPEC-QVSCRIBE-TIMEBOX-VAGUE — qualitative timing phrase with no numeric bound in normative requirement lines: 'as soon as possible'/'ASAP'/'promptly'/'in a timely manner'/'without delay'/'without undue delay'/'at the earliest opportunity/convenience'; QVscribe Imprecise Timebox defect class; ISO 29148 §5.2.5(i); distinct from SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED and SPEC-NFR-NO-THRESHOLD; _TIMEBOX_VAGUE_RE + _TIMEBOX_NUMERIC_UNIT_RE constants; _spec_qvscribe_timebox_vague() wired into _spec_checks(); silent when numeric time unit on same line; 15 unit tests (8 fire, 7 silent)); pytest 1005 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #178 opened (draft); issue #175 commented.
 - iter 65 (2026-08-27): Phase 1 no open loop/* PRs (0); PR #178 appears already merged (squash-merged in prior run). Phase 2 found 4 open loop-candidate issues (#172-#173, #176-#177). Phase 4 picked #177 (SPEC-NFR-STATISTICAL-AMBIGUITY — latency NFR uses 'average'/'mean' as statistical qualifier instead of percentile specifier; mean masks tail behaviour, p99 can be order-of-magnitude higher; ISO 29148 §5.2.5(a)/(i) unambiguous+verifiable; QVscribe Imprecise Measurement; fires even when load IS stated; _LATENCY_QUALITY_RE + _MEAN_AVERAGE_RE + _PERCENTILE_SPECIFIER_RE + _NORMATIVE_MODAL_RE constants; _spec_nfr_statistical_ambiguity() wired into _spec_checks(); 18 unit tests (8 fire, 10 silent)); pytest 1023 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #179 opened (draft); issue #177 commented.
+- iter 66 (2026-08-28): Phase 1 no open loop/* PRs (0). Phase 2 found 3 open loop-candidate issues (#172 SPEC-MISSING-PII-HANDLING, #173 SPEC-GHERKIN-MISSING-GIVEN, #176 SPEC-EARS-VAGUE-TRIGGER). Phase 4 picked #172 (SPEC-MISSING-PII-HANDLING — spec references PII/GDPR/CCPA/HIPAA/email address/phone number/user profile/sensitive data/personally identifiable but no privacy or data-retention statement anywhere; Canon Volere Legal/Regulatory NFR + ISO 25010 §4.2.2.5 + GDPR Art. 25; _PII_TRIGGER_RE 10-pattern vocab + _PII_SILENCE_RE 10-token silence (US+British spelling of anonymise/pseudonymise) + _spec_missing_pii_handling() helper; fast-path silence-token scan; fires one aggregate finding at first PII-trigger line on non-fenced non-blockquote lines; plan artifacts skipped; 23 unit tests (10 fire, 13 silent)); pytest 1046 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #180 opened (draft); issue #172 commented.
