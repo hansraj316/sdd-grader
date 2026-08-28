@@ -1486,6 +1486,82 @@ def _spec_nfr_statistical_ambiguity(art: Artifact, catalog: dict[str, Pitfall]) 
     return []
 
 
+# SPEC-MISSING-PII-HANDLING: spec references personal data (PII/GDPR/CCPA) but
+# contains no privacy or data-retention statement. Canon Volere Legal/Regulatory
+# NFR category + ISO 25010 §4.2.2.5 Confidentiality + GDPR Art. 25 Data
+# Protection by Design.
+_PII_TRIGGER_RE = re.compile(
+    r"\b(?:"
+    r"PII"
+    r"|personal\s+data"
+    r"|personal\s+information"
+    r"|email\s+address(?:es)?"
+    r"|phone\s+number"
+    r"|date\s+of\s+birth"
+    r"|social\s+security"
+    r"|user\s+profile"
+    r"|GDPR"
+    r"|CCPA"
+    r"|HIPAA"
+    r"|sensitive\s+data"
+    r"|personally\s+identifiable"
+    r")\b",
+    re.IGNORECASE,
+)
+_PII_SILENCE_RE = re.compile(
+    r"(?:"
+    r"\bdata[\s_-]retention\b"
+    r"|\bprivacy\b"
+    r"|\banonymis?[ez]\w*"        # anonymize/anonymise/anonymised/anonymized
+    r"|\bpseudonymis?[ez]\w*"     # pseudonymize/pseudonymise/pseudonymised/pseudonymized
+    r"|\bconsent\b"
+    r"|\bdata[\s_-]minimis?[ez]\w*"  # minimise/minimize
+    r"|\bdata[\s_-]protection\b"
+    r"|\bpurge\w*\b"               # purge/purged/purges
+    r"|\bright\s+to\s+(?:erasure|deletion)\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_pii_handling(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec references PII/personal data with no privacy or data-retention statement (SPEC-MISSING-PII-HANDLING).
+
+    Canon Volere Legal/Regulatory NFR + ISO 25010 §4.2.2.5 Confidentiality +
+    GDPR Article 25 (Data Protection by Design). Fires when:
+      1. A non-fenced, non-blockquote line matches PII trigger vocabulary.
+      2. No privacy silence token appears anywhere in the document.
+    Fires one aggregate finding anchored at the first PII-trigger line.
+    """
+    p = catalog.get("SPEC-MISSING-PII-HANDLING")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Fast path: if any silence token appears anywhere, the spec already addresses privacy.
+    if _PII_SILENCE_RE.search(art.raw):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    for i, (line, in_fence) in enumerate(zip(lines, fenced), start=1):
+        if in_fence:
+            continue
+        # Skip blockquote lines (> prefix)
+        if line.lstrip().startswith(">"):
+            continue
+        if _PII_TRIGGER_RE.search(line):
+            return [
+                _from_pitfall(
+                    p, art.path,
+                    "SPEC-MISSING-PII-HANDLING: spec references personal data or a regulated data "
+                    "category (e.g. PII, GDPR, CCPA, email address) but contains no privacy or "
+                    "data-retention statement. Add a Privacy/Compliance section covering data "
+                    "minimisation, retention schedule, pseudonymisation/anonymisation, and consent "
+                    "(Canon Volere Legal NFR; ISO 25010 §4.2.2.5; GDPR Art. 25).",
+                    line=i,
+                )
+            ]
+    return []
+
+
 def _plan_missing_rollback(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Deployment plans that never mention a rollback/revert/fallback strategy (PLAN-MISSING-ROLLBACK)."""
     p = catalog.get("PLAN-MISSING-ROLLBACK")
@@ -2582,6 +2658,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_absolute_term(art, catalog))
     out.extend(_spec_qvscribe_timebox_vague(art, catalog))
     out.extend(_spec_nfr_statistical_ambiguity(art, catalog))
+    out.extend(_spec_missing_pii_handling(art, catalog))
     return out
 
 
