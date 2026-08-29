@@ -619,6 +619,77 @@ def _spec_maqa_ac_conditional(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     ]
 
 
+# SPEC-GHERKIN-MISSING-GIVEN: When step without a preceding Given in the same scenario block.
+_SCENARIO_HEADING_RE = re.compile(r"^\s*(?:#+\s*)?scenario(?:\s+outline)?\b", re.IGNORECASE)
+
+
+def _spec_gherkin_missing_given(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """When step without a preceding Given in the same scenario block (SPEC-GHERKIN-MISSING-GIVEN).
+
+    MAQA completeness rule: every Gherkin scenario must declare its initial state (Given)
+    before the action (When). A When without Given leaves the precondition undefined,
+    making the test non-reproducible across environments.
+
+    Guard: formal-Gherkin mode — at least one When line-leader AND one Then line-leader
+    present in the document.  Prose ACs without a When/Then structure are skipped.
+    Block boundaries are: a Scenario:/Scenario Outline: heading, or 2+ consecutive blank
+    lines before another When.
+    """
+    p = catalog.get("SPEC-GHERKIN-MISSING-GIVEN")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Require formal Gherkin mode: a When line-leader AND a Then line-leader present.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    hits: list[int] = []
+    in_block_given = False  # whether a Given appeared since the last block reset
+    blank_streak = 0
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            blank_streak = 0
+            continue
+        stripped = line.strip()
+
+        if not stripped:
+            blank_streak += 1
+            if blank_streak >= 2:
+                # Two or more consecutive blank lines reset the scenario block.
+                in_block_given = False
+            continue
+        blank_streak = 0
+
+        # Scenario:/Scenario Outline: heading resets the block.
+        if _SCENARIO_HEADING_RE.match(line):
+            in_block_given = False
+            continue
+
+        # Given line-leader: mark that the current block has a Given.
+        if _GHERKIN_GIVEN_RE.match(line):
+            in_block_given = True
+            continue
+
+        # When line-leader without a preceding Given in this block → fire.
+        if _GHERKIN_WHEN_RE.match(line) and not in_block_given:
+            hits.append(i + 1)  # 1-indexed
+
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-GHERKIN-MISSING-GIVEN: {len(hits)} When step(s) without a preceding Given "
+            "in the same scenario block; add a Given step to declare the system's initial state.",
+            line=hits[0],
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
 _AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
 
@@ -2644,6 +2715,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ac_no_fr_link(art, catalog))
     out.extend(_spec_qvscribe_and_or(art, catalog))
     out.extend(_spec_maqa_ac_conditional(art, catalog))
+    out.extend(_spec_gherkin_missing_given(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
