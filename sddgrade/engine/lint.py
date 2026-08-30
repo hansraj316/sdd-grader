@@ -1595,6 +1595,96 @@ _PII_SILENCE_RE = re.compile(
 )
 
 
+# SPEC-EARS-VAGUE-TRIGGER: EARS event-driven/state-driven requirement with a qualitative
+# trigger condition that cannot be objectively tested (EARS §4.4; ISO 29148 §5.2.5(i)).
+# Fires when the line has 'shall' and matches a vague trigger in one of three forms:
+#   - Adjective-before-noun: "high load", "heavy traffic"
+#     (when|while|if) ... (high|heavy|excessive|elevated|abnormal|peak) (load|traffic|demand|usage|volume)
+#   - Noun-predicate: "load is high", "traffic is heavy"
+#     (when|while|if) ... (load|traffic|demand|usage|volume) ... (high|heavy|excessive|elevated|abnormal|peak)
+#   - Spike form: "traffic spikes", "load spikes"
+# Silenced when the line also contains a numeric threshold (digit + unit) that grounds the trigger.
+_EARS_VAGUE_TRIGGER_PATTERN_RE = re.compile(
+    r"""
+    (?:
+        # Adjective-before-noun form: "high load", "heavy traffic"
+        \b(?:when|while|if)\b
+        [^.;\n]{0,80}
+        \b(?:high|heavy|excessive|elevated|abnormal|peak)\s+
+        (?:load|traffic|demand|usage|volume)\b
+    |
+        # Noun-predicate form: "load is high", "traffic is heavy"
+        \b(?:when|while|if)\b
+        [^.;\n]{0,80}
+        \b(?:load|traffic|demand|usage|volume)\b
+        [^.;\n]{0,30}
+        \b(?:high|heavy|excessive|elevated|abnormal|peak)\b
+    |
+        # Spike form: "traffic spikes", "load spikes"
+        \b(?:load|traffic|demand|usage)\s+spikes?\b
+    )
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_EARS_VAGUE_TRIGGER_SHALL_RE = re.compile(r"\bshall\b", re.IGNORECASE)
+_EARS_VAGUE_TRIGGER_NUMERIC_RE = re.compile(
+    r"\b\d+\s*(?:%|rps|qps|req|users?|connections?|ms|MB|GB|tps)\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_ears_vague_trigger(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """EARS event-driven requirement with qualitative/unmeasurable trigger condition (SPEC-EARS-VAGUE-TRIGGER).
+
+    EARS (Mavin et al. 2009; ISO/IEC/IEEE 29148:2018 §4.4 and §5.2.5(i)) requires event-driven
+    triggers to be objectively observable — the precondition must be deterministically true or
+    false at test time. Triggers like 'when the load is high' or 'when traffic spikes' are
+    qualitative; acceptance testing cannot determine whether the trigger has fired without a
+    numeric threshold (e.g. 'when CPU exceeds 80%', 'when request rate exceeds 1000 rps').
+    Distinct from SPEC-EARS-TRIGGER-INVERSION which checks word-order errors ('shall … when');
+    this checks the semantic quality of the trigger content when word order is correct.
+    Scoped to requirement-bearing lines via _requirement_mask(); fenced blocks excluded.
+    One aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-EARS-VAGUE-TRIGGER")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        # Must have 'shall' on the line (EARS event-driven form)
+        if not _EARS_VAGUE_TRIGGER_SHALL_RE.search(line):
+            continue
+        # Must match a vague trigger pattern
+        if not _EARS_VAGUE_TRIGGER_PATTERN_RE.search(line):
+            continue
+        # Silenced when a numeric threshold grounds the trigger
+        if _EARS_VAGUE_TRIGGER_NUMERIC_RE.search(line):
+            continue
+        count += 1
+        if first_line is None:
+            first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-EARS-VAGUE-TRIGGER: {count} requirement line(s) use an EARS event-driven form "
+            "('when/while/if ... shall') with a qualitative trigger condition (e.g. 'when the load "
+            "is high', 'when traffic spikes') that cannot be deterministically tested without a "
+            "numeric threshold. Replace with a measurable trigger: 'when CPU exceeds 80%', "
+            "'when request rate exceeds 1000 rps' (EARS §4.4; ISO 29148 §5.2.5(i) verifiable).",
+            line=first_line,
+        )
+    ]
+
+
 def _spec_missing_pii_handling(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Spec references PII/personal data with no privacy or data-retention statement (SPEC-MISSING-PII-HANDLING).
 
@@ -2731,6 +2821,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_timebox_vague(art, catalog))
     out.extend(_spec_nfr_statistical_ambiguity(art, catalog))
     out.extend(_spec_missing_pii_handling(art, catalog))
+    out.extend(_spec_ears_vague_trigger(art, catalog))
     return out
 
 
