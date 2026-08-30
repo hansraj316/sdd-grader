@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 67
-Last run: 2026-08-29
-Open loop PRs: 0
+Iteration: 68
+Last run: 2026-08-30
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -96,7 +96,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #176 → PR #182 spec-ears-vague-trigger — SPEC-EARS-VAGUE-TRIGGER: EARS event-driven req with qualitative/unmeasurable trigger condition (when/while/if ... shall + high/heavy/excessive/elevated/abnormal/peak load/traffic/demand/usage/volume or spikes); noun-predicate + adjective-before-noun + spike forms; numeric threshold silence; 17 unit tests (8 fire, 9 silent); pytest 1077 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS
 
 ## Merged
 
@@ -334,3 +334,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 65 (2026-08-27): Phase 1 no open loop/* PRs (0); PR #178 appears already merged (squash-merged in prior run). Phase 2 found 4 open loop-candidate issues (#172-#173, #176-#177). Phase 4 picked #177 (SPEC-NFR-STATISTICAL-AMBIGUITY — latency NFR uses 'average'/'mean' as statistical qualifier instead of percentile specifier; mean masks tail behaviour, p99 can be order-of-magnitude higher; ISO 29148 §5.2.5(a)/(i) unambiguous+verifiable; QVscribe Imprecise Measurement; fires even when load IS stated; _LATENCY_QUALITY_RE + _MEAN_AVERAGE_RE + _PERCENTILE_SPECIFIER_RE + _NORMATIVE_MODAL_RE constants; _spec_nfr_statistical_ambiguity() wired into _spec_checks(); 18 unit tests (8 fire, 10 silent)); pytest 1023 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #179 opened (draft); issue #177 commented.
 - iter 66 (2026-08-28): Phase 1 no open loop/* PRs (0). Phase 2 found 3 open loop-candidate issues (#172 SPEC-MISSING-PII-HANDLING, #173 SPEC-GHERKIN-MISSING-GIVEN, #176 SPEC-EARS-VAGUE-TRIGGER). Phase 4 picked #172 (SPEC-MISSING-PII-HANDLING — spec references PII/GDPR/CCPA/HIPAA/email address/phone number/user profile/sensitive data/personally identifiable but no privacy or data-retention statement anywhere; Canon Volere Legal/Regulatory NFR + ISO 25010 §4.2.2.5 + GDPR Art. 25; _PII_TRIGGER_RE 10-pattern vocab + _PII_SILENCE_RE 10-token silence (US+British spelling of anonymise/pseudonymise) + _spec_missing_pii_handling() helper; fast-path silence-token scan; fires one aggregate finding at first PII-trigger line on non-fenced non-blockquote lines; plan artifacts skipped; 23 unit tests (10 fire, 13 silent)); pytest 1046 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #180 opened (draft); issue #172 commented.
 - iter 67 (2026-08-29): Phase 1 no open loop/* PRs (0); PR #180 already merged to main. Phase 2 found 2 open loop-candidate issues (#173 SPEC-GHERKIN-MISSING-GIVEN, #176 SPEC-EARS-VAGUE-TRIGGER). Phase 4 picked #173 (SPEC-GHERKIN-MISSING-GIVEN — When line-leader in a Gherkin scenario block with no preceding Given since last boundary; MAQA completeness rule; guard=formal-Gherkin mode (When+Then line-leaders); _SCENARIO_HEADING_RE + _spec_gherkin_missing_given(); block-boundary reset on Scenario heading or 2+ blank lines; fenced-block exclusion; aggregate finding at first offending When line with count; 14 unit tests (6 fire, 8 silent)); pytest 1060 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #181 opened (draft); issue #173 commented. CI went green same run; PR #181 squash-merged (issue #173 auto-closed).
+- iter 68 (2026-08-30): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#176 SPEC-EARS-VAGUE-TRIGGER). Phase 4 picked #176 (SPEC-EARS-VAGUE-TRIGGER — EARS event-driven req with qualitative/unmeasurable trigger condition; fires when 'shall' + vague trigger: adjective-before-noun form ('high load'/'heavy traffic'), noun-predicate form ('load is high'/'traffic is heavy'), spike form ('traffic spikes'); silenced when numeric threshold (digit + %/rps/qps/req/users/connections/ms/MB/GB/tps) on same line; EARS §4.4; ISO 29148 §5.2.5(i); _EARS_VAGUE_TRIGGER_PATTERN_RE 3-alternative VERBOSE regex + _EARS_VAGUE_TRIGGER_SHALL_RE + _EARS_VAGUE_TRIGGER_NUMERIC_RE; spec artifacts only; 17 unit tests (8 fire, 9 silent)); pytest 1077 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #182 opened (draft); issue #176 commented.
