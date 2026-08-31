@@ -1685,6 +1685,87 @@ def _spec_ears_vague_trigger(art: Artifact, catalog: dict[str, Pitfall]) -> list
     ]
 
 
+# SPEC-SUBJECTIVE-ADJECTIVE: normative requirement line containing an unmeasurable subjective
+# quality adjective (QVscribe Level-1 Clarity Rule QV-114; ISO 29148 §5.2.5(a) Unambiguous,
+# §5.2.5(i) Verifiable).  Words like 'user-friendly', 'intuitive', 'seamless', 'elegant', etc.
+# give no objective pass/fail criterion — testers cannot determine when the requirement is met.
+# Distinct from SPEC-QVSCRIBE-VAGUE-QUANTIFIER (quantity words) and
+# SPEC-QVSCRIBE-TIMEBOX-VAGUE (timing adverbs): this targets quality adjectives.
+_SUBJECTIVE_ADJ_RE = re.compile(
+    r"""
+    \b(?:
+        user[\s-]friendly               # "user-friendly" / "user friendly"
+        | intuitive                      # no measurable threshold
+        | seamless                       # implies frictionless without criterion
+        | easy[\s-]to[\s-]use            # subjective ease
+        | easy[\s-]to[\s-]understand     # subjective clarity
+        | easy[\s-]to[\s-]navigate       # subjective navigation
+        | elegant                        # aesthetic claim
+        | modern                         # temporal/aesthetic claim
+        | \brobust\b                     # vague resilience (not a numeric SLA)
+        | \bclean\b                      # aesthetic code/UI claim
+        | \bfast\b                       # needs a measurable bound
+        | \bsimple\b                     # subjective simplicity
+    )\b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Silence if the same line contains a numeric measurable comparator
+# (e.g. "< 2 s", "≤ 500 ms", "≥ 95%") — the adjective is grounded by a concrete bound.
+_SUBJECTIVE_ADJ_NUMERIC_SILENCE_RE = re.compile(
+    r"\b\d+\s*(?:ms|s\b|sec\b|min\b|%|rps|qps|req|users?|concurrent|tps|KB|MB|GB)\b"
+    r"|\b(?:p\d{2,3}|percentile)\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_subjective_adjective(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Normative requirement line with unmeasurable subjective adjective (SPEC-SUBJECTIVE-ADJECTIVE).
+
+    QVscribe Rule QV-114 (Subjective Language) classifies adjectives like 'user-friendly',
+    'intuitive', 'seamless', 'modern', 'simple', 'fast', 'clean', 'elegant', and 'robust'
+    as Level-1 clarity defects when they appear in normative requirement lines without an
+    accompanying measurable criterion.  ISO/IEC/IEEE 29148:2018 §5.2.5(a) Unambiguous requires
+    a single interpretation; §5.2.5(i) Verifiable requires finite-means testability.
+    Scoped to requirement-bearing lines via _requirement_mask(); fenced blocks excluded.
+    Silenced when the same line contains a numeric measurable comparator (digit + unit).
+    One aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-SUBJECTIVE-ADJECTIVE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if not _SUBJECTIVE_ADJ_RE.search(line):
+            continue
+        # Silence: line already contains a numeric measurable bound
+        if _SUBJECTIVE_ADJ_NUMERIC_SILENCE_RE.search(line):
+            continue
+        count += 1
+        if first_line is None:
+            first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-SUBJECTIVE-ADJECTIVE: {count} normative requirement line(s) contain an "
+            "unmeasurable subjective adjective (user-friendly/intuitive/seamless/elegant/robust/"
+            "simple/fast/clean/modern/easy-to-use); replace with a measurable criterion "
+            "(e.g. 'task completion rate ≥ 90% in ≤ 30 s' instead of 'intuitive interface').",
+            line=first_line,
+        )
+    ]
+
+
 def _spec_missing_pii_handling(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Spec references PII/personal data with no privacy or data-retention statement (SPEC-MISSING-PII-HANDLING).
 
@@ -2822,6 +2903,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_nfr_statistical_ambiguity(art, catalog))
     out.extend(_spec_missing_pii_handling(art, catalog))
     out.extend(_spec_ears_vague_trigger(art, catalog))
+    out.extend(_spec_subjective_adjective(art, catalog))
     return out
 
 
