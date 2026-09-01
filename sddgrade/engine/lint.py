@@ -2285,6 +2285,72 @@ def _plan_no_feature_flag(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fi
     )]
 
 
+# API-surface vocabulary for PLAN-NO-RATE-LIMITING: REST/GraphQL/gRPC/HTTP endpoints, webhooks, routes.
+_API_VOCAB_RE = re.compile(
+    r"\bapi\b"
+    r"|\brest(?:ful)?\b"
+    r"|\bgraphql\b"
+    r"|\bgrpc\b"
+    r"|\bhttp\s+endpoint\b"
+    r"|\bwebhook\b"
+    r"|\broute\b",
+    re.IGNORECASE,
+)
+
+# Silence tokens: any rate-limiting, throttling, quota, or circuit-breaker vocabulary silences the check.
+_RATE_LIMIT_SILENCE_RE = re.compile(
+    r"rate.?limit"
+    r"|throttl"
+    r"|\bquota\b"
+    r"|\bratelimit\b"
+    r"|\brate_limit\b"
+    r"|\bapi.?gateway\b"
+    r"|\bcircuit.?break"
+    r"|\bback.?pressure\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_rate_limiting(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan describes an API surface with no rate-limiting or throttling strategy (PLAN-NO-RATE-LIMITING).
+
+    OWASP API4:2023 Unrestricted Resource Consumption classifies missing rate-limiting as a
+    high-severity API security/reliability risk. Tessl's production-readiness gate and Kiro's
+    deployment checklist both require a throttling or quota strategy before an API goes live.
+    This is distinct from PLAN-MISSING-SECURITY (auth/TLS/secrets), PLAN-THIRD-PARTY-NO-FALLBACK
+    (outbound resilience), and PLAN-MISSING-HEALTH-CHECK (readiness probes).
+    """
+    p = catalog.get("PLAN-NO-RATE-LIMITING")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard A: deployment vocabulary must be present (reuse existing deploy guard constants).
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Guard B: API vocabulary must appear on at least one non-fenced line.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    api_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _API_VOCAB_RE.search(line):
+            api_hit = i + 1
+            break
+    if api_hit is None:
+        return []
+    # Silence: any rate-limiting, throttling, quota, or circuit-breaker token anywhere in the document.
+    if _RATE_LIMIT_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan describes an API surface but has no rate-limiting, throttling, or quota strategy.",
+        line=api_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -2953,6 +3019,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_async_no_dlq(art, catalog))
     out.extend(_plan_hardcoded_config(art, catalog))
     out.extend(_plan_no_feature_flag(art, catalog))
+    out.extend(_plan_no_rate_limiting(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
