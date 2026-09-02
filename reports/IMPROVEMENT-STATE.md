@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 71
 Last run: 2026-09-02
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -50,7 +50,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' before EARS trigger keyword (inverted ordering) → merged in PR #162
 - [x] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) → merged in PR #161
 - [x] spec-subjective-adjective — SPEC-SUBJECTIVE-ADJECTIVE: normative requirement with unmeasurable subjective adjective (user-friendly/intuitive/seamless/elegant/robust/simple/fast/clean/modern) → issue #183 → PR #186 → merged 2026-08-31
-- [~] spec-gherkin-multiple-when — SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders (MAQA single-action-per-scenario) → issue #184 → PR #188
+- [x] spec-gherkin-multiple-when — SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders (MAQA single-action-per-scenario) → issue #184 → PR #188 → merged 2026-09-02
 - [x] plan-no-rate-limiting — PLAN-NO-RATE-LIMITING: API-facing plan with no rate-limiting/throttling/quota vocabulary (OWASP API4:2023, Tessl, Kiro) → issue #185 → PR #187 → merged 2026-09-01
 - [x] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) → issue #165 → PR #169 → merged 2026-08-23
 - [x] spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement (QVscribe Level-1 Clarity, ISO 29148 §5.2.5(a)) → issue #163 → PR #167 → merged 2026-08-21
@@ -99,10 +99,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #184 → PR #188 spec-gherkin-multiple-when — SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders in the same block (MAQA single-action-per-scenario / INVEST Small); _spec_gherkin_multiple_when() reusing _SCENARIO_HEADING_RE/_GHERKIN_WHEN_RE/_GHERKIN_THEN_RE/_fence_mask(); guard=formal-Gherkin(When+Then); block reset on Scenario heading or 2+ blank lines; one aggregate finding per offending block; 13 tests (5 fire, 8 silent); pytest 1129 green; benchmark good=100.0 bad=50.8 PASS; awaiting CI.
+(none)
 
 ## Merged
 
+- #184 → PR #188 spec-gherkin-multiple-when — SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders in the same block (MAQA single-action-per-scenario / INVEST Small); _spec_gherkin_multiple_when() reusing _SCENARIO_HEADING_RE/_GHERKIN_WHEN_RE/_GHERKIN_THEN_RE/_fence_mask(); guard=formal-Gherkin(When+Then); block reset on Scenario heading or 2+ blank lines; one aggregate finding per offending block; 13 tests (5 fire, 8 silent); pytest 1129 green; benchmark good=100.0 bad=50.8 PASS (2026-09-02, CI green; squash-merged).
 - #185 → PR #187 plan-no-rate-limiting — PLAN-NO-RATE-LIMITING: API-facing deployment plan with no rate-limiting/throttling/quota/circuit-breaker strategy; _API_VOCAB_RE (api/rest(?:ful)?/graphql/grpc/http-endpoint/webhook/route) + _RATE_LIMIT_SILENCE_RE (rate.?limit/throttl/quota/ratelimit/rate_limit/api.?gateway/circuit.?break/back.?pressure); both deploy-guard + API-vocab guard must fire; fenced-block exclusion; aggregate finding at first API-vocab non-fenced line; 20 unit tests (7 fire, 13 silent); pytest 1116 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS (2026-09-01, CI was green; squash-merged).
 - #183 → PR #186 spec-subjective-adjective — SPEC-SUBJECTIVE-ADJECTIVE: normative requirement with unmeasurable subjective adjective (user-friendly/intuitive/seamless/elegant/robust/simple/fast/clean/modern/easy-to-use); _SUBJECTIVE_ADJ_RE VERBOSE 12-form regex + _SUBJECTIVE_ADJ_NUMERIC_SILENCE_RE silence; scoped via _requirement_mask()/_fence_mask(); one aggregate finding at first offending line; corpus/cases/ambiguous accepted_extras + judge.golden.json merged_overall 77.0→71.0; 19 unit tests (10 fire, 9 silent); pytest 1096 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS (2026-08-31, CI was green; squash-merged same run).
 - #176 → PR #182 spec-ears-vague-trigger — SPEC-EARS-VAGUE-TRIGGER: EARS event-driven req with qualitative/unmeasurable trigger condition; _EARS_VAGUE_TRIGGER_PATTERN_RE (3-alternative VERBOSE: adjective-before-noun + noun-predicate + spike forms) + numeric threshold silence; 17 unit tests (8 fire, 9 silent); pytest 1077 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS (2026-08-30, CI was green; squash-merged same run).
