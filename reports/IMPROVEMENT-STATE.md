@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 70
-Last run: 2026-09-01
-Open loop PRs: 0
+Iteration: 71
+Last run: 2026-09-02
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -50,7 +50,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-ears-trigger-inversion — SPEC-EARS-TRIGGER-INVERSION: 'shall' before EARS trigger keyword (inverted ordering) → merged in PR #162
 - [x] spec-qvscribe-weakened-except — SPEC-QVSCRIBE-WEAKENED-EXCEPT: shall/must qualified with 'except'/'unless' open-ended carve-out (QVscribe Weakness) → merged in PR #161
 - [x] spec-subjective-adjective — SPEC-SUBJECTIVE-ADJECTIVE: normative requirement with unmeasurable subjective adjective (user-friendly/intuitive/seamless/elegant/robust/simple/fast/clean/modern) → issue #183 → PR #186 → merged 2026-08-31
-- [ ] spec-gherkin-multiple-when — SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders (MAQA single-action-per-scenario) → issue #184
+- [~] spec-gherkin-multiple-when — SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders (MAQA single-action-per-scenario) → issue #184 → PR #188
 - [x] plan-no-rate-limiting — PLAN-NO-RATE-LIMITING: API-facing plan with no rate-limiting/throttling/quota vocabulary (OWASP API4:2023, Tessl, Kiro) → issue #185 → PR #187 → merged 2026-09-01
 - [x] plan-hardcoded-config — PLAN-HARDCODED-CONFIG: IPv4:port or credential patterns on non-fenced plan lines (Tessl/Twelve-Factor) → issue #165 → PR #169 → merged 2026-08-23
 - [x] spec-qvscribe-biconditional — SPEC-QVSCRIBE-BICONDITIONAL: 'if and only if' in normative requirement (QVscribe Level-1 Clarity, ISO 29148 §5.2.5(a)) → issue #163 → PR #167 → merged 2026-08-21
@@ -99,7 +99,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #184 → PR #188 spec-gherkin-multiple-when — SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders in the same block (MAQA single-action-per-scenario / INVEST Small); _spec_gherkin_multiple_when() reusing _SCENARIO_HEADING_RE/_GHERKIN_WHEN_RE/_GHERKIN_THEN_RE/_fence_mask(); guard=formal-Gherkin(When+Then); block reset on Scenario heading or 2+ blank lines; one aggregate finding per offending block; 13 tests (5 fire, 8 silent); pytest 1129 green; benchmark good=100.0 bad=50.8 PASS; awaiting CI.
 
 ## Merged
 
@@ -343,3 +343,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 68 (2026-08-30): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#176 SPEC-EARS-VAGUE-TRIGGER). Phase 4 picked #176 (SPEC-EARS-VAGUE-TRIGGER — EARS event-driven req with qualitative/unmeasurable trigger condition; fires when 'shall' + vague trigger: adjective-before-noun form ('high load'/'heavy traffic'), noun-predicate form ('load is high'/'traffic is heavy'), spike form ('traffic spikes'); silenced when numeric threshold (digit + %/rps/qps/req/users/connections/ms/MB/GB/tps) on same line; EARS §4.4; ISO 29148 §5.2.5(i); _EARS_VAGUE_TRIGGER_PATTERN_RE 3-alternative VERBOSE regex + _EARS_VAGUE_TRIGGER_SHALL_RE + _EARS_VAGUE_TRIGGER_NUMERIC_RE; spec artifacts only; 17 unit tests (8 fire, 9 silent)); pytest 1077 green; benchmark good=100.0 bad=50.8 precision=0.975 PASS; PR #182 opened (draft); issue #176 commented. CI green same run; PR #182 squash-merged (issue #176 auto-closed).
 - iter 69 (2026-08-31): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: research round; filed 3 new issues (#183 spec-subjective-adjective, #184 spec-gherkin-multiple-when, #185 plan-no-rate-limiting). Phase 4 picked #183 (SPEC-SUBJECTIVE-ADJECTIVE — normative requirement with unmeasurable subjective adjective; QVscribe QV-114 Level-1 Clarity, ISO 29148 §5.2.5(a)/(i); _SUBJECTIVE_ADJ_RE VERBOSE 12-form regex + _SUBJECTIVE_ADJ_NUMERIC_SILENCE_RE; silenced when digit+unit or percentile on same line; corpus/cases/ambiguous expected.json accepted_extras + judge.golden.json merged_overall 77.0→71.0 updated; 19 unit tests (10 fire, 9 silent)); pytest 1096 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS; PR #186 opened (draft); issue #183 commented. CI green same run; PR #186 squash-merged (issue #183 auto-closed).
 - iter 70 (2026-09-01): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#185 plan-no-rate-limiting, #184 spec-gherkin-multiple-when). Phase 4 picked #185 (PLAN-NO-RATE-LIMITING — API-facing deployment plan with no rate-limiting/throttling/quota/circuit-breaker; OWASP API4:2023, Kiro, Tessl, ISO 25010 §4.2.1.4; _API_VOCAB_RE (api/rest/graphql/grpc/http-endpoint/webhook/route) + _RATE_LIMIT_SILENCE_RE (rate.?limit/throttl/quota/ratelimit/rate_limit/api.?gateway/circuit.?break/back.?pressure); both deploy-guard + API-vocab guard must fire; fenced-block exclusion; aggregate finding at first API-vocab non-fenced line; 20 unit tests (7 fire, 13 silent)); pytest 1116 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS; PR #187 opened (draft); issue #185 commented. CI green (package+test); PR #187 squash-merged (issue #185 auto-closed).
+- iter 71 (2026-09-02): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#184 spec-gherkin-multiple-when). Phase 4 picked #184 (SPEC-GHERKIN-MULTIPLE-WHEN — Gherkin scenario with 2+ When line-leaders in same block; MAQA single-action-per-scenario / INVEST Small; _spec_gherkin_multiple_when() reusing _SCENARIO_HEADING_RE/_GHERKIN_WHEN_RE/_GHERKIN_THEN_RE/_fence_mask(); guard=formal-Gherkin(When+Then); block reset on Scenario heading or 2+ blank lines; one aggregate finding per offending block; 13 tests (5 fire, 8 silent)); pytest 1129 green; benchmark good=100.0 bad=50.8 PASS; PR #188 opened (draft); issue #184 commented.
