@@ -690,6 +690,78 @@ def _spec_gherkin_missing_given(art: Artifact, catalog: dict[str, Pitfall]) -> l
     ]
 
 
+# SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders in one block.
+
+
+def _spec_gherkin_multiple_when(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Gherkin scenario with 2+ When steps in the same block (SPEC-GHERKIN-MULTIPLE-WHEN).
+
+    MAQA precision rule: each Gherkin scenario must exercise exactly one action (When step).
+    Multiple When steps in a single block indicate a compound action that makes failure
+    isolation impossible — when the scenario fails, it is unclear which When caused it.
+
+    Guard: formal-Gherkin mode — at least one When line-leader AND at least one Then
+    line-leader present anywhere in the document.
+    Block boundaries: a Scenario:/Scenario Outline: heading, or 2+ consecutive blank lines.
+    Within each block, count When line-leaders; if count >= 2, fire one aggregate finding
+    anchored at the first offending second-When line.
+    """
+    p = catalog.get("SPEC-GHERKIN-MULTIPLE-WHEN")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Require formal Gherkin mode: a When line-leader AND a Then line-leader present.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    hits: list[int] = []  # 1-indexed line numbers of offending second-When per block
+    when_count_in_block = 0
+    blank_streak = 0
+    fired_this_block = False  # only fire once per block
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            blank_streak = 0
+            continue
+        stripped = line.strip()
+
+        if not stripped:
+            blank_streak += 1
+            if blank_streak >= 2:
+                # Two or more consecutive blank lines reset the scenario block.
+                when_count_in_block = 0
+                fired_this_block = False
+            continue
+        blank_streak = 0
+
+        # Scenario:/Scenario Outline: heading resets the block.
+        if _SCENARIO_HEADING_RE.match(line):
+            when_count_in_block = 0
+            fired_this_block = False
+            continue
+
+        # When line-leader: increment counter; fire if this is the second+ in the block.
+        if _GHERKIN_WHEN_RE.match(line):
+            when_count_in_block += 1
+            if when_count_in_block >= 2 and not fired_this_block:
+                hits.append(i + 1)  # 1-indexed
+                fired_this_block = True
+
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-GHERKIN-MULTIPLE-WHEN: {len(hits)} scenario block(s) contain 2+ When steps; "
+            "split each compound scenario into separate single-action scenarios.",
+            line=hits[0],
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
 _AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
 
@@ -2953,6 +3025,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_and_or(art, catalog))
     out.extend(_spec_maqa_ac_conditional(art, catalog))
     out.extend(_spec_gherkin_missing_given(art, catalog))
+    out.extend(_spec_gherkin_multiple_when(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
