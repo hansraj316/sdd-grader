@@ -762,6 +762,100 @@ def _spec_gherkin_multiple_when(art: Artifact, catalog: dict[str, Pitfall]) -> l
     ]
 
 
+# SPEC-GHERKIN-SCENARIO-OUTLINE-NO-EXAMPLES: Scenario Outline block missing Examples table.
+_SCENARIO_OUTLINE_RE = re.compile(
+    r"^\s*(?:#+\s*)?scenario\s+(?:outline|template)\b", re.IGNORECASE
+)
+_GHERKIN_EXAMPLES_RE = re.compile(
+    r"^\s*(?:examples?|scenarios?)\s*:", re.IGNORECASE
+)
+
+
+def _spec_gherkin_scenario_outline_no_examples(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Scenario Outline block with no Examples table (SPEC-GHERKIN-SCENARIO-OUTLINE-NO-EXAMPLES).
+
+    Gherkin Reference §3.3: a Scenario Outline / Scenario Template block MUST be followed
+    by an Examples: (or Scenarios:) table with at least one data row.  Without it the
+    parameterised scenario is never instantiated — no test runs — so all requirement
+    coverage attributed to the outline is illusory.
+
+    Guard: formal-Gherkin mode — at least one When line-leader AND at least one Then
+    line-leader present in the document.
+    Block boundaries: a new Scenario/Scenario Outline heading, or 2+ consecutive blank lines.
+    """
+    p = catalog.get("SPEC-GHERKIN-SCENARIO-OUTLINE-NO-EXAMPLES")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Require formal Gherkin mode: a When line-leader AND a Then line-leader present.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    hits: list[int] = []  # 1-indexed line numbers of offending Scenario Outline headings
+    in_outline = False     # tracking a Scenario Outline block?
+    outline_line: int = 0  # 1-indexed line number of the active Scenario Outline heading
+    has_examples = False   # Examples: appeared in the current outline block?
+    blank_streak = 0
+
+    def _close_block() -> None:
+        nonlocal in_outline, has_examples, outline_line
+        if in_outline and not has_examples:
+            hits.append(outline_line)
+        in_outline = False
+        has_examples = False
+        outline_line = 0
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            blank_streak = 0
+            continue
+        stripped = line.strip()
+
+        if not stripped:
+            blank_streak += 1
+            if blank_streak >= 2:
+                _close_block()
+            continue
+        blank_streak = 0
+
+        # Scenario Outline: / Scenario Template: — close current block, start a new outline.
+        if _SCENARIO_OUTLINE_RE.match(line):
+            _close_block()
+            in_outline = True
+            has_examples = False
+            outline_line = i + 1  # 1-indexed
+            continue
+
+        # Plain Scenario: heading (not outline) — just close the current block.
+        if _SCENARIO_HEADING_RE.match(line):
+            _close_block()
+            continue
+
+        # Examples: / Scenarios: header inside an outline block satisfies the requirement.
+        if in_outline and _GHERKIN_EXAMPLES_RE.match(line):
+            has_examples = True
+
+    # Close any block still open at end-of-file.
+    _close_block()
+
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-GHERKIN-SCENARIO-OUTLINE-NO-EXAMPLES: {len(hits)} Scenario Outline block(s) "
+            "have no Examples table; add an 'Examples:' section with at least one data row so "
+            "the scenario is actually instantiated and executed.",
+            line=hits[0],
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
 _AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
 
@@ -3026,6 +3120,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_maqa_ac_conditional(art, catalog))
     out.extend(_spec_gherkin_missing_given(art, catalog))
     out.extend(_spec_gherkin_multiple_when(art, catalog))
+    out.extend(_spec_gherkin_scenario_outline_no_examples(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
