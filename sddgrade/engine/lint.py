@@ -2517,6 +2517,81 @@ def _plan_no_rate_limiting(art: Artifact, catalog: dict[str, Pitfall]) -> list[F
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-NO-IDEMPOTENCY: retry/reprocess vocab with no idempotency guarantee.
+# ---------------------------------------------------------------------------
+
+# Trigger: any non-fenced plan line contains retry/reprocess/at-least-once semantics.
+_RETRY_VOCAB_RE = re.compile(
+    r"\bretry\b"
+    r"|\bretr(?:ies|ied|y)\b"
+    r"|\breprocess\w*"
+    r"|\bat.?least.?once\b"
+    r"|\brequeue\b"
+    r"|\breplay\b"
+    r"|\bredelivery\b"
+    r"|\bresubmit\b"
+    r"|\bbackoff\b"
+    r"|\bback-off\b",
+    re.IGNORECASE,
+)
+
+# Silence: idempotency / exactly-once / deduplication vocabulary anywhere in the document.
+_IDEMPOTENCY_RE = re.compile(
+    r"\bidempoten"
+    r"|\bexactly.?once\b"
+    r"|\bdeduplicat"
+    r"|\bdedupe\b"
+    r"|\bunique\b.*\bconstraint\b"
+    r"|\bconditional\b.*\bwrite\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_idempotency(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan with retry/reprocess logic but no idempotency guarantee (PLAN-NO-IDEMPOTENCY).
+
+    Any plan that introduces retry semantics (retry, reprocess, at-least-once delivery,
+    requeue, replay, resubmit, backoff) without an idempotency strategy has an unaddressed
+    failure mode: repeated operations produce duplicate side-effects (double charges, duplicate
+    records, repeated emails) that are silent and extremely hard to remediate in production.
+
+    Sources: Amazon Kiro production-readiness gate; Tessl spec-first; ISO 25010 §4.2.1.2
+    Fault Tolerance; Twelve-Factor App (stateless, retry-safe processes).
+    Distinct from PLAN-ASYNC-NO-DLQ (dead-letter queues) and PLAN-MISSING-ROLLBACK (undo deploys).
+    """
+    p = catalog.get("PLAN-NO-IDEMPOTENCY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present (reuse existing deploy guard constants).
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced line mentions retry/reprocess/at-least-once/etc.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    retry_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _RETRY_VOCAB_RE.search(line):
+            retry_hit = i + 1
+            break
+    if retry_hit is None:
+        return []
+    # Silence: idempotency / exactly-once / deduplication vocab anywhere in the document.
+    if _IDEMPOTENCY_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan describes retry/reprocess logic but has no idempotency guarantee "
+        "or deduplication strategy.",
+        line=retry_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -3185,6 +3260,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_migration(art, catalog))
     out.extend(_plan_missing_runbook(art, catalog))
     out.extend(_plan_async_no_dlq(art, catalog))
+    out.extend(_plan_no_idempotency(art, catalog))
     out.extend(_plan_hardcoded_config(art, catalog))
     out.extend(_plan_no_feature_flag(art, catalog))
     out.extend(_plan_no_rate_limiting(art, catalog))
