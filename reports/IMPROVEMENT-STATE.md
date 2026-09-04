@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 73
 Last run: 2026-09-04
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -99,11 +99,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- [~] #190 PLAN-NO-IDEMPOTENCY → PR #193 (loop/plan-no-idempotency; awaiting CI)
+(none)
 
 ## Merged
 
-- #190 → PR #193 plan-no-idempotency — PLAN-NO-IDEMPOTENCY: deployment plan with retry/reprocess/at-least-once/requeue/replay/resubmit/backoff vocab but no idempotency guarantee or deduplication strategy; _RETRY_VOCAB_RE + _IDEMPOTENCY_RE silence; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE deploy guard; fenced-block exclusion; one aggregate finding at first retry-vocab non-fenced line; 17 unit tests (7 fire, 10 silent); pytest 1159 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS (2026-09-04, awaiting CI).
+- #190 → PR #193 plan-no-idempotency — PLAN-NO-IDEMPOTENCY: deployment plan with retry/reprocess/at-least-once/requeue/replay/resubmit/backoff vocab but no idempotency guarantee or deduplication strategy; _RETRY_VOCAB_RE + _IDEMPOTENCY_RE silence; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE deploy guard; fenced-block exclusion; one aggregate finding at first retry-vocab non-fenced line; 17 unit tests (7 fire, 10 silent); pytest 1159 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS (2026-09-04, CI green; squash-merged).
 - #189 → PR #192 spec-gherkin-scenario-outline-no-examples — SPEC-GHERKIN-SCENARIO-OUTLINE-NO-EXAMPLES: Scenario Outline/Template block with no Examples table; parameterised scenario never instantiated = silent dead test; _SCENARIO_OUTLINE_RE + _GHERKIN_EXAMPLES_RE + _spec_gherkin_scenario_outline_no_examples(); guard=formal-Gherkin(When+Then); block boundary on new Scenario heading or 2+ blank lines; 13 unit tests (6 fire, 7 silent); pytest 1142 green; benchmark good=100.0 bad=50.8 PASS (2026-09-03, CI green; squash-merged).
 - #184 → PR #188 spec-gherkin-multiple-when — SPEC-GHERKIN-MULTIPLE-WHEN: Gherkin scenario with 2+ When line-leaders in the same block (MAQA single-action-per-scenario / INVEST Small); _spec_gherkin_multiple_when() reusing _SCENARIO_HEADING_RE/_GHERKIN_WHEN_RE/_GHERKIN_THEN_RE/_fence_mask(); guard=formal-Gherkin(When+Then); block reset on Scenario heading or 2+ blank lines; one aggregate finding per offending block; 13 tests (5 fire, 8 silent); pytest 1129 green; benchmark good=100.0 bad=50.8 PASS (2026-09-02, CI green; squash-merged).
 - #185 → PR #187 plan-no-rate-limiting — PLAN-NO-RATE-LIMITING: API-facing deployment plan with no rate-limiting/throttling/quota/circuit-breaker strategy; _API_VOCAB_RE (api/rest(?:ful)?/graphql/grpc/http-endpoint/webhook/route) + _RATE_LIMIT_SILENCE_RE (rate.?limit/throttl/quota/ratelimit/rate_limit/api.?gateway/circuit.?break/back.?pressure); both deploy-guard + API-vocab guard must fire; fenced-block exclusion; aggregate finding at first API-vocab non-fenced line; 20 unit tests (7 fire, 13 silent); pytest 1116 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS (2026-09-01, CI was green; squash-merged).
