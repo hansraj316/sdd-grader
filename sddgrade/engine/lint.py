@@ -1515,6 +1515,54 @@ def _spec_missing_motivation(art: Artifact, catalog: dict[str, Pitfall]) -> list
     ]
 
 
+# SPEC-MISSING-REVISION-HISTORY: spec with ≥3 FR-/NFR- lines but no revision /
+# version-history / changelog heading.  ISO/IEC/IEEE 29148:2018 §5.2.1,
+# IEEE 830-1998 §3.1, Canon Volere §4, Spec-Kit document preamble practice.
+_REVISION_HISTORY_RE = re.compile(
+    r"(?:revision\s+history|version\s+history|change\s*log|document\s+history"
+    r"|amendment\s+history|revision\s+log|document\s+revisions)",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_revision_history(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 FR-/NFR- lines but no revision-history / changelog heading.
+
+    ISO/IEC/IEEE 29148:2018 §5.2.1 requires document-identification metadata including
+    a version history so reviewers can determine which version they are reading.
+    Guard: ≥3 non-fenced lines with formal FR-/NFR- identifiers (reuses _REQ_ID_RE).
+    Check: no section heading matches the revision-history keyword set.
+    Only applies to SPEC artifacts (plan/tasks have no version-history requirement here).
+    """
+    p = catalog.get("SPEC-MISSING-REVISION-HISTORY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Guard: ≥3 non-fenced lines with FR- or NFR- identifiers.
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    # Check: any section heading that matches the revision-history pattern → silent.
+    for s in art.sections:
+        if _REVISION_HISTORY_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-REVISION-HISTORY: spec has 3+ FR-/NFR- requirements but no "
+            "Revision History, Version History, or Changelog section; add a version "
+            "table so reviewers can determine which version they are reading and what "
+            "changed between versions (ISO/IEC/IEEE 29148:2018 §5.2.1).",
+            line=1,
+        )
+    ]
+
+
 # SPEC-NFR-NO-UNIT: NFR line with a numeric threshold but no measurement unit.
 # Complements SPEC-NFR-NO-THRESHOLD (no number at all) — fires when a number IS
 # present but has no unit, leaving the threshold unverifiable ("200 what?").
@@ -3213,6 +3261,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_pii_handling(art, catalog))
     out.extend(_spec_ears_vague_trigger(art, catalog))
     out.extend(_spec_subjective_adjective(art, catalog))
+    out.extend(_spec_missing_revision_history(art, catalog))
     return out
 
 
