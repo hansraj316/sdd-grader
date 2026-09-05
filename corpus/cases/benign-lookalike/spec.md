@@ -53,3 +53,10 @@ products appear without manual entry.
 - FR: Functional Requirement — a statement of system behaviour.
 - NFR: Non-Functional Requirement — a quality attribute (performance, latency, etc.).
 - p95 latency: the 95th-percentile import-status API response time under load.
+
+## Revision History
+
+| Version | Date       | Author     | Change                             |
+|---------|------------|------------|------------------------------------|
+| 1.0     | 2024-03-01 | Team       | Initial draft                      |
+| 1.1     | 2024-03-15 | Team       | Added scalability requirement      |

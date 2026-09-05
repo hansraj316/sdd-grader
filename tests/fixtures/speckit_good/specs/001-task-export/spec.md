@@ -72,3 +72,11 @@ shared file is scoped to what matters.
 - FR: Functional Requirement — a statement of behaviour the system must exhibit.
 - NFR: Non-Functional Requirement — a quality attribute (performance, security, etc.).
 - RFC 4180: The IETF memo that specifies CSV field escaping with double-quotes.
+
+## Revision History
+
+| Version | Date       | Author     | Change                          |
+|---------|------------|------------|---------------------------------|
+| 1.0     | 2024-01-10 | Team       | Initial draft                   |
+| 1.1     | 2024-01-18 | Team       | Added status-filter requirement |
+| 1.2     | 2024-02-01 | Team       | Added Out of Scope section      |
