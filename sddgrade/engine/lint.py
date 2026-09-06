@@ -240,6 +240,15 @@ _I_WANT_TO_RE = re.compile(r"\bi\s+want\s+to\b", re.IGNORECASE)
 _SO_THAT_RE = re.compile(r"\bso\s+that\b", re.IGNORECASE)
 # Compound-want detector: any 'and' as a whole word in the want-clause portion.
 _COMPOUND_AND_RE = re.compile(r"\band\b", re.IGNORECASE)
+# SPEC-STORY-VAGUE-ACTOR: story opener where the actor is the bare generic noun
+# "user" or "end user" (with optional hyphen).  Qualified actors like
+# "As a logged-in user" or "As an admin user" do NOT match because the
+# adjective/qualifier appears *before* "user" and is captured by the \S+ slot
+# in _STORY_OPENER_RE, so those lines start "as a logged-in" not "as a user".
+_VAGUE_ACTOR_RE = re.compile(
+    r"^\s*(?:[-*+]?\s*)?as\s+an?\s+(?:end[- ]?)?user\b",
+    re.IGNORECASE,
+)
 
 # Vague outcome adverbs in Gherkin Then clauses (SPEC-AC-VAGUE-OUTCOME).
 _VAGUE_OUTCOME_RE = re.compile(
@@ -2860,6 +2869,47 @@ def _spec_story_compound(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fin
     ]
 
 
+def _spec_story_vague_actor(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """User story with generic 'a user' / 'an end user' actor instead of a specific role.
+
+    INVEST "Negotiable" criterion requires each story to be tied to a named stakeholder
+    group.  "As a user" provides no role context for prioritisation, scope negotiation,
+    or persona-based testing.  ISO/IEC/IEEE 29148:2018 §5.2.1 requires identification
+    of intended user classes.  Guard: spec must contain at least one Connextra
+    story opener with "I want".  Only fires on lines where the actor is the bare
+    generic noun "user" or "end user" (with optional hyphen); qualified actors like
+    "As a logged-in user" or "As an admin user" do NOT match _VAGUE_ACTOR_RE because
+    the qualifier precedes "user" and prevents the pattern from anchoring there.
+    """
+    p = catalog.get("SPEC-STORY-VAGUE-ACTOR")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    # Guard: skip specs with no Connextra user-story opener at all.
+    has_stories = any(
+        _STORY_OPENER_RE.match(line) and _I_WANT_RE.search(line) for line in lines
+    )
+    if not has_stories:
+        return []
+    vague: list[int] = []
+    for i, line in enumerate(lines):
+        if _VAGUE_ACTOR_RE.match(line) and _I_WANT_RE.search(line):
+            vague.append(i + 1)  # 1-indexed
+    if not vague:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-STORY-VAGUE-ACTOR: {len(vague)} user story(ies) use a generic actor"
+            " ('a user' / 'an end user') instead of a specific role; replace with a"
+            " named stakeholder such as 'As an admin', 'As a billing manager'"
+            " (INVEST Negotiable / ISO/IEC/IEEE 29148:2018 §5.2.1).",
+            line=vague[0],
+        )
+    ]
+
+
 def _spec_ac_vague_outcome(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Then clause with vague non-observable outcome word (SPEC-AC-VAGUE-OUTCOME).
 
@@ -3228,6 +3278,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_ears_pattern(art, catalog))
     out.extend(_story_no_benefit(art, catalog))
     out.extend(_spec_story_compound(art, catalog))
+    out.extend(_spec_story_vague_actor(art, catalog))
     out.extend(_unbounded_scope(art, catalog))
     out.extend(_req_duplicate_id(art, catalog))
     out.extend(_weak_directive(art, catalog))
