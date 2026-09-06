@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 74
-Last run: 2026-09-05
-Open loop PRs: 0
+Iteration: 75
+Last run: 2026-09-06
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -59,6 +59,9 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] plan-no-feature-flag — PLAN-NO-FEATURE-FLAG: deployment plan launches feature with no phased-rollout or feature-flag mention (Kiro/Tessl) → issue #171 → PR #174 → merged 2026-08-25
 - [x] spec-nfr-no-unit — SPEC-NFR-NO-UNIT: NFR with numeric threshold but no measurement unit → issue #145 → PR #151 → merged 2026-08-12
 - [x] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines → issue #146 → PR #153 → merged 2026-08-14
+- [~] spec-story-vague-actor — SPEC-STORY-VAGUE-ACTOR: Connextra story with 'a user' / 'an end user' generic actor → issue #195 → PR #198
+- [ ] plan-no-graceful-shutdown — PLAN-NO-GRACEFUL-SHUTDOWN: deployment plan with process stop/restart but no graceful-shutdown strategy (Twelve-Factor VI, Kiro) → issue #196
+- [ ] spec-nfr-percent-context-missing — SPEC-NFR-PERCENT-CONTEXT-MISSING: NFR line with % value but no named metric (Canon Volere Scale/Meter/Must, QVscribe QV-104) → issue #197
 - [ ] spec-missing-motivation — promoted to issue #147
 - [x] spec-qvscribe-shall-be-able-to — SPEC-QVSCRIBE-SHALL-BE-ABLE-TO → issue #148 → PR #152 → merged 2026-08-13
 - [x] plan-missing-runbook — promoted to issue #149 (research: Kiro production-readiness gate) → PR #155 → merged 2026-08-16
@@ -99,10 +102,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #195 → PR #198 spec-story-vague-actor — SPEC-STORY-VAGUE-ACTOR: Connextra user story with generic 'a user' / 'an end user' actor instead of specific role; _VAGUE_ACTOR_RE anchors on bare 'user'/'end user' at line start; qualified actors ('As a logged-in user', 'As an admin user') are SILENT; guard=at least one story opener + I-want; 3 corpus cases labeled accepted_extras; golden merged_overall 71.0→69.0; 13 unit tests (5 fire, 8 silent); pytest 1188 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS; awaiting CI.
 
 ## Merged
 
+- #195 → PR #198 spec-story-vague-actor — SPEC-STORY-VAGUE-ACTOR: Connextra user story with generic 'a user' / 'an end user' actor instead of specific role; _VAGUE_ACTOR_RE r'^\s*(?:[-*+]?\s*)?as\s+an?\s+(?:end[- ]?)?user\b'; qualified actors ('As a logged-in user', 'As an admin user') SILENT; guard=story opener + I-want; 3 corpus cases accepted_extras; golden merged_overall 71.0→69.0; 13 unit tests (5 fire, 8 silent); pytest 1188 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS (2026-09-06, awaiting CI).
 - #191 → PR #194 spec-missing-revision-history — SPEC-MISSING-REVISION-HISTORY: spec with ≥3 FR-/NFR- lines but no Revision History / Version History / Changelog / Document History / Amendment History heading; _REVISION_HISTORY_RE 8-form regex; guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding at line 1; spec-only; speckit_good + benign-lookalike fixtures updated; paraphrased-defects + realworld-mcp-proxy accepted_extras updated; paraphrased-defects floor 55→50; 16 unit tests (6 fire, 10 silent); pytest 1175 green; benchmark good=100.0 bad=50.8 precision=0.977 PASS (2026-09-05, CI green; squash-merged).
 - #190 → PR #193 plan-no-idempotency — PLAN-NO-IDEMPOTENCY: deployment plan with retry/reprocess/at-least-once/requeue/replay/resubmit/backoff vocab but no idempotency guarantee or deduplication strategy; _RETRY_VOCAB_RE + _IDEMPOTENCY_RE silence; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE deploy guard; fenced-block exclusion; one aggregate finding at first retry-vocab non-fenced line; 17 unit tests (7 fire, 10 silent); pytest 1159 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS (2026-09-04, CI green; squash-merged).
 - #189 → PR #192 spec-gherkin-scenario-outline-no-examples — SPEC-GHERKIN-SCENARIO-OUTLINE-NO-EXAMPLES: Scenario Outline/Template block with no Examples table; parameterised scenario never instantiated = silent dead test; _SCENARIO_OUTLINE_RE + _GHERKIN_EXAMPLES_RE + _spec_gherkin_scenario_outline_no_examples(); guard=formal-Gherkin(When+Then); block boundary on new Scenario heading or 2+ blank lines; 13 unit tests (6 fire, 7 silent); pytest 1142 green; benchmark good=100.0 bad=50.8 PASS (2026-09-03, CI green; squash-merged).
@@ -351,3 +355,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 72 (2026-09-03): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3: filed 3 new issues (#189 SPEC-GHERKIN-SCENARIO-OUTLINE-NO-EXAMPLES, #190 PLAN-NO-IDEMPOTENCY, #191 SPEC-MISSING-REVISION-HISTORY). Phase 4 picked #189 (SPEC-GHERKIN-SCENARIO-OUTLINE-NO-EXAMPLES — Scenario Outline/Template block with no Examples table; parameterised scenario never instantiated = silent dead test; Gherkin Reference §3.3, MAQA Completeness Level-2, QVscribe Incomplete-Requirement; _SCENARIO_OUTLINE_RE + _GHERKIN_EXAMPLES_RE constants + _spec_gherkin_scenario_outline_no_examples(); guard=formal-Gherkin(When+Then); block boundary on new Scenario heading or 2+ blank lines; fires one aggregate finding at Scenario Outline heading line; 13 unit tests (6 fire, 7 silent)); pytest 1142 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS; PR #192 opened (draft); issue #189 commented.
 - iter 73 (2026-09-04): Phase 1 no open loop/* PRs (0); PR #192 squash-merged recorded in Merged. Phase 2 found 2 open loop-candidate issues (#190 PLAN-NO-IDEMPOTENCY, #191 SPEC-MISSING-REVISION-HISTORY). Phase 4 picked #190 (PLAN-NO-IDEMPOTENCY — deployment plan with retry/reprocess/at-least-once/requeue/replay/resubmit/backoff vocab but no idempotency guarantee; Kiro/Tessl/ISO 25010 §4.2.1.2/Twelve-Factor; _RETRY_VOCAB_RE + _IDEMPOTENCY_RE; reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE guard; fenced-block exclusion; one aggregate finding at first retry-vocab non-fenced line; 17 unit tests (7 fire, 10 silent)); pytest 1159 green; benchmark good=100.0 bad=50.8 precision=0.976 PASS; PR #193 opened (draft); issue #190 commented.
 - iter 74 (2026-09-05): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#191 SPEC-MISSING-REVISION-HISTORY). Phase 4 picked #191 (SPEC-MISSING-REVISION-HISTORY — spec with ≥3 FR-/NFR- lines but no Revision History/Version History/Changelog/Document History/Amendment History heading; ISO 29148:2018 §5.2.1, IEEE 830-1998 §3.1, Canon Volere §4, Spec-Kit preamble practice; _REVISION_HISTORY_RE 8-form case-insensitive heading regex; spec-only; speckit_good + benign-lookalike fixtures updated; paraphrased-defects + realworld-mcp-proxy accepted_extras updated; paraphrased-defects floor 55→50; 16 unit tests (6 fire, 10 silent)); pytest 1175 green; benchmark good=100.0 bad=50.8 precision=0.977 PASS; PR #194 opened (draft); issue #191 commented.
+- iter 75 (2026-09-06): Phase 1 no open loop/* PRs (0); PR #194 already merged (recorded in Merged). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (MAQA/Canon/ISO-29148/INVEST → 5 ideas; Kiro/Tessl/OpenSpec/Twelve-Factor → 5 ideas); filed 3 new issues (#195 SPEC-STORY-VAGUE-ACTOR, #196 PLAN-NO-GRACEFUL-SHUTDOWN, #197 SPEC-NFR-PERCENT-CONTEXT-MISSING). Phase 4 picked #195 (SPEC-STORY-VAGUE-ACTOR — Connextra user story uses generic 'a user' / 'an end user' actor instead of specific role; INVEST Negotiable / ISO 29148 §5.2.1; _VAGUE_ACTOR_RE anchors on bare 'user'/'end user' at line start; qualified actors silent; 3 corpus cases labeled accepted_extras; golden merged_overall 71.0→69.0; 13 unit tests (5 fire, 8 silent)); pytest 1188 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS; PR #198 opened (draft); issue #195 commented.
