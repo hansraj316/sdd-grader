@@ -1780,6 +1780,89 @@ def _spec_nfr_statistical_ambiguity(art: Artifact, catalog: dict[str, Pitfall]) 
     return []
 
 
+# SPEC-NFR-PERCENT-CONTEXT-MISSING: NFR line with a percentage value but no named
+# metric (percent of what?). Canon Volere Scale/Meter/Must principle requires every
+# NFR to name the metric being measured. '99.9%' alone is unverifiable because it
+# could mean uptime, success rate, coverage, throughput, or infinitely many others.
+# QVscribe §QV-104 (Clarity) + ISO 29148 §5.2.5(a) Unambiguous.
+# Distinct from SPEC-NFR-NO-UNIT (fires when no unit at all) and
+# SPEC-NFR-STATISTICAL-AMBIGUITY (fires on mean vs. percentile qualifier).
+_PERCENT_MARKER_RE = re.compile(
+    r"(?:%|\bpercent(?:age)?\b)",
+    re.IGNORECASE,
+)
+_NFR_METRIC_CONTEXT_RE = re.compile(
+    r"\b(?:"
+    r"uptime"
+    r"|availability"
+    r"|latency"
+    r"|throughput"
+    r"|accuracy"
+    r"|reliability"
+    r"|coverage"
+    r"|success\s*rate"
+    r"|error\s*rate"
+    r"|response\s*time"
+    r"|failure\s*rate"
+    r"|consistency"
+    r"|compliance"
+    r"|recall"
+    r"|precision"
+    r"|f1"
+    r"|apdex"
+    r"|sla"
+    r"|slo"
+    r"|sli"
+    r"|capacity"
+    r"|utili[sz]ation"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_percent_context_missing(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """NFR line with a percentage value but no named metric (SPEC-NFR-PERCENT-CONTEXT-MISSING).
+
+    Canon Volere Scale/Meter/Must principle: every NFR must name what is being
+    measured. A bare '99.9%' without a metric noun ('uptime', 'success rate',
+    'coverage', etc.) has infinitely many interpretations and is therefore
+    unverifiable (ISO 29148 §5.2.5(a) Unambiguous, QVscribe §QV-104 Clarity).
+
+    Guards (all must apply on the same non-fenced requirement line):
+      1. Line is in requirement scope (_requirement_mask / _fence_mask)
+      2. Line contains a percentage marker (_PERCENT_MARKER_RE)
+    Silence: any named metric noun on the same line (_NFR_METRIC_CONTEXT_RE).
+    Fire one aggregate finding anchored at the first offending line.
+    Spec-only; plan artifacts are skipped.
+    """
+    p = catalog.get("SPEC-NFR-PERCENT-CONTEXT-MISSING")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _PERCENT_MARKER_RE.search(line):
+            continue
+        # Silence when a named metric noun is present on the same line
+        if _NFR_METRIC_CONTEXT_RE.search(line):
+            continue
+        return [
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-PERCENT-CONTEXT-MISSING: non-functional requirement states a "
+                "percentage with no named metric — '99.9% of what?' is unanswerable. "
+                "Add the metric noun: e.g. '99.9% uptime', '95% success rate', "
+                "'80% test coverage' (Canon Volere Scale; ISO 29148 §5.2.5(a); "
+                "QVscribe §QV-104 Clarity).",
+                line=i,
+            )
+        ]
+    return []
+
+
 # SPEC-MISSING-PII-HANDLING: spec references personal data (PII/GDPR/CCPA) but
 # contains no privacy or data-retention statement. Canon Volere Legal/Regulatory
 # NFR category + ISO 25010 §4.2.2.5 Confidentiality + GDPR Art. 25 Data
@@ -3313,6 +3396,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ears_vague_trigger(art, catalog))
     out.extend(_spec_subjective_adjective(art, catalog))
     out.extend(_spec_missing_revision_history(art, catalog))
+    out.extend(_spec_nfr_percent_context_missing(art, catalog))
     return out
 
 
