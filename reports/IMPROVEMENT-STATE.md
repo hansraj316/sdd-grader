@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 76
-Last run: 2026-09-06
-Open loop PRs: 0
+Iteration: 77
+Last run: 2026-09-07
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,7 +102,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] #197 → PR #199 spec-nfr-percent-context-missing — SPEC-NFR-PERCENT-CONTEXT-MISSING: NFR line with percentage value but no named metric; _PERCENT_MARKER_RE + _NFR_METRIC_CONTEXT_RE silence; scoped via _requirement_mask()/_fence_mask(); aggregate finding at first offending line; spec-only; 18 unit tests (6 fire, 12 silent); pytest 1206 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS
 
 ## Merged
 
@@ -357,3 +357,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 74 (2026-09-05): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#191 SPEC-MISSING-REVISION-HISTORY). Phase 4 picked #191 (SPEC-MISSING-REVISION-HISTORY — spec with ≥3 FR-/NFR- lines but no Revision History/Version History/Changelog/Document History/Amendment History heading; ISO 29148:2018 §5.2.1, IEEE 830-1998 §3.1, Canon Volere §4, Spec-Kit preamble practice; _REVISION_HISTORY_RE 8-form case-insensitive heading regex; spec-only; speckit_good + benign-lookalike fixtures updated; paraphrased-defects + realworld-mcp-proxy accepted_extras updated; paraphrased-defects floor 55→50; 16 unit tests (6 fire, 10 silent)); pytest 1175 green; benchmark good=100.0 bad=50.8 precision=0.977 PASS; PR #194 opened (draft); issue #191 commented.
 - iter 75 (2026-09-06): Phase 1 no open loop/* PRs (0); PR #194 already merged (recorded in Merged). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (MAQA/Canon/ISO-29148/INVEST → 5 ideas; Kiro/Tessl/OpenSpec/Twelve-Factor → 5 ideas); filed 3 new issues (#195 SPEC-STORY-VAGUE-ACTOR, #196 PLAN-NO-GRACEFUL-SHUTDOWN, #197 SPEC-NFR-PERCENT-CONTEXT-MISSING). Phase 4 picked #195 (SPEC-STORY-VAGUE-ACTOR — Connextra user story uses generic 'a user' / 'an end user' actor instead of specific role; INVEST Negotiable / ISO 29148 §5.2.1; _VAGUE_ACTOR_RE anchors on bare 'user'/'end user' at line start; qualified actors silent; 3 corpus cases labeled accepted_extras; golden merged_overall 71.0→69.0; 13 unit tests (5 fire, 8 silent)); pytest 1188 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS; PR #198 opened (draft); issue #195 commented.
 - iter 76 (2026-09-06): Phase 1 merged PR #198 (SPEC-STORY-VAGUE-ACTOR, issue #195 auto-closed, CI was green; squash-merged via MCP); PR list now 0 open loop/* PRs. Phase 7 state updated. Open issues remaining: #196 PLAN-NO-GRACEFUL-SHUTDOWN, #197 SPEC-NFR-PERCENT-CONTEXT-MISSING. Stopping per one-feature-per-run rule.
+- iter 77 (2026-09-07): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#197 SPEC-NFR-PERCENT-CONTEXT-MISSING, #196 PLAN-NO-GRACEFUL-SHUTDOWN). Phase 4 picked #197 (SPEC-NFR-PERCENT-CONTEXT-MISSING — NFR line with '%' or 'percent(age)' but no named metric noun; Canon Volere Scale/Meter/Must; QVscribe §QV-104 Clarity; ISO 29148 §5.2.5(a); _PERCENT_MARKER_RE + _NFR_METRIC_CONTEXT_RE 18-metric silence vocab; scoped via _requirement_mask()/_fence_mask(); spec-only; aggregate finding at first offending req line; 18 unit tests (6 fire, 12 silent)); pytest 1206 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS; PR #199 opened (draft); issue #197 commented.
