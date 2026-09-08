@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 77
-Last run: 2026-09-07
-Open loop PRs: 0
+Iteration: 78
+Last run: 2026-09-08
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,7 +102,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #196 → PR #200 plan-no-graceful-shutdown — PLAN-NO-GRACEFUL-SHUTDOWN: deployment plan with process stop/restart vocab but no graceful-shutdown strategy; _PROCESS_STOP_VOCAB_RE + _GRACEFUL_SHUTDOWN_RE; deploy guard; fenced-block exclusion; aggregate finding at first process-stop non-fenced line; 19 unit tests (7 fire, 12 silent); pytest 1225 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS. Awaiting CI.
 
 ## Merged
 
@@ -359,3 +359,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 75 (2026-09-06): Phase 1 no open loop/* PRs (0); PR #194 already merged (recorded in Merged). Phase 2 found 0 open loop-candidate issues → Phase 3: fanned 2 parallel research agents (MAQA/Canon/ISO-29148/INVEST → 5 ideas; Kiro/Tessl/OpenSpec/Twelve-Factor → 5 ideas); filed 3 new issues (#195 SPEC-STORY-VAGUE-ACTOR, #196 PLAN-NO-GRACEFUL-SHUTDOWN, #197 SPEC-NFR-PERCENT-CONTEXT-MISSING). Phase 4 picked #195 (SPEC-STORY-VAGUE-ACTOR — Connextra user story uses generic 'a user' / 'an end user' actor instead of specific role; INVEST Negotiable / ISO 29148 §5.2.1; _VAGUE_ACTOR_RE anchors on bare 'user'/'end user' at line start; qualified actors silent; 3 corpus cases labeled accepted_extras; golden merged_overall 71.0→69.0; 13 unit tests (5 fire, 8 silent)); pytest 1188 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS; PR #198 opened (draft); issue #195 commented.
 - iter 76 (2026-09-06): Phase 1 merged PR #198 (SPEC-STORY-VAGUE-ACTOR, issue #195 auto-closed, CI was green; squash-merged via MCP); PR list now 0 open loop/* PRs. Phase 7 state updated. Open issues remaining: #196 PLAN-NO-GRACEFUL-SHUTDOWN, #197 SPEC-NFR-PERCENT-CONTEXT-MISSING. Stopping per one-feature-per-run rule.
 - iter 77 (2026-09-07): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#197 SPEC-NFR-PERCENT-CONTEXT-MISSING, #196 PLAN-NO-GRACEFUL-SHUTDOWN). Phase 4 picked #197 (SPEC-NFR-PERCENT-CONTEXT-MISSING — NFR line with '%' or 'percent(age)' but no named metric noun; Canon Volere Scale/Meter/Must; QVscribe §QV-104 Clarity; ISO 29148 §5.2.5(a); _PERCENT_MARKER_RE + _NFR_METRIC_CONTEXT_RE 18-metric silence vocab; scoped via _requirement_mask()/_fence_mask(); spec-only; aggregate finding at first offending req line; 18 unit tests (6 fire, 12 silent)); pytest 1206 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS; PR #199 opened (draft); issue #197 commented. CI went green same run (package + test both success); PR #199 squash-merged (issue #197 auto-closed). Open issues remaining: #196 PLAN-NO-GRACEFUL-SHUTDOWN.
+- iter 78 (2026-09-08): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#196 PLAN-NO-GRACEFUL-SHUTDOWN). Phase 4 picked #196 (PLAN-NO-GRACEFUL-SHUTDOWN — deployment plan with process stop/restart vocab but no graceful-shutdown strategy; Twelve-Factor App Factor VI Disposability; Kiro production-readiness; ISO 25010 §4.2.1.4 Fault Tolerance; _PROCESS_STOP_VOCAB_RE + _GRACEFUL_SHUTDOWN_RE; deploy guard reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE; fenced-block exclusion; 19 unit tests (7 fire, 12 silent)); pytest 1225 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS; PR #200 opened (draft); issue #196 commented. Awaiting CI.
