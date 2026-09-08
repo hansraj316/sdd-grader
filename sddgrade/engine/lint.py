@@ -2732,6 +2732,88 @@ def _plan_no_idempotency(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fin
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-NO-GRACEFUL-SHUTDOWN: process stop/restart vocab with no graceful-shutdown strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: any non-fenced plan line mentions process lifecycle stop/restart events.
+_PROCESS_STOP_VOCAB_RE = re.compile(
+    r"\brestart\b"
+    r"|\bstop(?:s|ping|ped)?\b"
+    r"|\bshutdown\b"
+    r"|\bshut\s+down\b"
+    r"|\bterminate\b"
+    r"|\bkill(?:ing)?\b"
+    r"|\bSIGTERM\b"
+    r"|\bSIGKILL\b"
+    r"|\brolling\s+(?:update|deploy|restart)\b"
+    r"|\bzero[- ]?downtime\b"
+    r"|\bblue[- ]?green\b"
+    r"|\bcanary\s+deploy\b",
+    re.IGNORECASE,
+)
+
+# Silence: any graceful-shutdown, connection-drain, or in-flight-request vocabulary silences
+# the check anywhere in the document.
+_GRACEFUL_SHUTDOWN_RE = re.compile(
+    r"\bgraceful(?:ly)?\b"
+    r"|\bconnection\s+drain\b"
+    r"|\bdrain(?:ing)?\b"
+    r"|\bin[- ]?flight\b"
+    r"|\blame\s+duck\b"
+    r"|\bpre[- ]?stop\b"
+    r"|\bshutdown\s+hook\b"
+    r"|\blifecycle\s+hook\b"
+    r"|\bterminationGracePeriodSeconds\b"
+    r"|\bstop\s+timeout\b"
+    r"|\bwait(?:ing)?\s+for\s+(?:requests?|connection|job)\b"
+    r"|\bfinish(?:ing)?\s+(?:current|in[- ]?flight|outstanding)\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_graceful_shutdown(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan mentions process stop/restart but has no graceful-shutdown strategy
+    (PLAN-NO-GRACEFUL-SHUTDOWN).
+
+    Twelve-Factor App Factor VI (Disposability) requires processes to shut down gracefully on
+    SIGTERM. Without a graceful-shutdown strategy, rolling deployments drop in-flight requests,
+    corrupt in-progress DB transactions, or leave message queues in inconsistent state.
+    Amazon Kiro production-readiness checklist requires a stated shutdown strategy for all
+    stateful processes. This is distinct from PLAN-MISSING-ROLLBACK (deploy undo),
+    PLAN-NO-IDEMPOTENCY (retry safety), and PLAN-NO-RATE-LIMITING (client quota).
+    """
+    p = catalog.get("PLAN-NO-GRACEFUL-SHUTDOWN")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present (reuse existing deploy guard constants).
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced line contains process-stop/restart vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    stop_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _PROCESS_STOP_VOCAB_RE.search(line):
+            stop_hit = i + 1
+            break
+    if stop_hit is None:
+        return []
+    # Silence: any graceful-shutdown / connection-drain / in-flight token anywhere in the doc.
+    if _GRACEFUL_SHUTDOWN_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan describes process stop/restart but has no graceful-shutdown strategy.",
+        line=stop_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -3448,6 +3530,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_hardcoded_config(art, catalog))
     out.extend(_plan_no_feature_flag(art, catalog))
     out.extend(_plan_no_rate_limiting(art, catalog))
+    out.extend(_plan_no_graceful_shutdown(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
