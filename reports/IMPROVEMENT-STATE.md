@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 78
-Last run: 2026-09-08
-Open loop PRs: 0
+Iteration: 79
+Last run: 2026-09-09
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #201 → PR #202 plan-no-backup-strategy — PLAN-NO-BACKUP-STRATEGY: deployment plan with database/persistent-store vocab but no backup/disaster-recovery strategy; _DB_STORE_VOCAB_RE (postgres/mysql/mariadb/mongodb/redis/cassandra/dynamodb/aurora/rds/elasticsearch/opensearch/neo4j/couchdb/firestore/cockroachdb/database/data-store/data-volume/persistent-storage/blob-storage/object-storage/s3-bucket/gcs-bucket/azure-blob); _BACKUP_RECOVERY_RE silence (backup/restore/disaster-recov*/data-recov*/pitr/snapshot/pg_dump/mysqldump/rpo/rto/retention-polic*/archive/replication-factor/cross-region/geo-redundan*/failover/standby-replica/dr-replica); deploy guard; fenced-block exclusion; aggregate finding at first db-vocab non-fenced line; 20 unit tests (7 fire, 13 silent); pytest 1245 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS.
 
 ## Merged
 
+- iter 79 (2026-09-09): created issue #201 (PLAN-NO-BACKUP-STRATEGY), opened PR #202; 1 open loop PR; CI pending.
 - #196 → PR #200 plan-no-graceful-shutdown — PLAN-NO-GRACEFUL-SHUTDOWN: deployment plan with process stop/restart vocab but no graceful-shutdown strategy; _PROCESS_STOP_VOCAB_RE + _GRACEFUL_SHUTDOWN_RE silence; deploy guard (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE); fenced-block exclusion; aggregate finding at first process-stop non-fenced line; 19 unit tests (7 fire, 12 silent); pytest 1225 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS (2026-09-08, CI green; squash-merged).
 - #197 → PR #199 spec-nfr-percent-context-missing — SPEC-NFR-PERCENT-CONTEXT-MISSING: NFR line with '%' or 'percent(age)' but no named metric noun; _PERCENT_MARKER_RE + _NFR_METRIC_CONTEXT_RE 18-metric silence vocab; scoped via _requirement_mask()/_fence_mask(); spec-only; aggregate finding at first offending req line; 18 unit tests (6 fire, 12 silent); pytest 1206 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS (2026-09-07, CI green; squash-merged).
 - #195 → PR #198 spec-story-vague-actor — SPEC-STORY-VAGUE-ACTOR: Connextra user story with generic 'a user' / 'an end user' actor instead of specific role; _VAGUE_ACTOR_RE r'^\s*(?:[-*+]?\s*)?as\s+an?\s+(?:end[- ]?)?user\b'; qualified actors ('As a logged-in user', 'As an admin user') SILENT; guard=story opener + I-want; 3 corpus cases accepted_extras; golden merged_overall 71.0→69.0; 13 unit tests (5 fire, 8 silent); pytest 1188 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS (2026-09-06, CI green; squash-merged).
