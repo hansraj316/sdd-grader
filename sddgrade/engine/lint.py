@@ -2814,6 +2814,109 @@ def _plan_no_graceful_shutdown(art: Artifact, catalog: dict[str, Pitfall]) -> li
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-NO-BACKUP-STRATEGY: database/persistent-store vocab with no backup or
+# disaster-recovery strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: any non-fenced plan line mentions a database or persistent data store.
+_DB_STORE_VOCAB_RE = re.compile(
+    r"\bpostgres(?:ql)?\b"
+    r"|\bmysql\b"
+    r"|\bmariadb\b"
+    r"|\bmongodb?\b"
+    r"|\bredis\b"
+    r"|\bcassandra\b"
+    r"|\bdynamodb\b"
+    r"|\baurora\b"
+    r"|\brds\b"
+    r"|\belasticsearch\b"
+    r"|\bopensearch\b"
+    r"|\bneo4j\b"
+    r"|\bcouchdb\b"
+    r"|\bfirestore\b"
+    r"|\bcockroachdb\b"
+    r"|\bdatabase\b"
+    r"|\bdata[- ]?store\b"
+    r"|\bdata[- ]?volume\b"
+    r"|\bpersistent\s+(?:storage|volume|disk)\b"
+    r"|\bblob\s+storage\b"
+    r"|\bobject\s+storage\b"
+    r"|\bs3\s+bucket\b"
+    r"|\bgcs\s+bucket\b"
+    r"|\bazure\s+blob\b",
+    re.IGNORECASE,
+)
+
+# Silence: any backup / restore / disaster-recovery vocabulary anywhere in the document.
+# NOTE: bare 'recovery' and 'replica' are intentionally excluded — they are too broad
+# ('disaster recovery are out of scope' would silence; MongoDB 'replica set' is not backup).
+_BACKUP_RECOVERY_RE = re.compile(
+    r"\bbackup\b"
+    r"|\bback[- ]?up\b"
+    r"|\brestore\b"
+    r"|\bdisaster[- ]?recov\w*"
+    r"|\bdata\s+recov\w*"
+    r"|\bpoint[- ]?in[- ]?time\b"
+    r"|\bpitr\b"
+    r"|\bsnapshot\b"
+    r"|\b(?:pg_dump|mysqldump)\b"
+    r"|\brpo\b"
+    r"|\brto\b"
+    r"|\bretention\s+polic\w*"
+    r"|\barchive\b"
+    r"|\breplication\s+factor\b"
+    r"|\bcross[- ]?region\b"
+    r"|\bgeo[- ]?redundan\w*"
+    r"|\bfailover\b"
+    r"|\bstandby\s+replica\b"
+    r"|\bdr\s+replica\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_backup_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan mentions a database or persistent data store but has no
+    backup/disaster-recovery strategy (PLAN-NO-BACKUP-STRATEGY).
+
+    ISO/IEC 25010:2023 §4.2.1.4 and AWS Well-Architected REL-9 both require a stated
+    backup and recovery strategy for any persistent data store in a deployment plan.
+    Amazon Kiro production-readiness checklist mandates RPO, RTO, and restore procedures
+    for every database-bearing plan. This is distinct from PLAN-MISSING-MIGRATION
+    (schema change strategy) and PLAN-MISSING-ROLLBACK (deploy undo).
+    """
+    p = catalog.get("PLAN-NO-BACKUP-STRATEGY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced line mentions a database or persistent data store.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    db_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _DB_STORE_VOCAB_RE.search(line):
+            db_hit = i + 1
+            break
+    if db_hit is None:
+        return []
+    # Silence: any backup/restore/disaster-recovery/snapshot token anywhere in the doc.
+    if _BACKUP_RECOVERY_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan mentions a database or persistent data store but has no "
+        "backup or disaster-recovery strategy.",
+        line=db_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -3531,6 +3634,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_feature_flag(art, catalog))
     out.extend(_plan_no_rate_limiting(art, catalog))
     out.extend(_plan_no_graceful_shutdown(art, catalog))
+    out.extend(_plan_no_backup_strategy(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
