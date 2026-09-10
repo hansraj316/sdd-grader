@@ -1595,6 +1595,59 @@ _NFR_UNIT_RE = re.compile(
 )
 
 
+# SPEC-MISSING-ASSUMPTIONS: spec with ≥3 FR-/NFR- lines but no Assumptions /
+# Constraints / Preconditions heading.  ISO/IEC/IEEE 29148:2018 §5.2.1, Canon Volere
+# §6 (Project Constraints) + §10 (Assumptions), Kiro spec-template, Tessl spec-first.
+_ASSUMPTIONS_HEADING_RE = re.compile(
+    r"(?:assumptions?|constraints?|preconditions?|prerequisites?"
+    r"|boundary\s+conditions?"
+    r"|dependencies\s+and\s+constraints?"
+    r"|scope\s+and\s+constraints?)",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_assumptions(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 FR-/NFR- lines but no Assumptions / Constraints heading.
+
+    ISO/IEC/IEEE 29148:2018 §5.2.1 mandates documenting assumptions about the
+    operating environment and constraints bounding the solution.  Canon Volere §6/§10
+    and Kiro spec-template both require an explicit Assumptions/Constraints block.
+    Guard: ≥3 non-fenced lines with FR-/NFR- identifiers.
+    Check: no section heading matches the assumptions/constraints keyword set.
+    Distinct from SPEC-MISSING-MOTIVATION, SPEC-MISSING-OUT-OF-SCOPE,
+    SPEC-MISSING-GLOSSARY, and SPEC-MISSING-REVISION-HISTORY.
+    """
+    p = catalog.get("SPEC-MISSING-ASSUMPTIONS")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Guard: ≥3 non-fenced lines with FR- or NFR- identifiers.
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    # Check: any section heading that matches the assumptions/constraints pattern → silent.
+    for s in art.sections:
+        if _ASSUMPTIONS_HEADING_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-ASSUMPTIONS: spec has 3+ FR-/NFR- requirements but no "
+            "Assumptions, Constraints, or Preconditions section; add a section "
+            "documenting environmental assumptions and solution constraints so "
+            "implementers know the boundaries they must work within "
+            "(ISO/IEC/IEEE 29148:2018 §5.2.1 / Canon Volere §6+§10).",
+            line=1,
+        )
+    ]
+
+
 def _spec_nfr_no_unit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """NFR line with a numeric threshold but no measurement unit (SPEC-NFR-NO-UNIT).
 
@@ -3582,6 +3635,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_subjective_adjective(art, catalog))
     out.extend(_spec_missing_revision_history(art, catalog))
     out.extend(_spec_nfr_percent_context_missing(art, catalog))
+    out.extend(_spec_missing_assumptions(art, catalog))
     return out
 
 

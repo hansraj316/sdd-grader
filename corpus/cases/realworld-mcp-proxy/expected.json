@@ -1,13 +1,13 @@
 {
   "quality": "low",
-  "score_band": [40, 70],
-  "band_rationale": "Low: a Draft spec with an unresolved decision inside an FR, retained template header ('$ARGUMENTS'), a leaked API style, no edge cases, and (now) no problem-statement section must fail the default 70 gate decisively. Ceiling 70 is unchanged. Floor lowered to 40 because SPEC-MISSING-MOTIVATION (added iter 53) now fires as an accepted_extra, dropping the score from 64 to 46; floor 40 asserts the engine still credits the real user story and measurable success criterion even with the additional finding. Engine output at labeling time: 46.",
+  "score_band": [30, 70],
+  "band_rationale": "Low: a Draft spec with an unresolved decision inside an FR, retained template header ('$ARGUMENTS'), a leaked API style, no edge cases, and no problem-statement section must fail the default 70 gate decisively. Ceiling 70 is unchanged. Floor lowered to 30 because SPEC-MISSING-ASSUMPTIONS (added iter 80) now fires as an accepted_extra, dropping the score from 46 to 34; floor 30 asserts the engine still credits the real user story and measurable success criterion even with the additional finding. Engine output at labeling time: 34.",
   "expect_pitfalls": [
     "SPEC-UNRESOLVED-CLARIFICATION",
     "SPEC-LEFTOVER-PLACEHOLDER",
     "SPEC-IMPL-DETAIL-LEAK",
     "SPEC-MISSING-EDGE-CASES"
   ],
-  "accepted_extras": ["SPEC-MISSING-OUT-OF-SCOPE", "SPEC-MISSING-GLOSSARY", "SPEC-MISSING-MOTIVATION", "SPEC-MISSING-REVISION-HISTORY"],
+  "accepted_extras": ["SPEC-MISSING-OUT-OF-SCOPE", "SPEC-MISSING-GLOSSARY", "SPEC-MISSING-MOTIVATION", "SPEC-MISSING-REVISION-HISTORY", "SPEC-MISSING-ASSUMPTIONS"],
   "note": "Real-world-derived case (#53c): adapts the flawed spec shape seen in real Spec-Kit repos (e.g. the polymarket-kit MCP-server spec pattern) — a [NEEDS CLARIFICATION] marker left inside FR-003, the template's '$ARGUMENTS' input line retained, 'REST API' leaked into an FR, and the Review & Acceptance Checklist kept with every box unchecked. Known gap (not a labeled miss because no catalog rule covers it): lint does not flag a retained, fully-unchecked review checklist — SPEC-LEFTOVER-PLACEHOLDER only fires here because of '$ARGUMENTS'."
 }
