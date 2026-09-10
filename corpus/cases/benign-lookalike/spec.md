@@ -47,6 +47,13 @@ products appear without manual entry.
 - A simple quick-add form for single products (the existing manual flow already covers this).
 - Making the import faster than the 10-minute target is not a goal for this release.
 
+## Assumptions and Constraints
+
+- The catalog file format is CSV (UTF-8, comma-delimited); other formats fall outside the scope of this release.
+- The import service runs within the existing cloud infrastructure (AWS); this release introduces no new cloud providers.
+- The system supports files up to 50,000 rows; larger imports belong to a separate bulk-load project.
+- The operations manager authenticates through the existing SSO before accessing the import UI.
+
 ## Glossary
 
 - SKU: Stock Keeping Unit — the unique identifier for a product in the catalog.

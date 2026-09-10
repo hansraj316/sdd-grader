@@ -1,9 +1,9 @@
 {
   "quality": "medium",
-  "score_band": [50, 92],
-  "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium — five real defects — but the engine currently sees only one, scoring 88 before extra structural findings. Floor 50 accounts for SPEC-MISSING-REVISION-HISTORY (accepted_extra) and other accepted structural extras now firing; ceiling 92 requires the one expected defect to keep costing at least 8 points. Engine output at labeling time: ~54.",
+  "score_band": [44, 92],
+  "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium — five real defects — but the engine currently sees only one, scoring 88 before extra structural findings. Floor lowered to 44 because SPEC-MISSING-ASSUMPTIONS (added iter 80) now fires as an accepted_extra, dropping the score from ~54 to 48; ceiling 92 requires the one expected defect to keep costing at least 8 points. Engine output at labeling time: 48.",
   "expect_pitfalls": ["SPEC-NON-MEASURABLE-SUCCESS"],
-  "accepted_extras": ["REQ-WEAK-DIRECTIVE", "SPEC-PRONOUN-ANTECEDENT", "SPEC-MISSING-OUT-OF-SCOPE", "SPEC-MISSING-GLOSSARY", "SPEC-MISSING-MOTIVATION", "SPEC-EARS-TRIGGER-INVERSION", "SPEC-MISSING-REVISION-HISTORY"],
+  "accepted_extras": ["REQ-WEAK-DIRECTIVE", "SPEC-PRONOUN-ANTECEDENT", "SPEC-MISSING-OUT-OF-SCOPE", "SPEC-MISSING-GLOSSARY", "SPEC-MISSING-MOTIVATION", "SPEC-EARS-TRIGGER-INVERSION", "SPEC-MISSING-REVISION-HISTORY", "SPEC-MISSING-ASSUMPTIONS"],
   "known_misses": [
     "SPEC-AMBIGUOUS-WORDING",
     "SPEC-NFR-NO-THRESHOLD",
