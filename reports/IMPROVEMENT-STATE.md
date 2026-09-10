@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 79
-Last run: 2026-09-09
-Open loop PRs: 0
+Iteration: 80
+Last run: 2026-09-10
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] spec-missing-assumptions — SPEC-MISSING-ASSUMPTIONS → issue #203 → PR #204 (awaiting CI)
 
 ## Merged
 
+- iter 80 (2026-09-10): Phase 1 no open PRs; Phase 3 research — created issue #203 (SPEC-MISSING-ASSUMPTIONS); Phase 4 implemented; Phase 5 gate: pytest 1258 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #204; 1 open loop PR.
 - iter 79 (2026-09-09): created issue #201 (PLAN-NO-BACKUP-STRATEGY), opened PR #202, CI green same run, merged PR #202 (issue #201 closed), 0 open loop PRs.
 - #201 → PR #202 plan-no-backup-strategy — PLAN-NO-BACKUP-STRATEGY: deployment plan with database/persistent-store vocab but no backup/disaster-recovery strategy; _DB_STORE_VOCAB_RE (postgres/mysql/mariadb/mongodb/redis/cassandra/dynamodb/aurora/rds/elasticsearch/opensearch/neo4j/couchdb/firestore/cockroachdb/database/data-store/data-volume/persistent-storage/blob-storage/object-storage/s3-bucket/gcs-bucket/azure-blob); _BACKUP_RECOVERY_RE silence (backup/restore/disaster-recov*/data-recov*/pitr/snapshot/pg_dump/mysqldump/rpo/rto/retention-polic*/archive/replication-factor/cross-region/geo-redundan*/failover/standby-replica/dr-replica); deploy guard; fenced-block exclusion; aggregate finding at first db-vocab non-fenced line; 20 unit tests (7 fire, 13 silent); pytest 1245 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS (2026-09-09, CI green; squash-merged).
 - #196 → PR #200 plan-no-graceful-shutdown — PLAN-NO-GRACEFUL-SHUTDOWN: deployment plan with process stop/restart vocab but no graceful-shutdown strategy; _PROCESS_STOP_VOCAB_RE + _GRACEFUL_SHUTDOWN_RE silence; deploy guard (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE); fenced-block exclusion; aggregate finding at first process-stop non-fenced line; 19 unit tests (7 fire, 12 silent); pytest 1225 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS (2026-09-08, CI green; squash-merged).
