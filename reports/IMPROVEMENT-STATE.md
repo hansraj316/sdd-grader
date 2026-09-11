@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 80
-Last run: 2026-09-10
-Open loop PRs: 0
+Iteration: 81
+Last run: 2026-09-11
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] #205 → PR #206 spec-gherkin-no-then — SPEC-GHERKIN-NO-THEN: Gherkin scenario block with When step but no Then assertion (MAQA binary-verifiability, Gherkin Reference §3); _spec_gherkin_no_then() helper; formal-Gherkin guard (When+Then anywhere in doc); per-block scan; fenced-block exclusion; aggregate finding at first offending When line; spec-only; 13 unit tests (5 fire, 8 silent); pytest 1271 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS; awaiting CI.
 
 ## Merged
 
+- iter 81 (2026-09-11): Phase 1 no open PRs; Phase 3 research — created issue #205 (SPEC-GHERKIN-NO-THEN); Phase 4 implemented; Phase 5 gate: pytest 1271 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #206; awaiting CI.
 - iter 80 (2026-09-10): Phase 1 no open PRs; Phase 3 research — created issue #203 (SPEC-MISSING-ASSUMPTIONS); Phase 4 implemented; Phase 5 gate: pytest 1258 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #204; CI green; squash-merged PR #204 (issue #203 closed), 0 open loop PRs.
 - iter 80 (2026-09-10): created issue #203 (SPEC-MISSING-ASSUMPTIONS), opened PR #204, CI green same run, merged PR #204 (issue #203 closed), 0 open loop PRs.
 - #203 → PR #204 spec-missing-assumptions — SPEC-MISSING-ASSUMPTIONS: spec with ≥3 FR-/NFR- lines but no Assumptions/Constraints/Preconditions/Prerequisites/Boundary-Conditions heading; _ASSUMPTIONS_HEADING_RE 7-variant regex; guard ≥3 non-fenced FR-/NFR- lines via _REQ_ID_RE; one aggregate finding at line 1; spec-only; benign-lookalike fixture updated with Assumptions and Constraints section; paraphrased-defects accepted_extras + floor 50→44; realworld-mcp-proxy accepted_extras + floor 40→30; 13 unit tests (3 fire, 10 silent); pytest 1258 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS (2026-09-10, CI green; squash-merged).
