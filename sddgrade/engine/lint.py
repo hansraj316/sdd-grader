@@ -865,6 +865,89 @@ def _spec_gherkin_scenario_outline_no_examples(
     ]
 
 
+# SPEC-GHERKIN-NO-THEN: Gherkin scenario block with When step but no Then assertion.
+
+def _spec_gherkin_no_then(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Scenario block with at least one When step but zero Then steps (SPEC-GHERKIN-NO-THEN).
+
+    Gherkin Reference §3: every Scenario must end with a Then step that asserts the
+    observable outcome of the When action.  A When-only scenario can never produce a
+    pass/fail assertion — it is a non-verifiable test.
+
+    Guard: formal-Gherkin mode — at least one When line-leader AND at least one Then
+    line-leader present anywhere in the document (ensures we do not fire on prose-only
+    or non-Gherkin specs).  Per-block check: if a block has ≥1 When but zero Then, fire.
+
+    Block boundaries: a new Scenario:/Scenario Outline: heading, or 2+ consecutive blank
+    lines.  Fenced-code-block lines are excluded via _fence_mask().
+    Applies to spec artifacts only.
+    """
+    p = catalog.get("SPEC-GHERKIN-NO-THEN")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Require formal-Gherkin mode: both When and Then line-leaders exist somewhere.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    hits: list[int] = []  # 1-indexed line numbers of first When in offending blocks
+    block_when_line: int = 0   # 1-indexed line of first When in current block (0 = none seen)
+    block_has_then: bool = False  # has a Then appeared in current block?
+    blank_streak: int = 0
+
+    def _close_block() -> None:
+        nonlocal block_when_line, block_has_then
+        if block_when_line and not block_has_then:
+            hits.append(block_when_line)
+        block_when_line = 0
+        block_has_then = False
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            blank_streak = 0
+            continue
+        stripped = line.strip()
+
+        if not stripped:
+            blank_streak += 1
+            if blank_streak >= 2:
+                _close_block()
+            continue
+        blank_streak = 0
+
+        # Any Scenario: / Scenario Outline: heading resets the block.
+        if _SCENARIO_HEADING_RE.match(line) or _SCENARIO_OUTLINE_RE.match(line):
+            _close_block()
+            continue
+
+        # When line-leader: record first occurrence in this block.
+        if _GHERKIN_WHEN_RE.match(line):
+            if block_when_line == 0:
+                block_when_line = i + 1  # 1-indexed
+
+        # Then line-leader: mark block satisfied.
+        if _GHERKIN_THEN_RE.match(line):
+            block_has_then = True
+
+    # Close any block still open at end-of-file.
+    _close_block()
+
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-GHERKIN-NO-THEN: {len(hits)} Gherkin scenario block(s) have a When step "
+            "but no Then assertion; add a Then step to each block to state the observable "
+            "expected outcome so the scenario can produce a pass/fail result.",
+            line=hits[0],
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
 _AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
 
@@ -3616,6 +3699,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_gherkin_missing_given(art, catalog))
     out.extend(_spec_gherkin_multiple_when(art, catalog))
     out.extend(_spec_gherkin_scenario_outline_no_examples(art, catalog))
+    out.extend(_spec_gherkin_no_then(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
