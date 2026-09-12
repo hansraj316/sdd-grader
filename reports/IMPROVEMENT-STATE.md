@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 81
-Last run: 2026-09-11
-Open loop PRs: 0
+Iteration: 82
+Last run: 2026-09-12
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] #207 → PR #208 spec-qvscribe-capability-hedge — SPEC-QVSCRIBE-CAPABILITY-HEDGE: capability-hedging phrases ('shall be capable of', 'shall be allowed to', 'shall be permitted to', 'shall be designed to', 'shall be intended to', 'shall be expected to') dilute mandatory obligation; awaiting CI.
 
 ## Merged
 
+- iter 82 (2026-09-12): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #207 (SPEC-QVSCRIBE-CAPABILITY-HEDGE); Phase 4 implemented _CAPABILITY_HEDGE_RE + _spec_qvscribe_capability_hedge() + 15 unit tests; Phase 5 gate: pytest 1286 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #208; awaiting CI.
 - iter 81 (2026-09-11): Phase 1 no open PRs; Phase 3 research — created issue #205 (SPEC-GHERKIN-NO-THEN); Phase 4 implemented; Phase 5 gate: pytest 1271 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #206; CI green; squash-merged PR #206 (issue #205 closed), 0 open loop PRs.
 - iter 81 (2026-09-11): created issue #205 (SPEC-GHERKIN-NO-THEN), opened PR #206, CI green same run, merged PR #206 (issue #205 closed), 0 open loop PRs.
 - #205 → PR #206 spec-gherkin-no-then — SPEC-GHERKIN-NO-THEN: Gherkin scenario block with When step but no Then assertion; _spec_gherkin_no_then() helper; formal-Gherkin guard (When+Then anywhere in doc); per-block scan resets on Scenario:/Scenario Outline: heading or 2+ blank lines; fires when block has ≥1 When and zero Then; fenced-block exclusion; aggregate finding at first offending When line; spec-only; 13 unit tests (5 fire, 8 silent); pytest 1271 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS (2026-09-11, CI green; squash-merged).
