@@ -1033,6 +1033,66 @@ def _spec_qvscribe_shall_be_able_to(art: Artifact, catalog: dict[str, Pitfall]) 
     ]
 
 
+# SPEC-QVSCRIBE-CAPABILITY-HEDGE: 'shall be capable of' / 'shall be allowed to' /
+# 'shall be permitted to' / 'shall be designed to' / 'shall be intended to' /
+# 'shall be expected to' — all dilute mandatory obligation to capability/design intent.
+# Companion to SPEC-QVSCRIBE-SHALL-BE-ABLE-TO, covering the broader family of hedging forms.
+_CAPABILITY_HEDGE_RE = re.compile(
+    r"""(?:
+        \bshall\s+be\s+capable\s+of\b
+        | \bshall\s+be\s+allowed\s+to\b
+        | \bshall\s+be\s+permitted\s+to\b
+        | \bshall\s+be\s+designed\s+to\b
+        | \bshall\s+be\s+intended\s+to\b
+        | \bshall\s+be\s+expected\s+to\b
+    )""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _spec_qvscribe_capability_hedge(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Capability-hedging phrases that dilute mandatory obligation (SPEC-QVSCRIBE-CAPABILITY-HEDGE).
+
+    'shall be capable of / allowed to / permitted to / designed to / intended to /
+    expected to' all convert a direct mandatory behaviour into a latent capability or
+    design intent. QVscribe Level-1 Capability/Optionality defect (QV-103 extension);
+    IBM RQA Obligation Level; ISO 29148 §5.2.5(i) verifiable.
+
+    Scoped via _requirement_mask() / _fence_mask(); spec-only; one aggregate finding
+    at the first offending line.  Does not overlap with SPEC-QVSCRIBE-SHALL-BE-ABLE-TO
+    ('shall be able to') — each check covers a distinct set of phrases.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-CAPABILITY-HEDGE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _CAPABILITY_HEDGE_RE.search(line):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-CAPABILITY-HEDGE: {count} requirement line(s) use a capability-hedging "
+            "phrase ('shall be capable of', 'shall be allowed to', 'shall be permitted to', "
+            "'shall be designed to', 'shall be intended to', or 'shall be expected to'), "
+            "diluting a mandatory obligation to a latent capability or design intent; "
+            "replace with 'shall <verb>' to state the observable, verifiable behaviour directly.",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines.
 # QVscribe Continuance defect: 'always'/'never'/'at all times'/'continuously' on a normative
 # line cannot be verified by any finite test suite (ISO 29148 §5.2.5(i) verifiability).
@@ -3705,6 +3765,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     out.extend(_spec_qvscribe_shall_be_able_to(art, catalog))
+    out.extend(_spec_qvscribe_capability_hedge(art, catalog))
     out.extend(_spec_qvscribe_temporal_unbounded(art, catalog))
     out.extend(_spec_missing_motivation(art, catalog))
     out.extend(_spec_qvscribe_vague_quantifier(art, catalog))

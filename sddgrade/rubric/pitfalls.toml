@@ -828,6 +828,17 @@ detect = "Scan non-fenced requirement-bearing lines (matching _REQUIREMENTish_RE
 fix = "Replace 'shall be able to <verb>' with 'shall <verb>' to state the mandatory behaviour directly. Instead of 'The system shall be able to handle 10,000 concurrent requests', write 'The system shall handle 10,000 concurrent requests under peak load'. If the capability is genuinely optional, use SHOULD instead of SHALL."
 
 [[pitfall]]
+id = "SPEC-QVSCRIBE-CAPABILITY-HEDGE"
+name = "Capability-hedging phrase dilutes mandatory obligation ('shall be capable of' / 'shall be designed to')"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "QVscribe Level-1 Capability/Optionality defect (QV-103 extension): phrases such as 'shall be capable of', 'shall be allowed to', 'shall be permitted to', 'shall be designed to', 'shall be intended to', and 'shall be expected to' convert a mandatory behaviour ('the system SHALL do X') into a latent capability or design intent ('the system shall merely be capable/designed/intended to do X'). A system can satisfy these hedged forms if the code path exists but is never validated under real conditions. IBM RQA Obligation Level and ISO/IEC/IEEE 29148:2018 §5.2.5(i) both require that normative requirements state observable, verifiable behaviours — not capability claims. The existing SPEC-QVSCRIBE-SHALL-BE-ABLE-TO check covers only 'shall be able to'; this check covers the broader family of hedging infinitives and prepositional phrases."
+detect = "Scan non-fenced requirement-bearing lines (via _requirement_mask() / _fence_mask()) for the regex pattern matching: 'shall be capable of', 'shall be allowed to', 'shall be permitted to', 'shall be designed to', 'shall be intended to', 'shall be expected to' (case-insensitive). Fire one aggregate finding anchored at the first offending line. Spec artifacts only."
+fix = "Replace the hedged form with a direct obligation. Instead of 'The system shall be capable of handling 1,000 concurrent requests', write 'The system shall handle 1,000 concurrent requests'. Instead of 'The authentication module shall be designed to support OAuth 2.0', write 'The authentication module shall support OAuth 2.0'. If the capability is genuinely optional or aspirational, use SHOULD instead of SHALL, and document the design rationale separately."
+
+[[pitfall]]
 id = "SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED"
 name = "Temporal universal ('always'/'never') in requirement lines"
 dimension = "clarity"
