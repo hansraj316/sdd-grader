@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 83
 Last run: 2026-09-13
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,11 +102,13 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- [~] #209 spec-gherkin-duplicate-scenario → PR #210 (awaiting CI)
+(none)
 
 ## Merged
 
-- iter 83 (2026-09-13): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO); Phase 4 implemented _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario() + 13 unit tests; Phase 5 gate: pytest 1299 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #210; awaiting CI.
+- iter 83 (2026-09-13): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO); Phase 4 implemented _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario() + 13 unit tests; Phase 5 gate: pytest 1299 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #210; CI green (test+package); squash-merged PR #210 (issue #209 closed), 0 open loop PRs.
+- iter 83 (2026-09-13): created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO), opened PR #210, CI green same run, merged PR #210 (issue #209 closed), 0 open loop PRs.
+- #209 → PR #210 spec-gherkin-duplicate-scenario — SPEC-GHERKIN-DUPLICATE-SCENARIO: two or more Gherkin Scenario/Scenario Outline/Scenario Template blocks in same spec share identical title; _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario(); formal-Gherkin guard (When+Then); normalise interior whitespace, case-sensitive; fenced-block exclusion; aggregate finding at second occurrence of first duplicate; 13 unit tests (5 fire, 8 silent); pytest 1299 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS (2026-09-13, CI green; squash-merged).
 - iter 82 (2026-09-12): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #207 (SPEC-QVSCRIBE-CAPABILITY-HEDGE); Phase 4 implemented _CAPABILITY_HEDGE_RE + _spec_qvscribe_capability_hedge() + 15 unit tests; Phase 5 gate: pytest 1286 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #208; CI green (test+package); squash-merged PR #208 (issue #207 closed), 0 open loop PRs.
 - #207 → PR #208 spec-qvscribe-capability-hedge — SPEC-QVSCRIBE-CAPABILITY-HEDGE: capability-hedging phrases ('shall be capable of', 'shall be allowed to', 'shall be permitted to', 'shall be designed to', 'shall be intended to', 'shall be expected to') dilute mandatory obligation to latent capability/design intent; _CAPABILITY_HEDGE_RE VERBOSE 6-alternative regex + _spec_qvscribe_capability_hedge(); scoped via _requirement_mask()/_fence_mask(); spec-only; aggregate finding at first offending line; companion to SPEC-QVSCRIBE-SHALL-BE-ABLE-TO; 15 unit tests (9 fire, 6 silent); pytest 1286 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS (2026-09-12, CI green; squash-merged).
 - iter 81 (2026-09-11): Phase 1 no open PRs; Phase 3 research — created issue #205 (SPEC-GHERKIN-NO-THEN); Phase 4 implemented; Phase 5 gate: pytest 1271 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #206; CI green; squash-merged PR #206 (issue #205 closed), 0 open loop PRs.
