@@ -948,6 +948,81 @@ def _spec_gherkin_no_then(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fi
     ]
 
 
+# ---------------------------------------------------------------------------
+# SPEC-GHERKIN-DUPLICATE-SCENARIO
+# Two or more Gherkin Scenario blocks in the same spec share an identical title.
+# ---------------------------------------------------------------------------
+
+# Matches the Scenario: / Scenario Outline: / Scenario Template: heading prefix.
+# Strips optional leading #-header markers, list bullets, and whitespace.
+_SCENARIO_TITLE_RE = re.compile(
+    r"^\s*(?:#+\s*|[-*+]\s*)?scenario(?:\s+(?:outline|template))?\s*:\s*(.*)",
+    re.IGNORECASE,
+)
+
+
+def _spec_gherkin_duplicate_scenario(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Two or more Gherkin scenarios share an identical title (SPEC-GHERKIN-DUPLICATE-SCENARIO).
+
+    Duplicate scenario titles violate ISO 29148 §5.2.6 unique-identification, MAQA
+    test-artefact uniqueness, and QVscribe Level-1 Clarity.  Concrete harms: (1) test
+    runners report both under the same name — you cannot tell which failed; (2) a
+    developer who searches by name stops at the first hit and misses the second;
+    (3) traceability matrices that key on scenario names produce ambiguous rows.
+
+    Guard: formal-Gherkin mode — a When line-leader AND a Then line-leader are both
+    present in the document.
+    Detection: collect Scenario:/Scenario Outline:/Scenario Template: titles from
+    non-fenced lines; normalise interior whitespace; case-sensitive comparison.
+    Fire one aggregate finding anchored at the second occurrence of the first
+    duplicate pair found.
+    Applies to spec artifacts only.
+    """
+    p = catalog.get("SPEC-GHERKIN-DUPLICATE-SCENARIO")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Require formal-Gherkin mode: both When and Then line-leaders present.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    seen: dict[str, int] = {}   # title → 1-indexed line of first occurrence
+    dup_pairs: list[tuple[int, str]] = []  # (1-indexed duplicate line, title)
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        m = _SCENARIO_TITLE_RE.match(line)
+        if m:
+            # Normalise: collapse interior whitespace, strip edges.
+            title = " ".join(m.group(1).split())
+            if not title:
+                continue
+            lineno = i + 1  # 1-indexed
+            if title in seen:
+                dup_pairs.append((lineno, title))
+            else:
+                seen[title] = lineno
+
+    if not dup_pairs:
+        return []
+    first_dup_line, first_dup_title = dup_pairs[0]
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-GHERKIN-DUPLICATE-SCENARIO: {len(dup_pairs)} duplicate scenario "
+            f"title(s) found; first duplicate is '{first_dup_title}' (second occurrence "
+            "at this line). Give each Gherkin scenario a unique, descriptive title.",
+            line=first_dup_line,
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
 _AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
 
@@ -3760,6 +3835,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_gherkin_multiple_when(art, catalog))
     out.extend(_spec_gherkin_scenario_outline_no_examples(art, catalog))
     out.extend(_spec_gherkin_no_then(art, catalog))
+    out.extend(_spec_gherkin_duplicate_scenario(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
