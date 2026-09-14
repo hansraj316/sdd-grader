@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 83
-Last run: 2026-09-13
-Open loop PRs: 0
+Iteration: 84
+Last run: 2026-09-14
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,12 +102,13 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] plan-no-data-retention — PLAN-NO-DATA-RETENTION pitfall (Kiro PRR Data Lifecycle gate) → issue #211 → PR #214
 
 ## Merged
 
 - iter 83 (2026-09-13): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO); Phase 4 implemented _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario() + 13 unit tests; Phase 5 gate: pytest 1299 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #210; CI green (test+package); squash-merged PR #210 (issue #209 closed), 0 open loop PRs.
 - iter 83 (2026-09-13): created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO), opened PR #210, CI green same run, merged PR #210 (issue #209 closed), 0 open loop PRs.
+- iter 84 (2026-09-14): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research (3 agents: EARS/Gherkin/INVEST, Canon/MAQA/Kiro/Tessl, ISO29148/QVscribe/AIDE); filed 3 new issues #211 (PLAN-NO-DATA-RETENTION), #212 (SPEC-MISSING-STAKEHOLDER), #213 (SPEC-REFERENCE-UNRESOLVED); Phase 4 implemented #211: _PLAN_STORAGE_VOCAB_RE + _PLAN_RETENTION_RE + _plan_no_data_retention() + 20 unit tests; Phase 5 gate: pytest 1319 green, benchmark good=100.0 bad=50.8 PASS; Phase 6 opened draft PR #214 (Closes #211); 1 open loop PR.
 - #209 → PR #210 spec-gherkin-duplicate-scenario — SPEC-GHERKIN-DUPLICATE-SCENARIO: two or more Gherkin Scenario/Scenario Outline/Scenario Template blocks in same spec share identical title; _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario(); formal-Gherkin guard (When+Then); normalise interior whitespace, case-sensitive; fenced-block exclusion; aggregate finding at second occurrence of first duplicate; 13 unit tests (5 fire, 8 silent); pytest 1299 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS (2026-09-13, CI green; squash-merged).
 - iter 82 (2026-09-12): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #207 (SPEC-QVSCRIBE-CAPABILITY-HEDGE); Phase 4 implemented _CAPABILITY_HEDGE_RE + _spec_qvscribe_capability_hedge() + 15 unit tests; Phase 5 gate: pytest 1286 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #208; CI green (test+package); squash-merged PR #208 (issue #207 closed), 0 open loop PRs.
 - #207 → PR #208 spec-qvscribe-capability-hedge — SPEC-QVSCRIBE-CAPABILITY-HEDGE: capability-hedging phrases ('shall be capable of', 'shall be allowed to', 'shall be permitted to', 'shall be designed to', 'shall be intended to', 'shall be expected to') dilute mandatory obligation to latent capability/design intent; _CAPABILITY_HEDGE_RE VERBOSE 6-alternative regex + _spec_qvscribe_capability_hedge(); scoped via _requirement_mask()/_fence_mask(); spec-only; aggregate finding at first offending line; companion to SPEC-QVSCRIBE-SHALL-BE-ABLE-TO; 15 unit tests (9 fire, 6 silent); pytest 1286 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS (2026-09-12, CI green; squash-merged).
