@@ -3188,6 +3188,105 @@ def _plan_no_backup_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> list
     )]
 
 
+# PLAN-NO-DATA-RETENTION: deployment plan mentions persistent storage but has no
+# data-retention, TTL, purge, or deletion-policy statement.
+# ---------------------------------------------------------------------------
+
+# Trigger: non-fenced plan lines mentioning storage-related vocab. ≥2 hits required.
+_PLAN_STORAGE_VOCAB_RE = re.compile(
+    r"\bpostgres(?:ql)?\b"
+    r"|\bmysql\b"
+    r"|\bmariadb\b"
+    r"|\bmongodb?\b"
+    r"|\bredis\b"
+    r"|\bcassandra\b"
+    r"|\bdynamodb\b"
+    r"|\bdatabase\b"
+    r"|\bdata[- ]?store\b"
+    r"|\bpersist(?:ence|ed)?\b"
+    r"|\brecords?\b"
+    r"|\blogs?\b"
+    r"|\bblob\b"
+    r"|\bs3\b"
+    r"|\bbucket\b"
+    r"|\btable\b"
+    r"|\bappend[- ]?only\b"
+    r"|\bevent[- ]?store\b",
+    re.IGNORECASE,
+)
+
+# Silence: any retention / TTL / purge vocabulary anywhere in the document.
+# Use \w* suffix where past-tense forms (purged, archived, expired) must match.
+_PLAN_RETENTION_RE = re.compile(
+    r"\bretenti(?:on|on[- ]period)\b"
+    r"|\bttl\b"
+    r"|\btime[- ]?to[- ]?live\b"
+    r"|\bpurge\w*"          # purge, purged, purging, purges
+    r"|\bdeletion[- ]?polic\w*"
+    r"|\bdata[- ]?lifecycle\b"
+    r"|\barchiv\w+"         # archive, archival, archived, archiving
+    r"|\bexpir\w+"          # expire, expiry, expiration, expired, expires
+    r"|\bdata[- ]?age\b"
+    r"|\bauto[- ]?delete\w*"
+    r"|\brotate[- ]?logs?\w*",  # rotate, rotation, rotated
+    re.IGNORECASE,
+)
+
+
+def _plan_no_data_retention(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan mentions persistent storage but has no data-retention policy
+    (PLAN-NO-DATA-RETENTION).
+
+    Kiro's Production Readiness Review mandates a 'Data Lifecycle' gate: every service
+    that stores data must document retention periods, purge schedules, and archival rules.
+    Without a retention policy, services accumulate unbounded storage, unintentionally
+    retain PII past legal obligations (GDPR Art. 5(1)(e) storage-limitation; ISO/IEC
+    27001:2022 A.8.10), and fail compliance audits.
+
+    This is distinct from PLAN-NO-BACKUP-STRATEGY (disaster-recovery restore),
+    PLAN-MISSING-MIGRATION (schema change strategy), and SPEC-MISSING-PII-HANDLING
+    (privacy/encryption in spec).
+
+    Guard: ≥2 non-fenced lines match storage-vocab regex (prevents false positives on
+    plans that merely mention a datastore in passing with no lifecycle concern).
+    Silence: any retention-vocab token anywhere in the document.
+    Applies to plan artifacts only.
+    """
+    p = catalog.get("PLAN-NO-DATA-RETENTION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    # Collect non-fenced storage-vocab hits; need ≥2 to fire.
+    storage_hits: list[int] = []  # 1-indexed line numbers
+    for i, line in enumerate(lines):
+        if not fenced[i] and _PLAN_STORAGE_VOCAB_RE.search(line):
+            storage_hits.append(i + 1)
+            if len(storage_hits) >= 2:
+                break
+
+    if len(storage_hits) < 2:
+        return []
+
+    # Silence: any retention/TTL/purge vocabulary anywhere in the document.
+    if _PLAN_RETENTION_RE.search(art.raw):
+        return []
+
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "PLAN-NO-DATA-RETENTION: plan references persistent storage but states no "
+            "data-retention period, TTL, purge schedule, or archival policy. "
+            "Add a Data Lifecycle section documenting how long each store's data is "
+            "kept and how it is removed (e.g. 'events purged after 90 days', "
+            "'session tokens TTL 24 h', 'S3 objects archived to Glacier after 30 days').",
+            line=1,
+        )
+    ]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -3910,6 +4009,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_rate_limiting(art, catalog))
     out.extend(_plan_no_graceful_shutdown(art, catalog))
     out.extend(_plan_no_backup_strategy(art, catalog))
+    out.extend(_plan_no_data_retention(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
