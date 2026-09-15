@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 85
 Last run: 2026-09-15
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,13 +102,14 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- [~] spec-reference-unresolved → issue #213 → PR #215 (awaiting CI)
+(none)
 
 ## Merged
 
 - iter 83 (2026-09-13): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO); Phase 4 implemented _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario() + 13 unit tests; Phase 5 gate: pytest 1299 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #210; CI green (test+package); squash-merged PR #210 (issue #209 closed), 0 open loop PRs.
 - iter 83 (2026-09-13): created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO), opened PR #210, CI green same run, merged PR #210 (issue #209 closed), 0 open loop PRs.
-- iter 85 (2026-09-15): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#213 SPEC-REFERENCE-UNRESOLVED, #212 SPEC-MISSING-STAKEHOLDER); Phase 4 implemented #213: _EXTERNAL_REF_RE + _REF_SECTION_RE + _NORMATIVE_REF_LINE_RE + _spec_reference_unresolved() + 14 unit tests (6 fire, 8 silent); Phase 5 gate: pytest 1333 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #215; 1 open loop PR.
+- iter 85 (2026-09-15): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#213 SPEC-REFERENCE-UNRESOLVED, #212 SPEC-MISSING-STAKEHOLDER); Phase 4 implemented #213: _EXTERNAL_REF_RE + _REF_SECTION_RE + _NORMATIVE_REF_LINE_RE + _spec_reference_unresolved() + 14 unit tests (6 fire, 8 silent); Phase 5 gate: pytest 1333 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #215; CI green (test+package); squash-merged PR #215 (issue #213 closed), 0 open loop PRs.
+- #213 → PR #215 spec-reference-unresolved — SPEC-REFERENCE-UNRESOLVED: normative requirement cites external standard via bracket notation ([RFC …], [ISO …], [IEEE …], [NIST …], [OWASP …], etc.) but spec has no References or Bibliography section; _EXTERNAL_REF_RE + _REF_SECTION_RE + _NORMATIVE_REF_LINE_RE + _spec_reference_unresolved(); fenced-block exclusion; scoped to shall/must/FR-/NFR- normative lines; one aggregate finding at first offending line; spec-only; 14 unit tests (6 fire, 8 silent); pytest 1333 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS (2026-09-15, CI green; squash-merged).
 - iter 84 (2026-09-14): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research (3 agents: EARS/Gherkin/INVEST, Canon/MAQA/Kiro/Tessl, ISO29148/QVscribe/AIDE); filed 3 new issues #211 (PLAN-NO-DATA-RETENTION), #212 (SPEC-MISSING-STAKEHOLDER), #213 (SPEC-REFERENCE-UNRESOLVED); Phase 4 implemented #211: _PLAN_STORAGE_VOCAB_RE + _PLAN_RETENTION_RE + _plan_no_data_retention() + 20 unit tests; Phase 5 gate: pytest 1319 green, benchmark good=100.0 bad=50.8 PASS; Phase 6 opened PR #214; CI green (test+package); squash-merged PR #214 (issue #211 closed), 0 open loop PRs.
 - #209 → PR #210 spec-gherkin-duplicate-scenario — SPEC-GHERKIN-DUPLICATE-SCENARIO: two or more Gherkin Scenario/Scenario Outline/Scenario Template blocks in same spec share identical title; _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario(); formal-Gherkin guard (When+Then); normalise interior whitespace, case-sensitive; fenced-block exclusion; aggregate finding at second occurrence of first duplicate; 13 unit tests (5 fire, 8 silent); pytest 1299 green; benchmark good=100.0 bad=50.8 precision=0.979 PASS (2026-09-13, CI green; squash-merged).
 - iter 82 (2026-09-12): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #207 (SPEC-QVSCRIBE-CAPABILITY-HEDGE); Phase 4 implemented _CAPABILITY_HEDGE_RE + _spec_qvscribe_capability_hedge() + 15 unit tests; Phase 5 gate: pytest 1286 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #208; CI green (test+package); squash-merged PR #208 (issue #207 closed), 0 open loop PRs.
