@@ -1866,6 +1866,72 @@ def _spec_missing_assumptions(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     ]
 
 
+# SPEC-REFERENCE-UNRESOLVED: normative requirement cites external standard via bracket
+# notation (e.g., [RFC 7662], [ISO 27001]) but spec has no References/Bibliography section.
+# QVscribe QV-201 "Incomplete Requirement"; IBM RQA external-reference check;
+# ISO/IEC/IEEE 29148:2018 §5.2.5(b) completeness.
+_EXTERNAL_REF_RE = re.compile(
+    r"\[(?:RFC|ISO|IEEE|NIST|GDPR|HIPAA|PCI|DOC|STD|SEC|REG|ECMA|W3C|IETF|OWASP)"
+    r"\s*[\w./-]+\]",
+    re.IGNORECASE,
+)
+_REF_SECTION_RE = re.compile(
+    r"\b(?:references?|bibliography|external\s+standards?|normative\s+references?)\b",
+    re.IGNORECASE,
+)
+_NORMATIVE_REF_LINE_RE = re.compile(
+    r"\b(?:shall|must)\b|\bFR-\d+\b|\bNFR-\d+\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_reference_unresolved(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Normative requirement cites external standard via bracket notation but no References section (SPEC-REFERENCE-UNRESOLVED).
+
+    Guard: collect bracket citations ([RFC …], [ISO …], [IEEE …], etc.) on non-fenced
+    normative lines (shall/must/FR-/NFR-). If zero citations found, skip.
+    Check: any section heading matching references/bibliography/normative-references → silent.
+    Fire one aggregate finding at the first offending line.
+    Spec-only; fenced-code-block lines excluded.
+    """
+    p = catalog.get("SPEC-REFERENCE-UNRESOLVED")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Collect citation tokens on normative, non-fenced lines.
+    first_line: int | None = None
+    citation_count = 0
+    for i, ln in enumerate(lines):
+        if fenced[i]:
+            continue
+        if not _NORMATIVE_REF_LINE_RE.search(ln):
+            continue
+        if _EXTERNAL_REF_RE.search(ln):
+            citation_count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if citation_count == 0:
+        return []
+    # Check: any section heading matches the references pattern → silent.
+    for s in art.sections:
+        if _REF_SECTION_RE.search(s.title):
+            return []
+    plural = "s" if citation_count > 1 else ""
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-REFERENCE-UNRESOLVED: {citation_count} normative requirement{plural} cite "
+            f"external standard(s) via bracket notation (e.g., [RFC …], [ISO …]) but the spec "
+            f"has no References or Bibliography section; add a '## References' section listing "
+            f"each cited standard with its full title and URL so implementers can locate the "
+            f"constraints they must satisfy (ISO/IEC/IEEE 29148:2018 §5.2.5(b), QVscribe QV-201).",
+            line=first_line or 1,
+        )
+    ]
+
+
 def _spec_nfr_no_unit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """NFR line with a numeric threshold but no measurement unit (SPEC-NFR-NO-UNIT).
 
@@ -3956,6 +4022,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_revision_history(art, catalog))
     out.extend(_spec_nfr_percent_context_missing(art, catalog))
     out.extend(_spec_missing_assumptions(art, catalog))
+    out.extend(_spec_reference_unresolved(art, catalog))
     return out
 
 
