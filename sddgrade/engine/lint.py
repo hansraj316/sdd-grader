@@ -1866,6 +1866,57 @@ def _spec_missing_assumptions(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     ]
 
 
+# SPEC-MISSING-STAKEHOLDER: spec with ≥3 FR-/NFR- lines but no Stakeholders / User Roles /
+# Personas / Actors heading.  ISO/IEC/IEEE 29148:2018 §5.1.2 (stakeholder identification),
+# Amazon Kiro spec template, AIDE spec-quality framework.
+_STAKEHOLDER_HEADING_RE = re.compile(
+    r"(?:stakeholders?"
+    r"|user\s+roles?"
+    r"|personas?"
+    r"|affected\s+parties?"
+    r"|actors?(?:\s|$)"
+    r"|user\s+types?)",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_stakeholder(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 FR-/NFR- lines but no Stakeholders/User Roles/Personas heading.
+
+    ISO/IEC/IEEE 29148:2018 §5.1.2 mandates stakeholder identification as a
+    prerequisite to an SRS.  Amazon Kiro spec template and AIDE both require an
+    explicit Stakeholders section.  Guard: ≥3 non-fenced lines with FR-/NFR- IDs.
+    Check: no section heading matches the stakeholder keyword set.
+    Distinct from SPEC-STORY-VAGUE-ACTOR (individual story actor names).
+    """
+    p = catalog.get("SPEC-MISSING-STAKEHOLDER")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    for s in art.sections:
+        if _STAKEHOLDER_HEADING_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-STAKEHOLDER: spec has 3+ FR-/NFR- requirements but no "
+            "Stakeholders, User Roles, or Personas section; add a section listing "
+            "each stakeholder group, their role, and their primary concern so "
+            "implementers can prioritise conflicting needs "
+            "(ISO/IEC/IEEE 29148:2018 §5.1.2 / Amazon Kiro spec template).",
+            line=1,
+        )
+    ]
+
+
 # SPEC-REFERENCE-UNRESOLVED: normative requirement cites external standard via bracket
 # notation (e.g., [RFC 7662], [ISO 27001]) but spec has no References/Bibliography section.
 # QVscribe QV-201 "Incomplete Requirement"; IBM RQA external-reference check;
@@ -4022,6 +4073,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_revision_history(art, catalog))
     out.extend(_spec_nfr_percent_context_missing(art, catalog))
     out.extend(_spec_missing_assumptions(art, catalog))
+    out.extend(_spec_missing_stakeholder(art, catalog))
     out.extend(_spec_reference_unresolved(art, catalog))
     return out
 

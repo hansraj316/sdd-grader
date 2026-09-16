@@ -1173,6 +1173,17 @@ detect = "Guard: plan artifact with ≥2 non-fenced lines matching the storage-v
 fix = "Add a Data Retention section (or paragraph) to the plan that states: (1) what data each store holds; (2) how long it is kept (a concrete TTL or retention period, e.g. '90 days', '7 years'); (3) how data is removed (purge job, lifecycle rule, archive to cold storage); and (4) who is responsible for enforcement. Examples: 'User activity events in PostgreSQL are purged after 90 days via a nightly cron job.', 'Session tokens in Redis have a TTL of 24 hours.', 'Uploaded files in S3 are moved to Glacier after 30 days by a lifecycle rule and deleted after 7 years.'"
 
 [[pitfall]]
+id = "SPEC-MISSING-STAKEHOLDER"
+name = "Spec with substantial requirements but no Stakeholders section"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "low"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.1.2 mandates stakeholder identification as a prerequisite to an SRS: without knowing who the system serves, implementers cannot determine relative priority or resolve conflicting needs. Amazon Kiro's spec template requires a mandatory 'Stakeholders' section. The AIDE spec-quality framework lists missing stakeholder analysis as a leading cause of requirement ambiguity. This check is categorically distinct from SPEC-STORY-VAGUE-ACTOR (which validates individual user-story actor names): it catches the complete absence of any section defining who the stakeholders or user roles are."
+detect = "Guard: spec artifact AND ≥3 non-fenced lines matching \\b(?:FR|NFR)-\\d+\\b (requirement identifiers). Heading scan: check all '#'-prefixed section titles for the pattern stakeholder|user\\s+roles?|personas?|affected\\s+parties?|actors?(?:\\s|$)|user\\s+types? (case-insensitive). Fire once at file level (line 1) if guard passes and no such heading exists. Silent on plan and tasks artifacts."
+fix = "Add a '## Stakeholders' (or '## User Roles' / '## Personas') section near the top of the spec. List each stakeholder group, their role, and their primary concern or goal. Example: '## Stakeholders\\n- **End User**: places orders and tracks shipments; primary quality concern is response time.\\n- **Warehouse Staff**: fulfils orders; primary concern is accuracy of inventory data.\\n- **Finance Team**: approves refunds; primary concern is audit trail completeness.' This section becomes the reference point for prioritising conflicting requirements and scoping changes."
+
+[[pitfall]]
 id = "SPEC-REFERENCE-UNRESOLVED"
 name = "Normative requirement cites external standard via bracket notation but no References section exists"
 dimension = "completeness"
