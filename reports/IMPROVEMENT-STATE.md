@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 85
-Last run: 2026-09-15
-Open loop PRs: 0
+Iteration: 86
+Last run: 2026-09-16
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,7 +102,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #212 → PR #216 spec-missing-stakeholder — awaiting CI
 
 ## Merged
 
@@ -202,6 +202,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Run log
 
+- iter 86 (2026-09-16): Phase 1 no open PRs; Phase 2 found 1 open loop-candidate issue (#212 SPEC-MISSING-STAKEHOLDER); Phase 4 implemented _STAKEHOLDER_HEADING_RE + _spec_missing_stakeholder() + 14 unit tests; speckit_good + benign-lookalike updated with Stakeholders section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; Phase 5 gate: pytest 1347 green, benchmark good=100.0 bad=50.8 precision=0.98 PASS; Phase 6 opened PR #216; awaiting CI.
 - (seed) Loop scaffolded; backlog seeded with 12 ideas across SDD frameworks.
 - iter 1 (2026-06-25, manual proof): implemented pitfall-nfr-thresholds; gate caught a
   bug (FR-001 digits counted as a threshold), fixed; pytest 22 green; benchmark PASS;
