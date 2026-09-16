@@ -7,6 +7,11 @@ When a supplier sends a catalog update with thousands of SKUs, the manual flow i
 impractical — taking days and introducing data-entry errors. A bulk import capability
 lets operations upload a file and have the catalog updated automatically and reliably.
 
+## Stakeholders
+
+- Operations Manager: uploads catalog files; primary concern is import speed and error reporting.
+- Product Team: consumes the updated catalog; primary concern is data integrity and completeness.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Import a catalog file (Priority: P1)

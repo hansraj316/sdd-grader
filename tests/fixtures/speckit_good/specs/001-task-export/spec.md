@@ -6,6 +6,11 @@ Project members need to share task progress with stakeholders who do not use the
 Without an export capability, teams resort to manual copy-paste, which is error-prone
 and breaks reporting workflows that rely on spreadsheet data.
 
+## Stakeholders
+
+- Project Member: exports task lists to share progress; primary concern is data accuracy.
+- External Stakeholder: receives the exported CSV; primary concern is readability in spreadsheet tools.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Export tasks to CSV (Priority: P1)
