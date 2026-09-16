@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 86
 Last run: 2026-09-16
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,12 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #212 → PR #216 spec-missing-stakeholder — awaiting CI
+(none)
 
 ## Merged
 
+- iter 86 (2026-09-16): CI green on PR #216 (test+package both success); squash-merged PR #216 (issue #212 SPEC-MISSING-STAKEHOLDER closed), 0 open loop PRs.
+- #212 → PR #216 spec-missing-stakeholder — SPEC-MISSING-STAKEHOLDER: spec with ≥3 FR-/NFR- lines but no Stakeholders/User Roles/Personas/Actors/Affected Parties/User Types heading; _STAKEHOLDER_HEADING_RE + _spec_missing_stakeholder(); guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding at line 1; spec-only; speckit_good + benign-lookalike updated with Stakeholders section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; 14 unit tests (4 fire, 10 silent); pytest 1347 green; benchmark good=100.0 bad=50.8 precision=0.98 PASS (2026-09-16, CI green; squash-merged).
 - iter 83 (2026-09-13): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO); Phase 4 implemented _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario() + 13 unit tests; Phase 5 gate: pytest 1299 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #210; CI green (test+package); squash-merged PR #210 (issue #209 closed), 0 open loop PRs.
 - iter 83 (2026-09-13): created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO), opened PR #210, CI green same run, merged PR #210 (issue #209 closed), 0 open loop PRs.
 - iter 85 (2026-09-15): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#213 SPEC-REFERENCE-UNRESOLVED, #212 SPEC-MISSING-STAKEHOLDER); Phase 4 implemented #213: _EXTERNAL_REF_RE + _REF_SECTION_RE + _NORMATIVE_REF_LINE_RE + _spec_reference_unresolved() + 14 unit tests (6 fire, 8 silent); Phase 5 gate: pytest 1333 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #215; CI green (test+package); squash-merged PR #215 (issue #213 closed), 0 open loop PRs.
