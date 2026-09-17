@@ -3404,6 +3404,103 @@ def _plan_no_data_retention(art: Artifact, catalog: dict[str, Pitfall]) -> list[
     ]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-AUTH-WITHOUT-AUTHZ: deployment plan has authentication vocabulary but no
+# authorization vocabulary (OWASP API1:2023 Broken Object Level Authorization).
+# ---------------------------------------------------------------------------
+
+# Trigger: non-fenced plan line mentions authentication concepts.
+_AUTHN_VOCAB_RE = re.compile(
+    r"\blogin\b"
+    r"|\bsign[- ]?in\b"
+    r"|\bsign[- ]?up\b"
+    r"|\bregistr(?:ation|er|ation\s+flow)\b"
+    r"|\bauthentication\b"
+    r"|\bauthenticate\b"
+    r"|\bpassword\b"
+    r"|\bcredential[s]?\b"
+    r"|\bjwt\b"
+    r"|\boauth\b"
+    r"|\bsaml\b"
+    r"|\bsso\b"
+    r"|\bsession[- ]?token[s]?\b"
+    r"|\bbearer[- ]?token[s]?\b"
+    r"|\bapi[- ]?key[s]?\b",
+    re.IGNORECASE,
+)
+
+# Silence: any authorization concept anywhere in the document.
+_AUTHZ_VOCAB_RE = re.compile(
+    r"\bauthoriz(?:ation|e|ing)\b"
+    r"|\bauthoris(?:ation|e|ing)\b"
+    r"|\brbac\b"
+    r"|\brole[- ]?based\b"
+    r"|\baccess[- ]?control\b"
+    r"|\b\bacl\b"
+    r"|\bpermission[s]?\b"
+    r"|\bprivilege[s]?\b"
+    r"|\bleast[- ]?privilege\b"
+    r"|\bentitlement[s]?\b"
+    r"|\bpolicy[- ]?decision\b"
+    r"|\bpolicy[- ]?enforcement\b"
+    r"|\b(?:pep|pdp)\b"
+    r"|\b(?:opa|casbin|spring[- ]?security|aws[- ]?iam|iam[- ]?policy|iam[- ]?role)\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_auth_without_authz(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan mentions authentication but has no authorization strategy
+    (PLAN-AUTH-WITHOUT-AUTHZ).
+
+    OWASP API1:2023 (Broken Object Level Authorization) is the #1 API security risk.
+    OWASP ASVS 4.0 §4 separates Authentication (identity verification) from Authorization
+    (access decisions). A plan that implements JWT/OAuth/login but never discusses roles,
+    permissions, or access-control policies ships without authorization controls — the
+    most common source of privilege-escalation and data-leakage CVEs.
+
+    This is distinct from PLAN-MISSING-SECURITY, which fires when ALL security vocabulary
+    is absent. Once any auth token appears, PLAN-MISSING-SECURITY is silent; this check
+    specifically surfaces the authn/authz gap within an otherwise auth-aware plan.
+
+    Guard: deploy vocabulary must be present.
+    Trigger: ≥1 non-fenced line has authentication vocabulary.
+    Silence: any authorization vocabulary anywhere in the document.
+    """
+    p = catalog.get("PLAN-AUTH-WITHOUT-AUTHZ")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: find first non-fenced line with authentication vocab.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    authn_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _AUTHN_VOCAB_RE.search(line):
+            authn_hit = i + 1
+            break
+    if authn_hit is None:
+        return []
+    # Silence: any authorization vocabulary anywhere in the document.
+    if _AUTHZ_VOCAB_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-AUTH-WITHOUT-AUTHZ: plan describes authentication (login/JWT/OAuth/session) "
+        "but states no authorization strategy (no RBAC, ACL, role, permission, or "
+        "access-control vocabulary). Add an Authorization section covering the access "
+        "model, role definitions, and per-endpoint enforcement (OWASP API1:2023).",
+        line=authn_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -4129,6 +4226,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_graceful_shutdown(art, catalog))
     out.extend(_plan_no_backup_strategy(art, catalog))
     out.extend(_plan_no_data_retention(art, catalog))
+    out.extend(_plan_auth_without_authz(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
