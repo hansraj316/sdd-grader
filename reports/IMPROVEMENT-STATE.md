@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 86
-Last run: 2026-09-16
-Open loop PRs: 0
+Iteration: 87
+Last run: 2026-09-17
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,7 +102,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #217 → PR #218 plan-auth-without-authz — PLAN-AUTH-WITHOUT-AUTHZ: deployment plan with authentication vocab but no authorization vocab (OWASP API1:2023); 21 unit tests; pytest 1368 green; benchmark PASS.
 
 ## Merged
 
@@ -204,6 +204,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Run log
 
+- iter 87 (2026-09-17): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created issue #217 (PLAN-AUTH-WITHOUT-AUTHZ); Phase 4 implemented _AUTHN_VOCAB_RE + _AUTHZ_VOCAB_RE + _plan_auth_without_authz() + 21 unit tests (8 fire, 13 silent); Phase 5 gate: pytest 1368 green, benchmark good=100.0 bad<70 precision=0.98 PASS; Phase 6 opened PR #218; awaiting CI.
 - iter 86 (2026-09-16): Phase 1 no open PRs; Phase 2 found 1 open loop-candidate issue (#212 SPEC-MISSING-STAKEHOLDER); Phase 4 implemented _STAKEHOLDER_HEADING_RE + _spec_missing_stakeholder() + 14 unit tests; speckit_good + benign-lookalike updated with Stakeholders section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; Phase 5 gate: pytest 1347 green, benchmark good=100.0 bad=50.8 precision=0.98 PASS; Phase 6 opened PR #216; awaiting CI.
 - (seed) Loop scaffolded; backlog seeded with 12 ideas across SDD frameworks.
 - iter 1 (2026-06-25, manual proof): implemented pitfall-nfr-thresholds; gate caught a
