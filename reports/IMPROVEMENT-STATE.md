@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 87
 Last run: 2026-09-17
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,13 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #217 → PR #218 plan-auth-without-authz — PLAN-AUTH-WITHOUT-AUTHZ: deployment plan with authentication vocab but no authorization vocab (OWASP API1:2023); 21 unit tests; pytest 1368 green; benchmark PASS.
+(none)
 
 ## Merged
 
+- iter 87 (2026-09-17): CI green on PR #218 (test+package both success); squash-merged PR #218 (issue #217 PLAN-AUTH-WITHOUT-AUTHZ closed), 0 open loop PRs.
+- iter 87 (2026-09-17): CI green on PR #218 (test+package both success); squash-merged PR #218 (issue #217 PLAN-AUTH-WITHOUT-AUTHZ closed), 0 open loop PRs.
+- #217 → PR #218 plan-auth-without-authz — PLAN-AUTH-WITHOUT-AUTHZ: deployment plan with authentication vocab (login/JWT/OAuth/SAML/SSO/session/password/credentials) but no authorization vocab (RBAC/ACL/role-based/permission/privilege/least-privilege/access-control/OPA/Casbin/IAM); _AUTHN_VOCAB_RE + _AUTHZ_VOCAB_RE + _plan_auth_without_authz(); deploy guard (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE) prevents false positives on refactoring notes; fenced-block exclusion; one aggregate finding at first authn-vocab non-fenced line; plan-only; 21 unit tests (8 fire, 13 silent); pytest 1368 green; benchmark good=100.0 bad<70 precision=0.98 PASS (2026-09-17, CI green; squash-merged).
 - iter 86 (2026-09-16): CI green on PR #216 (test+package both success); squash-merged PR #216 (issue #212 SPEC-MISSING-STAKEHOLDER closed), 0 open loop PRs.
 - #212 → PR #216 spec-missing-stakeholder — SPEC-MISSING-STAKEHOLDER: spec with ≥3 FR-/NFR- lines but no Stakeholders/User Roles/Personas/Actors/Affected Parties/User Types heading; _STAKEHOLDER_HEADING_RE + _spec_missing_stakeholder(); guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding at line 1; spec-only; speckit_good + benign-lookalike updated with Stakeholders section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; 14 unit tests (4 fire, 10 silent); pytest 1347 green; benchmark good=100.0 bad=50.8 precision=0.98 PASS (2026-09-16, CI green; squash-merged).
 - iter 83 (2026-09-13): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #209 (SPEC-GHERKIN-DUPLICATE-SCENARIO); Phase 4 implemented _SCENARIO_TITLE_RE + _spec_gherkin_duplicate_scenario() + 13 unit tests; Phase 5 gate: pytest 1299 green, benchmark good=100.0 bad=50.8 precision=0.979 PASS; Phase 6 opened PR #210; CI green (test+package); squash-merged PR #210 (issue #209 closed), 0 open loop PRs.
@@ -204,7 +207,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Run log
 
-- iter 87 (2026-09-17): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created issue #217 (PLAN-AUTH-WITHOUT-AUTHZ); Phase 4 implemented _AUTHN_VOCAB_RE + _AUTHZ_VOCAB_RE + _plan_auth_without_authz() + 21 unit tests (8 fire, 13 silent); Phase 5 gate: pytest 1368 green, benchmark good=100.0 bad<70 precision=0.98 PASS; Phase 6 opened PR #218; awaiting CI.
+- iter 87 (2026-09-17): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created issue #217 (PLAN-AUTH-WITHOUT-AUTHZ); Phase 4 implemented _AUTHN_VOCAB_RE + _AUTHZ_VOCAB_RE + _plan_auth_without_authz() + 21 unit tests (8 fire, 13 silent); Phase 5 gate: pytest 1368 green, benchmark good=100.0 bad<70 precision=0.98 PASS; Phase 6 opened PR #218; CI green (test+package); squash-merged PR #218 (issue #217 closed), 0 open loop PRs.
 - iter 86 (2026-09-16): Phase 1 no open PRs; Phase 2 found 1 open loop-candidate issue (#212 SPEC-MISSING-STAKEHOLDER); Phase 4 implemented _STAKEHOLDER_HEADING_RE + _spec_missing_stakeholder() + 14 unit tests; speckit_good + benign-lookalike updated with Stakeholders section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; Phase 5 gate: pytest 1347 green, benchmark good=100.0 bad=50.8 precision=0.98 PASS; Phase 6 opened PR #216; awaiting CI.
 - (seed) Loop scaffolded; backlog seeded with 12 ideas across SDD frameworks.
 - iter 1 (2026-06-25, manual proof): implemented pitfall-nfr-thresholds; gate caught a
