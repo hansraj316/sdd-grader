@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 87
-Last run: 2026-09-17
-Open loop PRs: 0
+Iteration: 88
+Last run: 2026-09-18
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,7 +102,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- [~] #219 → PR #222 plan-no-caching-strategy — PLAN-NO-CACHING-STRATEGY: deployment plan with caching layer (Redis/CDN/Memcached/Varnish) but no cache-invalidation/TTL/eviction strategy; awaiting CI.
 
 ## Merged
 
@@ -207,6 +207,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Run log
 
+- iter 88 (2026-09-18): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created issues #219 (PLAN-NO-CACHING-STRATEGY), #220 (SPEC-MISSING-ACCEPTANCE-SECTION), #221 (PLAN-MISSING-API-VERSIONING); Phase 4 implemented #219: _CACHE_VOCAB_RE + _CACHE_STRATEGY_RE + _plan_no_caching_strategy() + 16 unit tests (7 fire, 9 silent); Phase 5 gate: pytest 1384 green, benchmark good=100.0 bad=50.8 precision=0.98 PASS; Phase 6 opened PR #222; awaiting CI.
 - iter 87 (2026-09-17): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created issue #217 (PLAN-AUTH-WITHOUT-AUTHZ); Phase 4 implemented _AUTHN_VOCAB_RE + _AUTHZ_VOCAB_RE + _plan_auth_without_authz() + 21 unit tests (8 fire, 13 silent); Phase 5 gate: pytest 1368 green, benchmark good=100.0 bad<70 precision=0.98 PASS; Phase 6 opened PR #218; CI green (test+package); squash-merged PR #218 (issue #217 closed), 0 open loop PRs.
 - iter 86 (2026-09-16): Phase 1 no open PRs; Phase 2 found 1 open loop-candidate issue (#212 SPEC-MISSING-STAKEHOLDER); Phase 4 implemented _STAKEHOLDER_HEADING_RE + _spec_missing_stakeholder() + 14 unit tests; speckit_good + benign-lookalike updated with Stakeholders section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; Phase 5 gate: pytest 1347 green, benchmark good=100.0 bad=50.8 precision=0.98 PASS; Phase 6 opened PR #216; awaiting CI.
 - (seed) Loop scaffolded; backlog seeded with 12 ideas across SDD frameworks.
