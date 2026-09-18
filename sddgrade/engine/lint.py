@@ -3501,6 +3501,102 @@ def _plan_auth_without_authz(art: Artifact, catalog: dict[str, Pitfall]) -> list
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-NO-CACHING-STRATEGY
+# ---------------------------------------------------------------------------
+_CACHE_VOCAB_RE = re.compile(
+    r"\bredis\b"
+    r"|\bmemcach(?:ed)?\b"
+    r"|\bcdn\b"
+    r"|(?<!un)cach(?:e[sd]?|ing)\b"
+    r"|\bvarnish\b"
+    r"|\bnginx[- ]?cache\b"
+    r"|\bedge[- ]cache\b"
+    r"|\bcache[- ]layer\b"
+    r"|\bcloudfront\b"
+    r"|\bcloudflare\b",
+    re.IGNORECASE,
+)
+
+# Silence: any cache-management strategy token found anywhere in the document.
+_CACHE_STRATEGY_RE = re.compile(
+    r"cache[- ]?invalid"
+    r"|cache[- ]?bust"
+    r"|\bttl\b"
+    r"|time[- ]?to[- ]?live"
+    r"|\bevict"
+    r"|expir[yi]"
+    r"|\bstale\b"
+    r"|warm[- ]?up"
+    r"|\bpurge\b"
+    r"|write[- ]?through"
+    r"|write[- ]?back"
+    r"|write[- ]?around"
+    r"|read[- ]?through"
+    r"|\bcache[- ]?key\b"
+    r"|\bmax[- ]?age\b"
+    r"|\bcache[- ]?control\b"
+    r"|cache[- ]?hit"
+    r"|cache[- ]?miss"
+    r"|cache[- ]?bypass"
+    r"|cache[- ]?strategy",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_caching_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan mentions a caching layer but has no invalidation/TTL/eviction strategy
+    (PLAN-NO-CACHING-STRATEGY).
+
+    A caching layer without an explicit strategy for invalidation, TTL, or eviction is a
+    common source of stale-data bugs, cache-stampede incidents, and compliance failures.
+    Tessl (infrastructure-drift prevention) and the Twelve-Factor App require stateless
+    processes to document how backing caches are managed. ISO 25010 Reliability mandates
+    that served data reflects the authoritative store.
+
+    Guard: deploy vocabulary must be present.
+    Trigger: ≥1 non-fenced plan line mentions a caching technology (Redis, CDN, Varnish…).
+    Silence: any cache-management term (TTL, invalidate, evict, stale, write-through…)
+             appears anywhere in the non-fenced document.
+    """
+    p = catalog.get("PLAN-NO-CACHING-STRATEGY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: find first non-fenced line with cache vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    cache_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _CACHE_VOCAB_RE.search(line):
+            cache_hit = i + 1
+            break
+    if cache_hit is None:
+        return []
+    # Silence: any cache-management strategy appears anywhere in the document.
+    non_fenced_text = "\n".join(
+        line for i, line in enumerate(lines) if not fenced[i]
+    )
+    if _CACHE_STRATEGY_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-CACHING-STRATEGY: plan introduces a caching layer (Redis/CDN/Varnish/…) "
+        "but states no cache-invalidation, TTL, or eviction strategy. Without a lifecycle "
+        "plan, stale data is silently served and cache-stampede events can overwhelm the "
+        "origin. Add a Cache Strategy section covering invalidation trigger, TTL/eviction "
+        "policy, and fallback behaviour on cache miss (Tessl, Twelve-Factor, ISO 25010).",
+        line=cache_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -4227,6 +4323,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_backup_strategy(art, catalog))
     out.extend(_plan_no_data_retention(art, catalog))
     out.extend(_plan_auth_without_authz(art, catalog))
+    out.extend(_plan_no_caching_strategy(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
