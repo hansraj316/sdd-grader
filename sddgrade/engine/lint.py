@@ -1917,6 +1917,61 @@ def _spec_missing_stakeholder(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     ]
 
 
+# SPEC-MISSING-ACCEPTANCE-SECTION: spec with ≥3 FR-/NFR- lines but no Acceptance Criteria
+# / Verification / Testing Criteria / Definition-of-Done / Fit Criteria / Test Cases /
+# Test Plan heading.  Canon Volere (fit criteria), MAQA (binary verifiability),
+# ISO/IEC/IEEE 29148:2018 §5.2.4(b), Amazon Kiro spec template, AIDE.
+_ACCEPTANCE_HEADING_RE = re.compile(
+    r"(?:acceptance[- ]criteri"
+    r"|acceptance[- ]test"
+    r"|\bverification\b"
+    r"|testing[- ]criteri"
+    r"|definition[- ]of[- ]done"
+    r"|fit[- ]criteri"
+    r"|test[- ]cases?"
+    r"|test[- ]plan)",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_acceptance_section(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 FR-/NFR- lines but no Acceptance Criteria/Verification heading.
+
+    Canon Volere (fit criteria), MAQA (binary verifiability), and
+    ISO/IEC/IEEE 29148:2018 §5.2.4(b) require every requirement to be
+    verifiable.  Guard: ≥3 non-fenced FR-/NFR- lines.  Check: no section
+    heading matches the acceptance/verification keyword set.
+    Distinct from SPEC-AC-VAGUE-OUTCOME and SPEC-MAQA-AC-CONDITIONAL (which
+    check the content of individual Then clauses).
+    """
+    p = catalog.get("SPEC-MISSING-ACCEPTANCE-SECTION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    for s in art.sections:
+        if _ACCEPTANCE_HEADING_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-ACCEPTANCE-SECTION: spec has 3+ FR-/NFR- requirements but no "
+            "Acceptance Criteria, Verification, or Definition-of-Done section; add a "
+            "section listing testable conditions that confirm each requirement is correctly "
+            "implemented (Canon Volere fit criteria / MAQA binary verifiability / "
+            "ISO/IEC/IEEE 29148:2018 §5.2.4(b)).",
+            line=1,
+        )
+    ]
+
+
 # SPEC-REFERENCE-UNRESOLVED: normative requirement cites external standard via bracket
 # notation (e.g., [RFC 7662], [ISO 27001]) but spec has no References/Bibliography section.
 # QVscribe QV-201 "Incomplete Requirement"; IBM RQA external-reference check;
@@ -4267,6 +4322,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_nfr_percent_context_missing(art, catalog))
     out.extend(_spec_missing_assumptions(art, catalog))
     out.extend(_spec_missing_stakeholder(art, catalog))
+    out.extend(_spec_missing_acceptance_section(art, catalog))
     out.extend(_spec_reference_unresolved(art, catalog))
     return out
 

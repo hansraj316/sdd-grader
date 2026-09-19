@@ -61,6 +61,15 @@ shared file is scoped to what matters.
 - 100% of exported CSV files open without error in Excel and Google Sheets.
 - Zero data-loss defects: exported row count equals filtered task count in all tests.
 
+## Acceptance Criteria
+
+- Given a project member has ≥1 task, when they request an export, then a CSV file is
+  produced containing one row per task with all required columns within 2 seconds.
+- Given the task list is empty, when export is requested, then a header-only CSV is
+  returned with no error.
+- Given tasks with mixed statuses, when filtered export is requested, then only tasks
+  matching the filter appear in the output.
+
 ## Out of Scope
 
 - Real-time push notifications for export completion are not part of this feature.

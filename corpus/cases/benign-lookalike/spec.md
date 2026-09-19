@@ -47,6 +47,15 @@ products appear without manual entry.
 - 99% of 50,000-row imports complete within 10 minutes.
 - 100% of rejected rows carry a line number plus a reason code.
 
+## Acceptance Criteria
+
+- Given a valid catalog file of up to 50,000 rows, when import is triggered, then every
+  row appears in the catalog within 10 minutes and the status endpoint returns "complete".
+- Given a file with invalid rows, when import is triggered, then each invalid row is
+  reported with its line number and a reason code, while valid rows still import.
+- Given a file exceeding 50,000 rows, when upload is attempted, then it is rejected
+  before any row is processed and the operations manager receives a clear error message.
+
 ## Out of Scope
 
 - A simple quick-add form for single products (the existing manual flow already covers this).
