@@ -3652,6 +3652,88 @@ def _plan_no_caching_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-MISSING-API-VERSIONING: plan introduces/modifies an API with no versioning strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: non-fenced plan line with API-change vocabulary.
+_API_CHANGE_VOCAB_RE = re.compile(
+    r"\bnew\s+(?:api\s+)?endpoint\b"
+    r"|\badd(?:ing|s)?\s+(?:a\s+)?(?:rest(?:ful)?|http|api|new)\s+(?:endpoint|route|api)\b"
+    r"|\b(?:expos(?:es?|ing)|introduc(?:es?|ing)|publish(?:es|ing)?)\b[^\n]*\b(?:api|endpoint|route)\b"
+    r"|\b(?:modif(?:y|ies|ied|ying)|chang(?:e[sd]?|ing))\b[^\n]*\b(?:api|endpoint|contract)\b"
+    r"|\b(?:api|endpoint|route)\b[^\n]*\b(?:add|creat|updat|remov|delet)",
+    re.IGNORECASE,
+)
+
+# Silence: any API versioning or compatibility vocabulary silences the check.
+_API_VERSION_RE = re.compile(
+    r"/v\d+"
+    r"|api[- ]?version"
+    r"|x-api-version"
+    r"|version\s+header"
+    r"|\bsemver\b"
+    r"|\bdeprecati?on?\b"
+    r"|\bdeprecated?\b"
+    r"|\bbackward[- ]?compat"
+    r"|\bforward[- ]?compat"
+    r"|\bbreaking[- ]?change"
+    r"|\bcontract[- ]?test"
+    r"|\bconsumer[- ]?driven\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_api_versioning(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan introduces or modifies an API with no versioning strategy
+    (PLAN-MISSING-API-VERSIONING).
+
+    OpenSpec and Spec-Kit require version-stable API contracts. ISO/IEC/IEEE 29148:2018
+    §5.2.7 (compatibility) and Tessl's consumer-contract stability principle require that
+    any API-change plan state a versioning scheme and deprecation timeline. Without a
+    versioning strategy a single breaking change silently breaks every downstream consumer.
+
+    Guard: deploy vocabulary must be present.
+    Trigger: ≥1 non-fenced plan line matches API-change vocabulary.
+    Silence: any versioning or backward-compat token anywhere in the document.
+    """
+    p = catalog.get("PLAN-MISSING-API-VERSIONING")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: find first non-fenced line with API-change vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    api_change_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _API_CHANGE_VOCAB_RE.search(line):
+            api_change_hit = i + 1
+            break
+    if api_change_hit is None:
+        return []
+    # Silence: any versioning or compatibility vocabulary anywhere in the document.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _API_VERSION_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-API-VERSIONING: plan introduces or modifies an API endpoint but "
+        "states no versioning strategy (URL prefix /vN, Accept-version header, semver, "
+        "deprecation timeline, backward-compat commitment). Without a versioning policy "
+        "a single breaking change silently breaks every downstream consumer. Add an API "
+        "Versioning section covering the scheme, breaking-change policy, and sunset plan "
+        "(OpenSpec, Spec-Kit, ISO 29148 §5.2.7, Tessl consumer-contract stability).",
+        line=api_change_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -4380,6 +4462,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_data_retention(art, catalog))
     out.extend(_plan_auth_without_authz(art, catalog))
     out.extend(_plan_no_caching_strategy(art, catalog))
+    out.extend(_plan_missing_api_versioning(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
