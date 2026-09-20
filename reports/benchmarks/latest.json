@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-19T07:29:20.182541+00:00",
+  "timestamp": "2026-09-20T07:27:18.865970+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -356,9 +356,9 @@
         "overall": 40.0,
         "score_band": [
           38,
-          92
+          86
         ],
-        "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium \u2014 five real defects \u2014 but the engine currently sees only one, scoring 88 before extra structural findings. Floor lowered to 38 because SPEC-MISSING-ACCEPTANCE-SECTION (added iter 89) now fires as an accepted_extra, dropping the score from ~40 to ~40; ceiling 92 requires the one expected defect to keep costing at least 8 points. Engine output at labeling time: 40.",
+        "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium \u2014 five real defects \u2014 but the engine currently sees only one, scoring 88 before extra structural findings. Floor lowered to 38 because SPEC-MISSING-ACCEPTANCE-SECTION (added iter 89) now fires as an accepted_extra, dropping the score to 40; ceiling 86 keeps band width < 50 (failable gate) while allowing the score to rise if future accepted_extras are removed. Engine output at labeling time: 40.",
         "in_band": true,
         "true_positives": [
           "SPEC-NON-MEASURABLE-SUCCESS"
