@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 90
 Last run: 2026-09-20
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,12 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #221 → PR #224 plan-missing-api-versioning — PLAN-MISSING-API-VERSIONING: deployment plan introduces or modifies an API endpoint with no versioning strategy; _API_CHANGE_VOCAB_RE (5-pattern) + _API_VERSION_RE (11-token silence) + _plan_missing_api_versioning(); deploy guard; fenced-block exclusion; aggregate finding at first API-change-vocab non-fenced line; plan-only; 17 unit tests (6 fire, 11 silent); pytest 1416 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (awaiting CI).
+(none)
 
 ## Merged
 
+- iter 90 (2026-09-20): CI green on PR #224 (test+package both success); squash-merged PR #224 (issue #221 PLAN-MISSING-API-VERSIONING closed), 0 open loop PRs.
+- #221 → PR #224 plan-missing-api-versioning — PLAN-MISSING-API-VERSIONING: deployment plan introduces or modifies an API endpoint with no versioning strategy; _API_CHANGE_VOCAB_RE (5-pattern) + _API_VERSION_RE (11-token silence) + _plan_missing_api_versioning(); deploy guard; fenced-block exclusion; aggregate finding at first API-change-vocab non-fenced line; plan-only; 17 unit tests (6 fire, 11 silent); pytest 1416 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (2026-09-20, CI green; squash-merged).
 - iter 89 (2026-09-19): CI green on PR #223 (test+package both success); squash-merged PR #223 (issue #220 SPEC-MISSING-ACCEPTANCE-SECTION closed), 0 open loop PRs.
 - #220 → PR #223 spec-missing-acceptance-section — SPEC-MISSING-ACCEPTANCE-SECTION: spec with ≥3 FR-/NFR- lines but no Acceptance Criteria, Verification, Testing Criteria, Definition-of-Done, Fit Criteria, Test Cases, or Test Plan heading (Canon Volere fit criteria / MAQA binary verifiability / ISO/IEC/IEEE 29148:2018 §5.2.4(b)); _ACCEPTANCE_HEADING_RE 8-alternative + _spec_missing_acceptance_section(); guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding at line 1; spec-only; speckit_good + benign-lookalike updated with Acceptance Criteria section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled; score bands adjusted; 15 unit tests (4 fire, 11 silent); pytest 1399 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (2026-09-19, CI green; squash-merged).
 - iter 88 (2026-09-18): CI green on PR #222 (test+package both success); squash-merged PR #222 (issue #219 PLAN-NO-CACHING-STRATEGY closed), 0 open loop PRs.
@@ -211,7 +213,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Run log
 
-- iter 90 (2026-09-20): Phase 1 no open PRs; Phase 2 found 1 open loop-candidate issue (#221 PLAN-MISSING-API-VERSIONING); Phase 4 implemented #221: _API_CHANGE_VOCAB_RE (5-pattern) + _API_VERSION_RE (11-token silence) + _plan_missing_api_versioning() + 17 unit tests (6 fire, 11 silent); Phase 5 gate: pytest 1416 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #224; awaiting CI.
+- iter 90 (2026-09-20): Phase 1 no open PRs; Phase 2 found 1 open loop-candidate issue (#221 PLAN-MISSING-API-VERSIONING); Phase 4 implemented #221: _API_CHANGE_VOCAB_RE (5-pattern) + _API_VERSION_RE (11-token silence) + _plan_missing_api_versioning() + 17 unit tests (6 fire, 11 silent); Phase 5 gate: pytest 1416 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #224; CI green (test+package both success); squash-merged PR #224 (issue #221 closed), 0 open loop PRs.
 - iter 89 (2026-09-19): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#220 SPEC-MISSING-ACCEPTANCE-SECTION, #221 PLAN-MISSING-API-VERSIONING); Phase 4 implemented #220: _ACCEPTANCE_HEADING_RE (8-alternative) + _spec_missing_acceptance_section() + 15 unit tests (4 fire, 11 silent); speckit_good + benign-lookalike fixtures updated with Acceptance Criteria section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled, score bands adjusted; Phase 5 gate: pytest 1399 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #223; CI green (test+package both success); squash-merged PR #223 (issue #220 closed), 0 open loop PRs.
 - iter 88 (2026-09-18): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created issues #219 (PLAN-NO-CACHING-STRATEGY), #220 (SPEC-MISSING-ACCEPTANCE-SECTION), #221 (PLAN-MISSING-API-VERSIONING); Phase 4 implemented #219: _CACHE_VOCAB_RE + _CACHE_STRATEGY_RE + _plan_no_caching_strategy() + 16 unit tests (7 fire, 9 silent); Phase 5 gate: pytest 1384 green, benchmark good=100.0 bad=50.8 precision=0.98 PASS; Phase 6 opened PR #222; CI green (test+package both success); squash-merged PR #222 (issue #219 closed), 0 open loop PRs.
 - iter 87 (2026-09-17): Phase 1 no open PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created issue #217 (PLAN-AUTH-WITHOUT-AUTHZ); Phase 4 implemented _AUTHN_VOCAB_RE + _AUTHZ_VOCAB_RE + _plan_auth_without_authz() + 21 unit tests (8 fire, 13 silent); Phase 5 gate: pytest 1368 green, benchmark good=100.0 bad<70 precision=0.98 PASS; Phase 6 opened PR #218; CI green (test+package); squash-merged PR #218 (issue #217 closed), 0 open loop PRs.
