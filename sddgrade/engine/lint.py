@@ -576,6 +576,49 @@ def _spec_fr_no_story(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     ]
 
 
+def _spec_us_no_ac(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """US-NNN section with no AC-NNN acceptance-criteria lines in its span (SPEC-US-NO-AC).
+
+    Guard: spec must have ≥1 section heading whose title begins with 'US-NNN'.
+    For each US-NNN section compute its span (heading to next sibling/ancestor heading)
+    and scan for _AC_NNN_RE.  Aggregate finding for all stories missing AC lines.
+    """
+    p = catalog.get("SPEC-US-NO-AC")
+    if p is None or not p.applies_to(art.type):
+        return []
+    us_sections = [s for s in art.sections if _US_NNN_TITLE_RE.match(s.title)]
+    if not us_sections:
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    missing_ac: list[str] = []
+    for idx, s in enumerate(art.sections):
+        if not _US_NNN_TITLE_RE.match(s.title):
+            continue
+        start = s.line - 1  # 0-indexed heading line
+        end = len(lines)
+        for following in art.sections[idx + 1:]:
+            if following.level <= s.level:
+                end = following.line - 1
+                break
+        has_ac = any(
+            not fenced[i] and _AC_NNN_RE.search(lines[i])
+            for i in range(start, end)
+        )
+        if not has_ac:
+            missing_ac.append(s.title.strip())
+    if not missing_ac:
+        return []
+    examples = ", ".join(f"'{t}'" for t in missing_ac[:3])
+    suffix = f" (+{len(missing_ac) - 3} more)" if len(missing_ac) > 3 else ""
+    noun = "story" if len(missing_ac) == 1 else "stories"
+    return [_from_pitfall(
+        p, art.path,
+        f"SPEC-US-NO-AC: {len(missing_ac)} user {noun} lack any AC-NNN "
+        f"acceptance-criteria line: {examples}{suffix}.",
+    )]
+
+
 # SPEC-MAQA-AC-CONDITIONAL: conditional or non-normative modal language in Gherkin Then clauses.
 # Explicit conditionals: if, unless, depending, provided that, in the event.
 _THEN_CONDITIONAL_RE = re.compile(
@@ -4375,6 +4418,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ac_vague_outcome(art, catalog))
     out.extend(_spec_fr_no_story(art, catalog))
     out.extend(_spec_ac_no_fr_link(art, catalog))
+    out.extend(_spec_us_no_ac(art, catalog))
     out.extend(_spec_qvscribe_and_or(art, catalog))
     out.extend(_spec_maqa_ac_conditional(art, catalog))
     out.extend(_spec_gherkin_missing_given(art, catalog))
