@@ -507,6 +507,17 @@ detect = "Guard: spec must have ≥1 section heading whose title begins with 'US
 fix = "Move each FR-/NFR- line inside the corresponding '## US-NNN' section that it implements, or add a '[US#]' cross-reference tag: 'FR-001: The system shall ... [US1]'. If the requirement crosses multiple stories, tag all: '[US1][US3]'."
 
 [[pitfall]]
+id = "SPEC-US-NO-AC"
+name = "User story section with no acceptance criteria"
+dimension = "testability"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "Spec-Kit and INVEST ('Testable') require every user story to carry acceptance criteria. Without AC-NNN lines a story is unverifiable and cannot be handed off to QA or used to generate test cases. ISO/IEC/IEEE 29148:2018 §5.2.3 mandates that requirements be verifiable. This is categorically distinct from XREF-AC-NO-TASK (AC defined but not referenced by a task), SPEC-AC-NO-FR-LINK (no line co-referencing FR-NNN and AC-NNN), and SPEC-MISSING-ACCEPTANCE-SECTION (no acceptance section exists at all). It targets the US-NNN-headed layout specifically: a story block with a heading like '## US-001: Login' but zero AC-NNN lines in its span."
+detect = "Guard: spec must have ≥1 section heading whose title begins with 'US-NNN' (e.g. '## US-001', '### US-002: Checkout'). For each US-NNN section, scan its span (from the heading line to the next sibling or ancestor heading) for any non-fenced line containing an AC-NNN identifier (pattern \\bAC-\\d+\\b). Collect US-NNN titles whose span contains no such line. Fire one aggregate finding naming all offending story titles."
+fix = "Add at least one AC-NNN line inside the US-NNN section. Use Given/When/Then (Gherkin) format or a direct verifiable outcome statement. Example: 'AC-001: Given a valid login, when the user submits credentials, then the system shall return a 200 OK response within 500 ms.'"
+
+[[pitfall]]
 id = "XREF-CONTRADICTION"
 name = "Cross-artifact contradiction"
 dimension = "consistency"
