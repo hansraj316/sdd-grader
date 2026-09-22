@@ -3777,6 +3777,90 @@ def _plan_missing_api_versioning(art: Artifact, catalog: dict[str, Pitfall]) -> 
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-MISSING-SLO: plan for user-facing service with no SLO/availability target.
+# ---------------------------------------------------------------------------
+
+# Trigger: user-facing vocabulary — user/customer/client AND service/api/endpoint/web/dashboard.
+_SLO_USER_SIGNAL_RE = re.compile(
+    r"\b(?:user[s]?|customer[s]?|client[s]?)\b",
+    re.IGNORECASE,
+)
+_SLO_SERVICE_SIGNAL_RE = re.compile(
+    r"\b(?:service|api|endpoint|web[- ]?app|dashboard|portal|ui|frontend|front[- ]end)\b",
+    re.IGNORECASE,
+)
+
+# Silence: any SLO vocabulary anywhere in the document.
+_SLO_VOCAB_RE = re.compile(
+    r"\bslo\b"
+    r"|\bsla\b"
+    r"|service[- ]level"
+    r"|\buptime\b"
+    r"|\bavailability\b"
+    r"|\berror[- ]?budget\b"
+    r"|\breliability[- ]target\b"
+    r"|99[.]9|99[.]99|99[.]999"
+    r"|\bp99\b"
+    r"|\bp95\b"
+    r"|\bpercentile\b"
+    r"|\blatency[- ]target\b"
+    r"|\btarget[- ]latency\b"
+    r"|\bfour[- ]nines?\b"
+    r"|\bfive[- ]nines?\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_slo(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan for a user-facing service with no SLO/availability target
+    (PLAN-MISSING-SLO).
+
+    Google SRE Book and MAQA require every user-facing service deployment to state
+    an explicit SLO (availability, latency, error-rate). ISO/IEC/IEEE 29148:2018 §5.2.3
+    (verifiability) applies: an operational requirement with no measurable threshold
+    cannot be verified. Without an SLO there is no objective criterion for alerting,
+    on-call escalation, or post-incident review.
+
+    Guard: deploy vocabulary present + user-facing signal (user/customer/client +
+           service/API/endpoint/web/dashboard).
+    Silence: any SLO vocabulary present anywhere in the document.
+    """
+    p = catalog.get("PLAN-MISSING-SLO")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    # Guard: must mention both a user-type actor and a service component.
+    if not _SLO_USER_SIGNAL_RE.search(non_fenced_text):
+        return []
+    if not _SLO_SERVICE_SIGNAL_RE.search(non_fenced_text):
+        return []
+    # Silence: any SLO vocabulary present.
+    if _SLO_VOCAB_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-SLO: deployment plan for a user-facing service states no "
+        "Service Level Objective (SLO), availability target, or reliability budget. "
+        "Without an SLO there is no objective threshold for alerting, on-call "
+        "escalation, or post-incident review. Add an SLO section stating at least "
+        "one measurable target — e.g., '99.9% availability, p99 latency ≤ 300 ms, "
+        "error rate < 0.1%' — and the error budget that follows from it "
+        "(Google SRE Book, MAQA, ISO 29148 §5.2.3).",
+        line=1,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -4507,6 +4591,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_auth_without_authz(art, catalog))
     out.extend(_plan_no_caching_strategy(art, catalog))
     out.extend(_plan_missing_api_versioning(art, catalog))
+    out.extend(_plan_missing_slo(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
