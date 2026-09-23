@@ -4635,11 +4635,76 @@ def _constitution_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fin
     return []
 
 
+# PK vocabulary: any of these words/phrases in an entity body indicate a primary key.
+_DATA_MODEL_PK_VOCAB_RE = re.compile(
+    r"""
+    \b(?:
+        primary[_\s]key
+        | surrogate[_\s]key
+        | unique[_\s]identifier
+        | \bPK\b
+        | \buuid\b
+        | \bUUID\b
+        | \bid\b
+        | \bID\b
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _data_model_entity_no_pk(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    p = catalog.get("DATA-MODEL-ENTITY-NO-PK")
+    if not p or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    entities = _entities(art)
+    if not entities:
+        return []
+
+    # Map each entity name to its section body for PK scan.
+    entity_sections = {
+        s.title.strip(): s
+        for s in art.sections
+        if s.level >= 3 and s.title.strip().lower() not in _STRUCTURAL_HEADINGS
+    }
+
+    missing: list[str] = []
+    for name in entities:
+        sec = entity_sections.get(name)
+        if sec is None:
+            continue
+        body = sec.body
+        if not _DATA_MODEL_PK_VOCAB_RE.search(body):
+            missing.append(name)
+
+    if not missing:
+        return []
+
+    examples = ", ".join(f"'{n}'" for n in missing[:3])
+    suffix = f" (and {len(missing) - 3} more)" if len(missing) > 3 else ""
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Data-model entity/entities with no primary-key or unique-identifier field: {examples}{suffix}.",
+        )
+    ]
+
+
+def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    out: list[Finding] = []
+    out.extend(_data_model_entity_no_pk(art, catalog))
+    return out
+
+
 _STRUCTURAL_CHECKS = {
     ArtifactType.SPEC: _spec_checks,
     ArtifactType.PLAN: _plan_checks,
     ArtifactType.TASKS: _tasks_checks,
     ArtifactType.CONSTITUTION: _constitution_checks,
+    ArtifactType.DATA_MODEL: _data_model_checks,
 }
 
 
