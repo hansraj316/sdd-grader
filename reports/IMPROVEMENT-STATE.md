@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 93
 Last run: 2026-09-23
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,12 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- [~] #227 → PR #230 data-model-entity-no-pk — DATA-MODEL-ENTITY-NO-PK: data-model entity (level-3+ heading, not structural sub-heading) with no PK vocabulary (id/ID/PK/uuid/UUID/primary key/surrogate key/unique identifier) in its body; _DATA_MODEL_PK_VOCAB_RE VERBOSE 8-alternative + _data_model_entity_no_pk() + _data_model_checks() dispatched via _STRUCTURAL_CHECKS[DATA_MODEL]; 14 unit tests (5 fire, 9 silent); pytest 1456 green; benchmark good=100.0 bad<70 precision=0.981 PASS; awaiting CI.
+(none)
 
 ## Merged
 
+- iter 93 (2026-09-23): CI green on PR #230 (test+package both success); squash-merged PR #230 (issue #227 DATA-MODEL-ENTITY-NO-PK closed), 0 open loop PRs.
+- #227 → PR #230 data-model-entity-no-pk — DATA-MODEL-ENTITY-NO-PK: data-model entity (level-3+ heading, not structural sub-heading) with no PK vocabulary (id/ID/PK/uuid/UUID/primary key/surrogate key/unique identifier) in its body; _DATA_MODEL_PK_VOCAB_RE VERBOSE 8-alternative + _data_model_entity_no_pk() + _data_model_checks() dispatched via _STRUCTURAL_CHECKS[DATA_MODEL]; 14 unit tests (5 fire, 9 silent); pytest 1456 green; benchmark good=100.0 bad<70 precision=0.981 PASS (2026-09-23, CI green; squash-merged).
 - iter 92 (2026-09-22): CI green on PR #229 (test+package both success); squash-merged PR #229 (issue #226 PLAN-MISSING-SLO closed), 0 open loop PRs.
 - #226 → PR #229 plan-missing-slo — PLAN-MISSING-SLO: deployment plan for user-facing service (user/customer/client + service/api/endpoint/dashboard) with no SLO/availability/reliability vocabulary; _SLO_USER_SIGNAL_RE + _SLO_SERVICE_SIGNAL_RE dual guard + _SLO_VOCAB_RE (15-token silence: slo/sla/availability/uptime/error-budget/p99/p95/percentile/latency-target/four-nines/five-nines/99.9); deploy guard; one aggregate finding at line 1; plan-only; 15 unit tests (5 fire, 10 silent); pytest 1442 green; benchmark good=100.0 bad<70 precision=0.981 PASS (2026-09-22, CI green; squash-merged).
 - iter 90 (2026-09-20): CI green on PR #224 (test+package both success); squash-merged PR #224 (issue #221 PLAN-MISSING-API-VERSIONING closed), 0 open loop PRs.
@@ -398,4 +400,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 78 (2026-09-08): Phase 1 no open loop/* PRs (0). Phase 2 found 1 open loop-candidate issue (#196 PLAN-NO-GRACEFUL-SHUTDOWN). Phase 4 picked #196 (PLAN-NO-GRACEFUL-SHUTDOWN — deployment plan with process stop/restart vocab but no graceful-shutdown strategy; Twelve-Factor App Factor VI Disposability; Kiro production-readiness; ISO 25010 §4.2.1.4 Fault Tolerance; _PROCESS_STOP_VOCAB_RE + _GRACEFUL_SHUTDOWN_RE; deploy guard reuses _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE; fenced-block exclusion; 19 unit tests (7 fire, 12 silent)); pytest 1225 green; benchmark good=100.0 bad=50.8 precision=0.978 PASS; PR #200 opened (draft); issue #196 commented. CI green same run (package + test both success); PR #200 squash-merged (issue #196 auto-closed). 0 open loop PRs remaining.
 - iter 91 (2026-09-21): Phase 1 no open PRs (0); Phase 2 found 0 open loop-candidate issues → Phase 3 research; created 3 new issues #225 (SPEC-US-NO-AC), #226 (PLAN-MISSING-SLO), #227 (DATA-MODEL-ENTITY-NO-PK); Phase 4 implemented #225 (SPEC-US-NO-AC — US-NNN section heading in spec.md with no AC-NNN acceptance-criteria lines in its span; Spec-Kit/INVEST Testable/ISO 29148 §5.2.3; guard=≥1 US-NNN heading; span computed same as _spec_fr_no_story; _AC_NNN_RE scan; fenced-block exclusion via _fence_mask; aggregate finding naming missing story titles; wired into _spec_checks() after _spec_us_no_ac(); 11 unit tests (5 fire, 6 silent)); Phase 5 gate: pytest 1427 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #228 (draft); issue #225 commented.
 - iter 91 merge (2026-09-21): CI green; squash-merged PR #228 (SPEC-US-NO-AC, issue #225 auto-closed); 0 open loop PRs.
-- iter 93 (2026-09-23): Phase 1 no open PRs (0); Phase 2 found 1 open loop-candidate issue (#227 DATA-MODEL-ENTITY-NO-PK); Phase 4 implemented #227: _DATA_MODEL_PK_VOCAB_RE (8-alternative VERBOSE, case-insensitive: id/ID/PK/uuid/UUID/primary key/primary_key/surrogate key/unique identifier) + _data_model_entity_no_pk() helper (guards DATA_MODEL type + ≥1 entity; scans Section.body per entity; aggregate finding naming offenders) + _data_model_checks() + _STRUCTURAL_CHECKS[DATA_MODEL] entry + DATA-MODEL-ENTITY-NO-PK pitfalls.toml entry (dimension=completeness, artifacts=[data-model]); 14 unit tests (5 fire, 9 silent); Phase 5 gate: pytest 1456 green, benchmark good=100.0 bad<70 precision=0.981 PASS; Phase 6 opened PR #230 (draft); issue #227 commented; awaiting CI.
+- iter 93 (2026-09-23): Phase 1 no open PRs (0); Phase 2 found 1 open loop-candidate issue (#227 DATA-MODEL-ENTITY-NO-PK); Phase 4 implemented #227: _DATA_MODEL_PK_VOCAB_RE (8-alternative VERBOSE, case-insensitive: id/ID/PK/uuid/UUID/primary key/primary_key/surrogate key/unique identifier) + _data_model_entity_no_pk() helper (guards DATA_MODEL type + ≥1 entity; scans Section.body per entity; aggregate finding naming offenders) + _data_model_checks() + _STRUCTURAL_CHECKS[DATA_MODEL] entry + DATA-MODEL-ENTITY-NO-PK pitfalls.toml entry (dimension=completeness, artifacts=[data-model]); 14 unit tests (5 fire, 9 silent); Phase 5 gate: pytest 1456 green, benchmark good=100.0 bad<70 precision=0.981 PASS; Phase 6 opened PR #230; CI green (test+package both success); squash-merged PR #230 (issue #227 closed), 0 open loop PRs.
