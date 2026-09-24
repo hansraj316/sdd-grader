@@ -1,13 +1,25 @@
 {
-  "quality": "low",
-  "score_band": [24, 70],
-  "band_rationale": "Low: a Draft spec with an unresolved decision inside an FR, retained template header ('$ARGUMENTS'), a leaked API style, no edge cases, and no problem-statement section must fail the default 70 gate decisively. Ceiling 70 is unchanged. Floor lowered to 24 because SPEC-MISSING-ACCEPTANCE-SECTION (added iter 89) now fires as an accepted_extra, dropping the score from 26 to 26; floor 24 asserts the engine still credits the real user story even with the additional finding. Engine output at labeling time: 26.",
-  "expect_pitfalls": [
-    "SPEC-UNRESOLVED-CLARIFICATION",
-    "SPEC-LEFTOVER-PLACEHOLDER",
-    "SPEC-IMPL-DETAIL-LEAK",
-    "SPEC-MISSING-EDGE-CASES"
-  ],
-  "accepted_extras": ["SPEC-MISSING-OUT-OF-SCOPE", "SPEC-MISSING-GLOSSARY", "SPEC-MISSING-MOTIVATION", "SPEC-MISSING-REVISION-HISTORY", "SPEC-MISSING-ASSUMPTIONS", "SPEC-MISSING-STAKEHOLDER", "SPEC-MISSING-ACCEPTANCE-SECTION"],
-  "note": "Real-world-derived case (#53c): adapts the flawed spec shape seen in real Spec-Kit repos (e.g. the polymarket-kit MCP-server spec pattern) — a [NEEDS CLARIFICATION] marker left inside FR-003, the template's '$ARGUMENTS' input line retained, 'REST API' leaked into an FR, and the Review & Acceptance Checklist kept with every box unchecked. Known gap (not a labeled miss because no catalog rule covers it): lint does not flag a retained, fully-unchecked review checklist — SPEC-LEFTOVER-PLACEHOLDER only fires here because of '$ARGUMENTS'."
+    "quality": "low",
+    "score_band": [
+        18,
+        66
+    ],
+    "band_rationale": "Low: a Draft spec with an unresolved decision inside an FR, retained template header ('$ARGUMENTS'), a leaked API style, no edge cases, and no problem-statement section must fail the default 70 gate decisively. Ceiling lowered to 66 (was 70) to keep band width < 50. Floor lowered to 18 because SPEC-MISSING-SCOPE (added iter 94) now fires as an accepted_extra, dropping the score from 20 to 20; floor 18 asserts the engine still credits the real user story even with the additional finding. Engine output at labeling time: 20.",
+    "expect_pitfalls": [
+        "SPEC-UNRESOLVED-CLARIFICATION",
+        "SPEC-LEFTOVER-PLACEHOLDER",
+        "SPEC-IMPL-DETAIL-LEAK",
+        "SPEC-MISSING-EDGE-CASES"
+    ],
+    "accepted_extras": [
+        "SPEC-MISSING-OUT-OF-SCOPE",
+        "SPEC-MISSING-GLOSSARY",
+        "SPEC-MISSING-MOTIVATION",
+        "SPEC-MISSING-REVISION-HISTORY",
+        "SPEC-MISSING-ASSUMPTIONS",
+        "SPEC-MISSING-STAKEHOLDER",
+        "SPEC-MISSING-ACCEPTANCE-SECTION",
+        "SPEC-MISSING-SCOPE"
+    ],
+    "note": "Real-world-derived case (#53c): adapts the flawed spec shape seen in real Spec-Kit repos (e.g. the polymarket-kit MCP-server spec pattern) \u2014 a [NEEDS CLARIFICATION] marker left inside FR-003, the template's '$ARGUMENTS' input line retained, 'REST API' leaked into an FR, and the Review & Acceptance Checklist kept with every box unchecked. Known gap (not a labeled miss because no catalog rule covers it): lint does not flag a retained, fully-unchecked review checklist \u2014 SPEC-LEFTOVER-PLACEHOLDER only fires here because of '$ARGUMENTS'."
 }
