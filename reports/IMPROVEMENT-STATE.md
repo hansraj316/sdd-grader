@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 93
-Last run: 2026-09-23
-Open loop PRs: 0
+Iteration: 94
+Last run: 2026-09-24
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,10 +102,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-(none)
+- #231 → PR #233 spec-missing-scope — SPEC-MISSING-SCOPE: spec with ≥3 FR-/NFR- lines but no Scope section heading; _SCOPE_HEADING_RE + _SCOPE_NEGATIVE_RE (excludes Out-of-Scope/Non-goals headings) + _spec_missing_scope(); guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding at line 1; spec-only; speckit_good + benign-lookalike fixtures updated with Scope section; paraphrased-defects + realworld-mcp-proxy accepted_extras + floors adjusted; 14 unit tests (4 fire, 10 silent); pytest 1470 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (awaiting CI)
 
 ## Merged
 
+- iter 94 (2026-09-24): Phase 1 no open PRs (0); Phase 2 no open loop-candidate issues → Phase 3 research; created issue #231 (SPEC-MISSING-SCOPE) and #232 (PLAN-NO-SECRETS-MANAGEMENT); Phase 4 implemented #231: _SCOPE_HEADING_RE + _SCOPE_NEGATIVE_RE + _spec_missing_scope() + 14 unit tests; Phase 5 gate: pytest 1470 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #233; 1 open loop PR.
 - iter 93 (2026-09-23): CI green on PR #230 (test+package both success); squash-merged PR #230 (issue #227 DATA-MODEL-ENTITY-NO-PK closed), 0 open loop PRs.
 - #227 → PR #230 data-model-entity-no-pk — DATA-MODEL-ENTITY-NO-PK: data-model entity (level-3+ heading, not structural sub-heading) with no PK vocabulary (id/ID/PK/uuid/UUID/primary key/surrogate key/unique identifier) in its body; _DATA_MODEL_PK_VOCAB_RE VERBOSE 8-alternative + _data_model_entity_no_pk() + _data_model_checks() dispatched via _STRUCTURAL_CHECKS[DATA_MODEL]; 14 unit tests (5 fire, 9 silent); pytest 1456 green; benchmark good=100.0 bad<70 precision=0.981 PASS (2026-09-23, CI green; squash-merged).
 - iter 92 (2026-09-22): CI green on PR #229 (test+package both success); squash-merged PR #229 (issue #226 PLAN-MISSING-SLO closed), 0 open loop PRs.
