@@ -2015,6 +2015,57 @@ def _spec_missing_acceptance_section(art: Artifact, catalog: dict[str, Pitfall])
     ]
 
 
+# SPEC-MISSING-SCOPE: spec with ≥3 FR-/NFR- lines but no Scope section heading.
+# ISO/IEC/IEEE 29148:2018 §5.2.1 "System or software product scope"; Canon Volere §2;
+# Amazon Kiro and Tessl spec templates.  Distinct from SPEC-MISSING-OUT-OF-SCOPE
+# (non-goals) — both sections are independently required.
+_SCOPE_HEADING_RE = re.compile(
+    r"(?:(?:system|project|product|application|solution|feature)\s+)?scope\b",
+    re.IGNORECASE,
+)
+_SCOPE_NEGATIVE_RE = re.compile(
+    r"(?:out[- ]of[- ]scope|non[- ]?goals?|exclusions?|excluded)",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥3 FR-/NFR- lines but no Scope section heading.
+
+    ISO/IEC/IEEE 29148:2018 §5.2.1 requires a scope clause identifying the
+    system-of-interest and delimiting its boundary.  Guard: ≥3 non-fenced
+    lines with FR-/NFR- IDs.  Check: no section heading matches the scope
+    keyword set (excluding 'Out of Scope' / 'Non-goals' headings).
+    Distinct from SPEC-MISSING-OUT-OF-SCOPE (non-goals) and
+    SPEC-MISSING-MOTIVATION (problem statement).
+    """
+    p = catalog.get("SPEC-MISSING-SCOPE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    for s in art.sections:
+        if _SCOPE_HEADING_RE.search(s.title) and not _SCOPE_NEGATIVE_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-SCOPE: spec has 3+ FR-/NFR- requirements but no Scope section; "
+            "add a '## Scope' (or '## System Scope' / '## Project Scope') section "
+            "near the top delimiting what the system covers in this release "
+            "(ISO/IEC/IEEE 29148:2018 §5.2.1 / Canon Volere §2).",
+            line=1,
+        )
+    ]
+
+
 # SPEC-REFERENCE-UNRESOLVED: normative requirement cites external standard via bracket
 # notation (e.g., [RFC 7662], [ISO 27001]) but spec has no References/Bibliography section.
 # QVscribe QV-201 "Incomplete Requirement"; IBM RQA external-reference check;
@@ -4533,6 +4584,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_assumptions(art, catalog))
     out.extend(_spec_missing_stakeholder(art, catalog))
     out.extend(_spec_missing_acceptance_section(art, catalog))
+    out.extend(_spec_missing_scope(art, catalog))
     out.extend(_spec_reference_unresolved(art, catalog))
     return out
 

@@ -1,14 +1,31 @@
 {
-  "quality": "medium",
-  "score_band": [38, 86],
-  "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium — five real defects — but the engine currently sees only one, scoring 88 before extra structural findings. Floor lowered to 38 because SPEC-MISSING-ACCEPTANCE-SECTION (added iter 89) now fires as an accepted_extra, dropping the score to 40; ceiling 86 keeps band width < 50 (failable gate) while allowing the score to rise if future accepted_extras are removed. Engine output at labeling time: 40.",
-  "expect_pitfalls": ["SPEC-NON-MEASURABLE-SUCCESS"],
-  "accepted_extras": ["REQ-WEAK-DIRECTIVE", "SPEC-PRONOUN-ANTECEDENT", "SPEC-MISSING-OUT-OF-SCOPE", "SPEC-MISSING-GLOSSARY", "SPEC-MISSING-MOTIVATION", "SPEC-EARS-TRIGGER-INVERSION", "SPEC-MISSING-REVISION-HISTORY", "SPEC-MISSING-ASSUMPTIONS", "SPEC-MISSING-STAKEHOLDER", "SPEC-MISSING-ACCEPTANCE-SECTION"],
-  "known_misses": [
-    "SPEC-AMBIGUOUS-WORDING",
-    "SPEC-NFR-NO-THRESHOLD",
-    "SPEC-SPECULATIVE-FEATURE",
-    "SPEC-IMPL-DETAIL-LEAK"
-  ],
-  "note": "Paraphrase case: the same defect classes as ambiguous/nfr-unquantified/impl-leak, worded to avoid the catalog's trigger regexes. Lint SHOULD ideally catch: 'snappy'/'lightweight'/'smoothly' (ambiguous wording, FR-001/FR-002); 'keep working when the whole company checks it at the same moment' (unquantified load NFR, FR-002); 'could later grow a spreadsheet export' (speculative feature, FR-003); 'CockroachDB'/'Svelte' (impl-detail leak, FR-004). Only the digit-based structural check (non-measurable success) generalizes to this phrasing today. These are labeled known_misses: excluded from gated recall, reported in recall_incl_known_misses so the miss stays visible."
+    "quality": "medium",
+    "score_band": [
+        32,
+        81
+    ],
+    "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium \u2014 five real defects \u2014 but the engine currently sees only one, scoring 88 before extra structural findings. Floor lowered to 32 because SPEC-MISSING-SCOPE (added iter 94) now fires as an accepted_extra, dropping the score to 34; ceiling 81 keeps band width < 50 (failable gate) while allowing the score to rise if future accepted_extras are removed. Engine output at labeling time: 40.",
+    "expect_pitfalls": [
+        "SPEC-NON-MEASURABLE-SUCCESS"
+    ],
+    "accepted_extras": [
+        "REQ-WEAK-DIRECTIVE",
+        "SPEC-PRONOUN-ANTECEDENT",
+        "SPEC-MISSING-OUT-OF-SCOPE",
+        "SPEC-MISSING-GLOSSARY",
+        "SPEC-MISSING-MOTIVATION",
+        "SPEC-EARS-TRIGGER-INVERSION",
+        "SPEC-MISSING-REVISION-HISTORY",
+        "SPEC-MISSING-ASSUMPTIONS",
+        "SPEC-MISSING-STAKEHOLDER",
+        "SPEC-MISSING-ACCEPTANCE-SECTION",
+        "SPEC-MISSING-SCOPE"
+    ],
+    "known_misses": [
+        "SPEC-AMBIGUOUS-WORDING",
+        "SPEC-NFR-NO-THRESHOLD",
+        "SPEC-SPECULATIVE-FEATURE",
+        "SPEC-IMPL-DETAIL-LEAK"
+    ],
+    "note": "Paraphrase case: the same defect classes as ambiguous/nfr-unquantified/impl-leak, worded to avoid the catalog's trigger regexes. Lint SHOULD ideally catch: 'snappy'/'lightweight'/'smoothly' (ambiguous wording, FR-001/FR-002); 'keep working when the whole company checks it at the same moment' (unquantified load NFR, FR-002); 'could later grow a spreadsheet export' (speculative feature, FR-003); 'CockroachDB'/'Svelte' (impl-detail leak, FR-004). Only the digit-based structural check (non-measurable success) generalizes to this phrasing today. These are labeled known_misses: excluded from gated recall, reported in recall_incl_known_misses so the miss stays visible."
 }

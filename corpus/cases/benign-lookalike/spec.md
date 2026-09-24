@@ -7,6 +7,13 @@ When a supplier sends a catalog update with thousands of SKUs, the manual flow i
 impractical — taking days and introducing data-entry errors. A bulk import capability
 lets operations upload a file and have the catalog updated automatically and reliably.
 
+## Scope
+
+This specification covers the bulk catalog import feature for the operations web interface.
+In scope: CSV/TSV file uploads, row-level validation, and asynchronous import with progress
+reporting. Multi-format support (XML, Excel) and real-time streaming imports are out of scope
+for this release.
+
 ## Stakeholders
 
 - Operations Manager: uploads catalog files; primary concern is import speed and error reporting.

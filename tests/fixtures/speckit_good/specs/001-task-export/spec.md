@@ -6,6 +6,13 @@ Project members need to share task progress with stakeholders who do not use the
 Without an export capability, teams resort to manual copy-paste, which is error-prone
 and breaks reporting workflows that rely on spreadsheet data.
 
+## Scope
+
+This specification covers the CSV task-export feature for the web application, targeting
+release v2.3. In scope: exporting tasks to CSV, filtering by status, and RFC 4180-compliant
+field escaping. All other export formats (PDF, Excel) and scheduled/automated exports are
+out of scope for this release (see Out of Scope section).
+
 ## Stakeholders
 
 - Project Member: exports task lists to share progress; primary concern is data accuracy.
