@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 95
 Last run: 2026-09-25
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -102,11 +102,12 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- [~] #232 → PR #234 plan-no-secrets-management — PLAN-NO-SECRETS-MANAGEMENT: deployment plan references secrets/credentials with no secrets-management strategy (Vault, AWS/GCP/Azure Secrets Manager, SSM, .env, Sealed Secrets, External Secrets Operator); _SECRETS_TRIGGER_RE (7-pattern) + _SECRETS_MGMT_RE (11-pattern silence) + _plan_no_secrets_management(); deploy guard; fenced-block + heading exclusion; aggregate finding at first trigger line; 16 unit tests (6 fire, 10 silent); pytest 1486 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (2026-09-25, CI pending)
+(none)
 
 ## Merged
 
-- iter 95 (2026-09-25): Phase 1 no open PRs (0); Phase 2 found 1 open loop-candidate issue (#232 PLAN-NO-SECRETS-MANAGEMENT); Phase 4 implemented _SECRETS_TRIGGER_RE + _SECRETS_MGMT_RE + _plan_no_secrets_management() + 16 unit tests; Phase 5 gate: pytest 1486 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #234; awaiting CI.
+- iter 95 (2026-09-25): CI green on PR #234 (test+package both success); squash-merged PR #234 (issue #232 PLAN-NO-SECRETS-MANAGEMENT closed), 0 open loop PRs.
+- #232 → PR #234 plan-no-secrets-management — PLAN-NO-SECRETS-MANAGEMENT: deployment plan references secrets/credentials with no secrets-management strategy (Vault, AWS/GCP/Azure Secrets Manager, SSM, .env, Sealed Secrets, External Secrets Operator); _SECRETS_TRIGGER_RE (7-pattern) + _SECRETS_MGMT_RE (11-pattern silence) + _plan_no_secrets_management(); deploy guard; fenced-block + heading exclusion; aggregate finding at first trigger line; 16 unit tests (6 fire, 10 silent); pytest 1486 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (2026-09-25, CI green; squash-merged).
 - iter 94 (2026-09-24): CI green on PR #233 (test+package both success); squash-merged PR #233 (issue #231 SPEC-MISSING-SCOPE closed), 0 open loop PRs.
 - #231 → PR #233 spec-missing-scope — SPEC-MISSING-SCOPE: spec with ≥3 FR-/NFR- lines but no Scope section heading; _SCOPE_HEADING_RE + _SCOPE_NEGATIVE_RE (excludes Out-of-Scope/Non-goals headings) + _spec_missing_scope(); guard ≥3 non-fenced FR-/NFR- lines; one aggregate finding at line 1; spec-only; speckit_good + benign-lookalike fixtures updated with Scope section; paraphrased-defects + realworld-mcp-proxy accepted_extras + floors adjusted; 14 unit tests (4 fire, 10 silent); pytest 1470 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (2026-09-24, CI green; squash-merged).
 - iter 93 (2026-09-23): CI green on PR #230 (test+package both success); squash-merged PR #230 (issue #227 DATA-MODEL-ENTITY-NO-PK closed), 0 open loop PRs.
