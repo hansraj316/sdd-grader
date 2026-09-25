@@ -3912,6 +3912,96 @@ def _plan_missing_slo(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-NO-SECRETS-MANAGEMENT: plan references secrets/credentials with no
+# secrets-management strategy (Vault, Secrets Manager, etc.).
+# ---------------------------------------------------------------------------
+
+# Trigger: secrets/credential vocabulary on non-fenced non-heading plan lines.
+_SECRETS_TRIGGER_RE = re.compile(
+    r"\bapi[_\-\s]?key\b"
+    r"|\bpassword\b"
+    r"|\bpasswd\b"
+    r"|\bcredential(?:s)?\b"
+    r"|\bsecret(?!s?[\s\-]?manager)\b"
+    r"|\btoken(?!iz(?:e|ation))\b"
+    r"|\bprivate[_\-\s]?key\b",
+    re.IGNORECASE,
+)
+
+# Silence: any secrets-management strategy vocabulary anywhere in the document.
+_SECRETS_MGMT_RE = re.compile(
+    r"\bvault\b"
+    r"|\bsecrets?[\s\-]manager\b"
+    r"|\baws[\s\-]secrets?\b"
+    r"|\bgcp[\s\-]secrets?\b"
+    r"|\bazure[\s\-]key[\s\-]vault\b"
+    r"|\bssm[\s\-]parameter\b"
+    r"|\bparameter[\s\-]store\b"
+    r"|\bsealed[\s\-]secrets?\b"
+    r"|\bexternal[\s\-]secrets?\b"
+    r"|\.env(?:\.example)?\b"
+    r"|\benv(?:ironment)?[\s\-]var(?:iable)?s?\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_secrets_management(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan references secrets or credentials with no secrets-management
+    strategy (PLAN-NO-SECRETS-MANAGEMENT).
+
+    Twelve-Factor App Factor III (Config) requires credentials to be stored in the
+    environment via a proper secrets management tool, never in code or unmanaged config.
+    Tessl production-readiness gate and Kiro deployment gate both require a secrets
+    lifecycle plan. OWASP Top 10 2021 A02 Cryptographic Failures covers secrets leakage.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains api key/password/credential/secret/token/private key.
+    Silence: any secrets-management vocabulary present anywhere in the doc.
+    """
+    p = catalog.get("PLAN-NO-SECRETS-MANAGEMENT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Silence: any secrets-management token anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _SECRETS_MGMT_RE.search(non_fenced_text):
+        return []
+    # Trigger: scan non-fenced non-heading lines for secrets trigger vocab.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        if _SECRETS_TRIGGER_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-SECRETS-MANAGEMENT: deployment plan references secrets, credentials, "
+        "API keys, passwords, or tokens but has no secrets-management strategy. "
+        "Store credentials in a dedicated secrets store (HashiCorp Vault, AWS Secrets "
+        "Manager, GCP Secret Manager, Azure Key Vault, AWS SSM Parameter Store, "
+        "Kubernetes Sealed Secrets, or External Secrets Operator) and inject them at "
+        "runtime via environment variables or mounted files "
+        "(Twelve-Factor App Factor III, Tessl, Kiro, OWASP Top 10 2021 A02).",
+        line=trigger_line,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -4644,6 +4734,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_caching_strategy(art, catalog))
     out.extend(_plan_missing_api_versioning(art, catalog))
     out.extend(_plan_missing_slo(art, catalog))
+    out.extend(_plan_no_secrets_management(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
