@@ -1066,6 +1066,89 @@ def _spec_gherkin_duplicate_scenario(
     ]
 
 
+# SPEC-GHERKIN-NO-ERROR-SCENARIO: Gherkin suite with ≥2 scenarios but no error/failure path.
+_GHERKIN_ERROR_VOCAB_RE = re.compile(
+    r"""
+    \b(?:
+        error
+        | fail(?:ure|s|ed)?
+        | invalid
+        | exception
+        | not\s+found
+        | unauthori[sz]ed
+        | forbidden
+        | reject(?:ed|s)?
+        | timeout
+        | expired
+        | denied
+        | unavailable
+        | unknown
+    )\b
+    | \b[45]\d{2}\b          # HTTP 4xx / 5xx status codes
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _spec_gherkin_no_error_scenario(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Gherkin scenario suite covers no error or failure path (SPEC-GHERKIN-NO-ERROR-SCENARIO).
+
+    Guard: (1) formal-Gherkin mode (both When and Then line-leaders exist in the doc);
+           (2) ≥2 Scenario/Scenario Outline/Scenario Template heading lines present.
+    Detection: scan non-fenced scenario-title lines and non-fenced Then-clause lines for
+    error-vocabulary.  If none match, fire one aggregate finding at line 1.
+    Sources: MAQA completeness, Canon Volere §5 exception fit criteria,
+             ISO/IEC/IEEE 29148:2018 §5.2.5(d) — 'exception behaviors are defined'.
+    Applies to spec artifacts only.
+    """
+    p = catalog.get("SPEC-GHERKIN-NO-ERROR-SCENARIO")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Formal-Gherkin guard: both When and Then must exist.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    # Count scenario headings and collect their titles + Then lines for error scan.
+    scenario_count = 0
+    has_error_vocab = False
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = _INLINE_CODE_RE.sub("", line)
+        # Scenario title lines
+        if _SCENARIO_TITLE_RE.match(line):
+            scenario_count += 1
+            if _GHERKIN_ERROR_VOCAB_RE.search(stripped):
+                has_error_vocab = True
+        # Then-clause lines
+        elif _GHERKIN_THEN_RE.match(line):
+            if _GHERKIN_ERROR_VOCAB_RE.search(stripped):
+                has_error_vocab = True
+
+    # Need ≥2 scenarios before we require negative coverage.
+    if scenario_count < 2:
+        return []
+    if has_error_vocab:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-GHERKIN-NO-ERROR-SCENARIO: spec has "
+            f"{scenario_count} Gherkin scenario(s) but none covers an error or failure "
+            "path. Add at least one scenario that tests an invalid input, unauthorised "
+            "access, or system error condition.",
+            line=1,
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
 _AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
 
@@ -4651,6 +4734,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_gherkin_scenario_outline_no_examples(art, catalog))
     out.extend(_spec_gherkin_no_then(art, catalog))
     out.extend(_spec_gherkin_duplicate_scenario(art, catalog))
+    out.extend(_spec_gherkin_no_error_scenario(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))

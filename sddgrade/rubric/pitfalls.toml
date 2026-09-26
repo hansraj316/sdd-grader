@@ -1173,6 +1173,17 @@ detect = "Guard: formal-Gherkin mode — at least one '^\\s*[-*+]?\\s*when\\b' A
 fix = "Give each Gherkin scenario a unique, descriptive title that states the specific behaviour under test and the distinguishing condition. Instead of two scenarios both named 'User logs in', use names like 'User logs in with valid credentials' and 'User logs in with an expired password'. The title should be specific enough that a test report entry is self-describing without needing to read the scenario body. If two scenarios test the same behaviour under different data, consider merging them into a single Scenario Outline with an Examples table."
 
 [[pitfall]]
+id = "SPEC-GHERKIN-NO-ERROR-SCENARIO"
+name = "Gherkin scenarios cover no error or failure path"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "MAQA completeness requires every acceptance-criteria suite to cover both the success path and the failure/exception paths — a suite that only describes happy paths cannot verify the requirement is met under adverse conditions. Canon Volere §5 mandates that fit criteria include exception behaviours (what happens when the system is used incorrectly or inputs are invalid). ISO/IEC/IEEE 29148:2018 §5.2.5(d) states a requirement is 'complete' only when 'exception behaviors are defined'. A spec that defines multiple scenarios but never describes what happens when inputs are wrong, the user is unauthorised, or a resource is missing is structurally incomplete — implementors will invent error handling with no agreed specification, leading to inconsistent UX and security gaps."
+detect = "Guard: (1) formal-Gherkin mode — both a '^\\s*[-*+]?\\s*when\\b' AND a '^\\s*[-*+]?\\s*then\\b' line-leader exist in the document, AND (2) ≥2 non-fenced Scenario:/Scenario Outline:/Scenario Template: heading lines exist (requiring multiple scenarios before flagging absence of error coverage). Scan non-fenced scenario-title lines (lines matching the Scenario heading regex) and non-fenced Then-clause lines for error-vocabulary: \\b(?:error|fail(?:ure|s|ed)?|invalid|exception|not\\s+found|unauthori[sz]ed|forbidden|reject(?:ed|s)?|timeout|expired|denied|unavailable|unknown)\\b or an HTTP error-status pattern \\b[45]\\d{2}\\b. If NONE match, fire one aggregate finding anchored at line 1. SILENT when ≥1 scenario title or Then clause contains error vocabulary. Applies to spec artifacts only."
+fix = "Add at least one Gherkin scenario that exercises a failure or exception path. Examples: 'Scenario: Login with invalid credentials' (Then an error message is displayed), 'Scenario: Upload rejected when file exceeds size limit' (Then a 413 error is returned), 'Scenario: Access denied for unauthorised user' (Then the user is redirected to the login page with a 401 status). Each acceptance-criteria block should have at least one negative/error scenario alongside its positive counterparts."
+
+[[pitfall]]
 id = "PLAN-NO-DATA-RETENTION"
 name = "Deployment plan mentions persistent storage but no data-retention policy"
 dimension = "completeness"
