@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 96
-Last run: 2026-09-26
-Open loop PRs: 0
+Iteration: 97
+Last run: 2026-09-27
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -61,6 +61,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] spec-qvscribe-temporal-unbounded — SPEC-QVSCRIBE-TEMPORAL-UNBOUNDED: temporal universals in requirement lines → issue #146 → PR #153 → merged 2026-08-14
 - [x] spec-story-vague-actor — SPEC-STORY-VAGUE-ACTOR: Connextra story with 'a user' / 'an end user' generic actor → issue #195 → PR #198 → merged 2026-09-06
 - [x] plan-no-graceful-shutdown — PLAN-NO-GRACEFUL-SHUTDOWN: deployment plan with process stop/restart but no graceful-shutdown strategy (Twelve-Factor VI, Kiro) → issue #196 → PR #200 → merged 2026-09-08
+- [~] plan-container-no-resource-limits — PLAN-CONTAINER-NO-RESOURCE-LIMITS: deployment plan with container/k8s vocab but no resource limits/requests (Kiro, Tessl, CNCF production checklist) → issue #237 → PR #238
 - [ ] spec-nfr-percent-context-missing — SPEC-NFR-PERCENT-CONTEXT-MISSING: NFR line with % value but no named metric (Canon Volere Scale/Meter/Must, QVscribe QV-104) → issue #197
 - [ ] spec-missing-motivation — promoted to issue #147
 - [x] spec-qvscribe-shall-be-able-to — SPEC-QVSCRIBE-SHALL-BE-ABLE-TO → issue #148 → PR #152 → merged 2026-08-13
@@ -102,10 +103,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-_(none)_
+- [~] plan-container-no-resource-limits — see issue #237 → PR #238
 
 ## Merged
 
+- iter 97 (2026-09-27): no PRs to merge (0 open); no open loop-candidate issues → Phase 3 research; created issue #237 (PLAN-CONTAINER-NO-RESOURCE-LIMITS); Phase 4 implemented _CONTAINER_VOCAB_RE + _RESOURCE_LIMITS_RE + _plan_container_no_resource_limits() + 15 unit tests; Phase 5 gate: pytest 1516 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #238; awaiting CI.
 - iter 96 (2026-09-26): CI green on PR #236 (test+package both success); squash-merged PR #236 (issue #235 SPEC-GHERKIN-NO-ERROR-SCENARIO closed), 0 open loop PRs.
 - #235 → PR #236 spec-gherkin-no-error-scenario — SPEC-GHERKIN-NO-ERROR-SCENARIO: spec has ≥2 formal Gherkin Scenario: blocks (When+Then guard) but none of the scenario titles or Then-clause lines mention error/failure vocabulary; _GHERKIN_ERROR_VOCAB_RE VERBOSE 13-alternative + HTTP 4xx/5xx pattern + _spec_gherkin_no_error_scenario(); fenced-block + inline-code exclusion; formal-Gherkin guard (When+Then); ≥2 scenarios guard; one aggregate finding at line 1; spec-only; 15 unit tests (10 silent, 5 fire); pytest 1501 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (2026-09-26, CI green; squash-merged).
 - iter 95 (2026-09-25): CI green on PR #234 (test+package both success); squash-merged PR #234 (issue #232 PLAN-NO-SECRETS-MANAGEMENT closed), 0 open loop PRs.
