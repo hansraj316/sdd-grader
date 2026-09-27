@@ -4000,6 +4000,96 @@ def _plan_missing_slo(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
 # secrets-management strategy (Vault, Secrets Manager, etc.).
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# PLAN-CONTAINER-NO-RESOURCE-LIMITS — containerised plan with no resource limits.
+# ---------------------------------------------------------------------------
+
+# Trigger: container/orchestration vocabulary on non-fenced non-heading plan lines.
+_CONTAINER_VOCAB_RE = re.compile(
+    r"\bdocker\b"
+    r"|\bcontainer\s+image\b"
+    r"|\bcontaineris[e|i]d\b"
+    r"|\bkubernetes\b"
+    r"|\bk8s\b"
+    r"|\bpod\b"
+    r"|\bhelm\s+chart\b"
+    r"|\bhelm\s+release\b"
+    r"|\bdeployment\.yaml\b"
+    r"|\bkustomize\b"
+    r"|\boci\s+image\b",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Silence: resource limits/requests vocabulary anywhere in non-fenced text.
+_RESOURCE_LIMITS_RE = re.compile(
+    r"resources?\.limits"
+    r"|resources?\.requests"
+    r"|\bcpu\s+limit"
+    r"|\bmemory\s+limit"
+    r"|\blimits\s*:"
+    r"|\brequests\s*:"
+    r"|\b--cpu\b"
+    r"|\b--memory\b"
+    r"|\bmem_limit\b"
+    r"|\bcpu_shares\b"
+    r"|\bulimit\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_container_no_resource_limits(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Containerised deployment plan with no resource limits (PLAN-CONTAINER-NO-RESOURCE-LIMITS).
+
+    Kiro production-readiness gate and Tessl require CPU/memory resource limits on
+    every container before the workload ships to production. A container without
+    limits can exhaust node capacity and trigger cascading OOM kills.
+
+    Guard: deploy vocabulary present (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE).
+    Container-vocab guard: ≥1 non-fenced non-heading line matches container/orchestration vocab.
+    Silence: any resource-limits vocabulary present anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-CONTAINER-NO-RESOURCE-LIMITS")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    # Silence: resource limits/requests mentioned anywhere.
+    if _RESOURCE_LIMITS_RE.search(non_fenced_text):
+        return []
+    # Container-vocab trigger: find first matching non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _CONTAINER_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-CONTAINER-NO-RESOURCE-LIMITS: deployment plan references containers or "
+        "Kubernetes/Helm/Docker workloads but specifies no CPU or memory resource limits "
+        "or requests. Add 'resources.limits' and 'resources.requests' to every container "
+        "spec to prevent runaway processes from exhausting node capacity "
+        "(Kiro production-readiness, Tessl, CNCF production checklist, ISO 25010 Capacity).",
+        line=trigger_line,
+    )]
+
+
 # Trigger: secrets/credential vocabulary on non-fenced non-heading plan lines.
 _SECRETS_TRIGGER_RE = re.compile(
     r"\bapi[_\-\s]?key\b"
@@ -4819,6 +4909,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_api_versioning(art, catalog))
     out.extend(_plan_missing_slo(art, catalog))
     out.extend(_plan_no_secrets_management(art, catalog))
+    out.extend(_plan_container_no_resource_limits(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out

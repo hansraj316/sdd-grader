@@ -1294,6 +1294,17 @@ detect = "Guard: spec artifact AND ≥3 non-fenced lines matching \\b(?:FR|NFR)-
 fix = "Add a '## Scope' (or '## System Scope' / '## Project Scope') section near the top of the spec, before the Requirements section. State what the system or feature covers in this release, the boundaries of the feature, and any high-level constraints on the implementation. Example: '## Scope\\nThis specification covers the CSV task-export feature for the web application. In scope: export to CSV, status filtering, UTF-8 encoding. Not in scope: PDF/Excel export, real-time push notifications, recurring scheduled exports (see Out of Scope section). Release target: v2.3.' Even a two-sentence scope statement is sufficient to pass this check."
 
 [[pitfall]]
+id = "PLAN-CONTAINER-NO-RESOURCE-LIMITS"
+name = "Containerised deployment plan with no resource limits or requests"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "medium"
+method = "lint"
+why = "A containerised service with no CPU/memory resource limits is a production risk: a runaway process can starve co-located services, trigger OOM kills across the node, or exhaust cloud spending budgets. Kiro's production-readiness gate requires resource limits before any container workload ships. Tessl flags containers without resource governance as a shipping prerequisite. The CNCF production checklist and Kubernetes best practices require 'resources.limits' and 'resources.requests' on all pod specs. ISO 25010 Capacity requires a system not to exceed its allocated resource envelope."
+detect = "Guard: plan must have ≥1 non-fenced non-heading line matching container/orchestration vocabulary (docker, container image, kubernetes, k8s, \\bpod\\b, helm chart, helm release, deployment.yaml, kustomize, oci image). Deploy guard: _DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE must also match. Silence: any of resources.limits, resources.requests, cpu limit, memory limit, limits:, requests:, --cpu, --memory, mem_limit, cpu_shares, ulimit appears anywhere in non-fenced text. Fire one aggregate finding anchored at first container-vocab non-fenced line. Plan artifact only."
+fix = "Add a resource limits section (or inline values) to the deployment plan. Specify CPU and memory limits and requests for every container: 'resources: {limits: {cpu: 500m, memory: 512Mi}, requests: {cpu: 100m, memory: 128Mi}}'. For Docker Compose use mem_limit and cpu_shares. For ECS/Fargate use task CPU/memory definitions."
+
+[[pitfall]]
 id = "PLAN-NO-SECRETS-MANAGEMENT"
 name = "Deployment plan references secrets or credentials with no secrets-management strategy"
 dimension = "completeness"
