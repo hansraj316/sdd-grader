@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 97
-Last run: 2026-09-27
-Open loop PRs: 0
+Iteration: 98
+Last run: 2026-09-28
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -26,6 +26,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] pitfall-escape-clause — see issue #3 → merged in PR #10
 - [x] pitfall-negative-requirement — see issue #4 → merged in PR #11
 - [x] xref-dangling-req-ref — XREF-DANGLING-REQ-REF: task references undefined requirement ID → issue #111 → PR #114 → merged 2026-07-26
+- [~] data-model-entity-no-timestamps — DATA-MODEL-ENTITY-NO-TIMESTAMPS: entity with no audit-timestamp columns (ISO 27001 A.12.4, GDPR Art.30, Kiro) → issue #239 → PR #240
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
 - [x] report-sarif — already implemented as sddgrade/report/sarif.py (closed issue #14)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
@@ -103,10 +104,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-_(none)_
+- #239 → PR #240 data-model-entity-no-timestamps — DATA-MODEL-ENTITY-NO-TIMESTAMPS: data-model entity with no audit-timestamp columns (created_at/updated_at); _DATA_MODEL_TIMESTAMP_VOCAB_RE 19-alternative VERBOSE + _data_model_entity_no_timestamps(); data-model-only; aggregate finding; speckit_good data-model.md updated; feature-xref accepted_extras + merged_overall 89.9→89.3; 15 unit tests (5 fire, 10 silent); pytest 1531 green; benchmark good=100.0 bad=50.8 precision=0.982 PASS (2026-09-28, awaiting CI).
 
 ## Merged
 
+- iter 98 (2026-09-28): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues; Phase 3 research → filed issue #239 (DATA-MODEL-ENTITY-NO-TIMESTAMPS); Phase 4 implemented; Phase 5 gate: pytest 1531 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #240; 1 open loop PR.
 - iter 97 (2026-09-27): CI green on PR #238 (test+package both success); squash-merged PR #238 (issue #237 PLAN-CONTAINER-NO-RESOURCE-LIMITS closed), 0 open loop PRs.
 - #237 → PR #238 plan-container-no-resource-limits — PLAN-CONTAINER-NO-RESOURCE-LIMITS: deployment plan with container/k8s/docker/helm/pod vocab but no resource limits or requests; _CONTAINER_VOCAB_RE VERBOSE 11-alternative + _RESOURCE_LIMITS_RE (11-pattern silence) + _plan_container_no_resource_limits(); deploy guard; fenced-block + heading exclusion; aggregate finding at first container-vocab line; plan-only; 15 unit tests (6 fire, 9 silent); pytest 1516 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (2026-09-27, CI green; squash-merged).
 - iter 96 (2026-09-26): CI green on PR #236 (test+package both success); squash-merged PR #236 (issue #235 SPEC-GHERKIN-NO-ERROR-SCENARIO closed), 0 open loop PRs.
