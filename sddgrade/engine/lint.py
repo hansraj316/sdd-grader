@@ -5011,9 +5011,63 @@ def _data_model_entity_no_pk(
     ]
 
 
+_DATA_MODEL_TIMESTAMP_VOCAB_RE = re.compile(
+    r"""
+    \b(?:
+        created_at | updated_at | created_on | updated_on
+        | modified_at | modified_on | date_created | date_modified
+        | inserted_at | last_modified | last_updated
+        | creation_date | modification_date | audit_date | record_date | recorded_at
+        | createdAt | updatedAt | modifiedAt
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _data_model_entity_no_timestamps(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    p = catalog.get("DATA-MODEL-ENTITY-NO-TIMESTAMPS")
+    if not p or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    entities = _entities(art)
+    if not entities:
+        return []
+
+    entity_sections = {
+        s.title.strip(): s
+        for s in art.sections
+        if s.level >= 3 and s.title.strip().lower() not in _STRUCTURAL_HEADINGS
+    }
+
+    missing: list[str] = []
+    for name in entities:
+        sec = entity_sections.get(name)
+        if sec is None:
+            continue
+        body = sec.body
+        if not _DATA_MODEL_TIMESTAMP_VOCAB_RE.search(body):
+            missing.append(name)
+
+    if not missing:
+        return []
+
+    examples = ", ".join(f"'{n}'" for n in missing[:3])
+    suffix = f" (and {len(missing) - 3} more)" if len(missing) > 3 else ""
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Data-model entity/entities with no audit-timestamp field (created_at/updated_at): {examples}{suffix}.",
+        )
+    ]
+
+
 def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
     out.extend(_data_model_entity_no_pk(art, catalog))
+    out.extend(_data_model_entity_no_timestamps(art, catalog))
     return out
 
 
