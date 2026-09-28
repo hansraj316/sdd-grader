@@ -1283,6 +1283,17 @@ detect = "Guard: data-model artifact with ≥1 entity (level-3+ heading not in s
 fix = "Add a primary-key field to each flagged entity. At minimum, include a field named 'id' (or 'uuid', 'entity_id', 'primary_key') with its type and a note that it uniquely identifies the record. Example for a 'Payment' entity: '| id | UUID | Primary key, globally unique, immutable |'. If the entity uses a composite primary key, state the constituent fields and note that the combination is unique. Surrogate keys (auto-increment integer or UUID) are preferred over mutable natural keys for resilience to business-rule changes."
 
 [[pitfall]]
+id = "DATA-MODEL-ENTITY-NO-TIMESTAMPS"
+name = "Data-model entity with no audit-timestamp columns"
+dimension = "completeness"
+artifacts = ["data-model"]
+severity = "medium"
+method = "lint"
+why = "Audit timestamp columns (created_at / updated_at and their variants) are required by ISO 27001 A.12.4 (logging and monitoring), GDPR Article 30 (records of processing), and standard enterprise data-modeling practice (DAMA-DMBOK, Martin Fowler). Without them it is impossible to determine when a record was created or last modified, making debugging, data-lineage tracking, compliance audits, and incremental-sync ETL pipelines impractical. Kiro production-readiness checks flag any persistent entity that omits audit metadata. This is distinct from DATA-MODEL-ENTITY-NO-PK (primary-key identity): an entity can have a PK yet still lack an audit trail."
+detect = "Guard: data-model artifact with ≥1 entity (level-3+ heading not in structural sub-heading denylist). For each entity, scan its body for audit-timestamp vocabulary: created_at, updated_at, created_on, updated_on, modified_at, modified_on, date_created, date_modified, inserted_at, last_modified, last_updated, creation_date, modification_date, audit_date, record_date, recorded_at, createdAt, updatedAt, modifiedAt (case-insensitive). Collect entities missing any timestamp vocabulary; fire one aggregate finding. Data-model artifact only."
+fix = "Add 'created_at' and 'updated_at' fields (or camelCase equivalents) to each flagged entity. Example for an 'Order' entity: '| created_at | timestamp | Set at INSERT, immutable. |' and '| updated_at | timestamp | Updated on every modification. |'. If the entity wraps an existing database table that already carries these columns, document them explicitly in the data-model section so the spec is self-contained."
+
+[[pitfall]]
 id = "SPEC-MISSING-SCOPE"
 name = "Spec with substantial requirements but no Scope section"
 dimension = "completeness"
