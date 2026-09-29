@@ -1294,6 +1294,17 @@ detect = "Guard: data-model artifact with ≥1 entity (level-3+ heading not in s
 fix = "Add 'created_at' and 'updated_at' fields (or camelCase equivalents) to each flagged entity. Example for an 'Order' entity: '| created_at | timestamp | Set at INSERT, immutable. |' and '| updated_at | timestamp | Updated on every modification. |'. If the entity wraps an existing database table that already carries these columns, document them explicitly in the data-model section so the spec is self-contained."
 
 [[pitfall]]
+id = "DATA-MODEL-ENTITY-NO-INDEX"
+name = "Data-model entity with foreign-key fields but no index declaration"
+dimension = "completeness"
+artifacts = ["data-model"]
+severity = "medium"
+method = "lint"
+why = "A data-model entity that carries foreign-key fields (columns ending in _id, or explicit FK/references vocabulary) without any index declaration will produce full-table scans on every join at runtime, causing latency degradation at scale. Amazon Kiro's data-model production-readiness gate requires explicit index planning alongside entity definition. ISO 25010 Performance Efficiency (Time Behaviour §4.2.1.1) requires that frequently accessed join paths be declared. This is the third structural completeness dimension for data-model entities, complementing DATA-MODEL-ENTITY-NO-PK (identity) and DATA-MODEL-ENTITY-NO-TIMESTAMPS (audit trail)."
+detect = "Guard: data-model artifact with ≥1 entity (level-3+ heading, not in structural sub-heading denylist). For each entity, scan its body for FK vocabulary: explicit markers (FK, foreign key, foreign_key, references) or implicit _id-suffixed field names (e.g., user_id, order_id — any [a-z]\\w+_id pattern). If FK vocabulary is found, check whether the entity body also contains index vocabulary (index, idx_, unique index, composite index, btree, hash index, gin, gist, indexed on, create index, clustered, covering index). Entities with FK vocabulary but no index vocabulary are flagged. Entities with no FK fields are skipped. Fire one aggregate finding naming all flagged entities."
+fix = "For each flagged entity, add an Indexes sub-section or inline notes that declare which FK fields are indexed. Example: '#### Indexes\\n- idx_orders_user_id ON (user_id) — improves join performance with the User entity\\n- idx_orders_status ON (status) — optional; include for filtered queries'. At minimum, document that the FK column carries an index so the spec is self-contained and the performance contract is explicit."
+
+[[pitfall]]
 id = "SPEC-MISSING-SCOPE"
 name = "Spec with substantial requirements but no Scope section"
 dimension = "completeness"

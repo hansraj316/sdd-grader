@@ -5064,10 +5064,97 @@ def _data_model_entity_no_timestamps(
     ]
 
 
+_DATA_MODEL_FK_TRIGGER_RE = re.compile(
+    r"""
+    \b(?:
+        FK
+        | foreign[_\s]key
+        | \breferences\b
+        | [a-z]\w+_id          # e.g. user_id, order_id (bare 'id' excluded by prefix)
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+_DATA_MODEL_INDEX_VOCAB_RE = re.compile(
+    r"""
+    \b(?:
+        index(?:es)?
+        | idx_\w+
+        | unique\s+index
+        | composite\s+index
+        | b-?tree
+        | hash\s+index
+        | \bgin\b
+        | \bgist\b
+        | indexed(?:\s+on)?
+        | create\s+index
+        | clustered
+        | covering\s+index
+        | non-?clustered
+        | db_index
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _entity_full_text(art: Artifact, entity_name: str) -> str:
+    """Collect body of the named entity AND all its child sub-sections."""
+    texts: list[str] = []
+    entity_level = 0
+    in_entity = False
+    for sec in art.sections:
+        if not in_entity:
+            if sec.title.strip() == entity_name and sec.level >= 3:
+                in_entity = True
+                entity_level = sec.level
+                texts.append(sec.body)
+        else:
+            if sec.level <= entity_level:
+                break  # past the entity
+            texts.append(sec.body)
+    return "\n".join(texts)
+
+
+def _data_model_entity_no_index(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    p = catalog.get("DATA-MODEL-ENTITY-NO-INDEX")
+    if not p or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    entities = _entities(art)
+    if not entities:
+        return []
+
+    missing: list[str] = []
+    for name in entities:
+        full_text = _entity_full_text(art, name)
+        # Only flag entities that actually have FK fields.
+        if not _DATA_MODEL_FK_TRIGGER_RE.search(full_text):
+            continue
+        if not _DATA_MODEL_INDEX_VOCAB_RE.search(full_text):
+            missing.append(name)
+
+    if not missing:
+        return []
+
+    examples = ", ".join(f"'{n}'" for n in missing[:3])
+    suffix = f" (and {len(missing) - 3} more)" if len(missing) > 3 else ""
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Data-model entity/entities with foreign-key fields but no index declaration: {examples}{suffix}.",
+        )
+    ]
+
+
 def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
     out.extend(_data_model_entity_no_pk(art, catalog))
     out.extend(_data_model_entity_no_timestamps(art, catalog))
+    out.extend(_data_model_entity_no_index(art, catalog))
     return out
 
 
