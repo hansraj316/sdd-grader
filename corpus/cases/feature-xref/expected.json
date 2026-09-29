@@ -9,7 +9,8 @@
   ],
   "accepted_extras": [
     "TASKS-NO-ESTIMATE",
-    "DATA-MODEL-ENTITY-NO-TIMESTAMPS"
+    "DATA-MODEL-ENTITY-NO-TIMESTAMPS",
+    "DATA-MODEL-ENTITY-NO-INDEX"
   ],
   "note": "Multi-artifact Spec-Kit case (#57): spec + plan + tasks + data-model routed through the same discovery the CLI uses. Exercises the cross-artifact layer (story->task, entity->task) and plan checks (unresolved marker in Technical Context); the plan's Constitution Check passes so PLAN-CONSTITUTION-UNCHECKED must NOT fire."
 }
