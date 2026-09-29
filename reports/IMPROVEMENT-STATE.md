@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 98
-Last run: 2026-09-28
-Open loop PRs: 0
+Iteration: 99
+Last run: 2026-09-29
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -104,10 +104,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-_(none)_
+- [~] data-model-entity-no-index — DATA-MODEL-ENTITY-NO-INDEX → issue #241 → PR #247 (open, CI pending)
 
 ## Merged
 
+- iter 99 (2026-09-29): Phase 1 no open loop/* PRs; Phase 2 found open loop-candidate issues (#241–#246 from prior research); Phase 4 implemented #241 (DATA-MODEL-ENTITY-NO-INDEX): _DATA_MODEL_FK_TRIGGER_RE + _DATA_MODEL_INDEX_VOCAB_RE + _entity_full_text() + _data_model_entity_no_index() + dispatch in _data_model_checks(); corpus expected.json + judge.golden.json updated (merged_overall 89.3→88.7); Phase 5 gate: pytest 1545 green, benchmark gate PASS; Phase 6 opened PR #247 (Closes #241); CI pending.
 - iter 98 (2026-09-28): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues; Phase 3 research → filed issue #239 (DATA-MODEL-ENTITY-NO-TIMESTAMPS); Phase 4 implemented; Phase 5 gate: pytest 1531 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #240; CI green (test+package both success); squash-merged PR #240 (issue #239 DATA-MODEL-ENTITY-NO-TIMESTAMPS closed), 0 open loop PRs.
 - iter 97 (2026-09-27): CI green on PR #238 (test+package both success); squash-merged PR #238 (issue #237 PLAN-CONTAINER-NO-RESOURCE-LIMITS closed), 0 open loop PRs.
 - #237 → PR #238 plan-container-no-resource-limits — PLAN-CONTAINER-NO-RESOURCE-LIMITS: deployment plan with container/k8s/docker/helm/pod vocab but no resource limits or requests; _CONTAINER_VOCAB_RE VERBOSE 11-alternative + _RESOURCE_LIMITS_RE (11-pattern silence) + _plan_container_no_resource_limits(); deploy guard; fenced-block + heading exclusion; aggregate finding at first container-vocab line; plan-only; 15 unit tests (6 fire, 9 silent); pytest 1516 green; benchmark good=100.0 bad=50.8 precision=0.981 PASS (2026-09-27, CI green; squash-merged).
