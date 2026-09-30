@@ -4175,6 +4175,101 @@ def _plan_no_secrets_management(art: Artifact, catalog: dict[str, Pitfall]) -> l
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-NO-INPUT-VALIDATION: API deployment plan with no input-validation strategy.
+# ---------------------------------------------------------------------------
+
+# API vocabulary trigger — reuses _API_VOCAB_RE (already defined above) but adds
+# request-body/payload variants for plans that may not use the generic "route" word.
+_INPUT_VALIDATION_API_RE = re.compile(
+    r"\bapi\b"
+    r"|\brest(?:ful)?\b"
+    r"|\bgraphql\b"
+    r"|\bgrpc\b"
+    r"|\bhttp\s+endpoint\b"
+    r"|\bwebhook\b"
+    r"|\broute\b"
+    r"|\brequest\s+body\b"
+    r"|\brequest\s+payload\b"
+    r"|\bpost\s+endpoint\b",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Silence: any input-validation, sanitization, or schema-validation vocabulary silences the check.
+_INPUT_VALIDATION_SILENCE_RE = re.compile(
+    r"\bvalidat"
+    r"|\bsanitiz"
+    r"|\bsanitis"
+    r"|\bschema\s+validat"
+    r"|\bjson\s+schema\b"
+    r"|\bopenapi\s+schema\b"
+    r"|\binput\s+sanit"
+    r"|\ballowed?\s+values?\b"
+    r"|\bwhitelist\b"
+    r"|\ballowlist\b"
+    r"|\bzod\b"
+    r"|\bjoi\b"
+    r"|\byup\b"
+    r"|\bpydantic\b"
+    r"|\bcerberus\b"
+    r"|\bmarshmallow\b"
+    r"|\bform\s+validat"
+    r"|\btype\s+check"
+    r"|\brequest\s+validat"
+    r"|\bpayload\s+validat",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_input_validation(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan exposes API endpoints with no input-validation strategy (PLAN-NO-INPUT-VALIDATION).
+
+    OWASP API Security Top 10:2023 API6 (Unrestricted Access to Sensitive Business Flows)
+    and OWASP Top 10:2021 A03 (Injection) require explicit input-validation strategies for
+    any plan that exposes endpoints. Amazon Kiro production-readiness checklist requires an
+    input-validation section. Without it, APIs accept malformed or malicious payloads,
+    enabling injection and undefined behavior.
+
+    Guard A: deployment vocabulary present.
+    Guard B: API vocabulary on ≥1 non-fenced line.
+    Silence: any validation/sanitization/schema-validation token anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-NO-INPUT-VALIDATION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard A: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Guard B: API vocabulary must appear on at least one non-fenced line.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    api_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and _INPUT_VALIDATION_API_RE.search(line):
+            api_hit = i + 1
+            break
+    if api_hit is None:
+        return []
+    # Silence: any validation/sanitization/schema-validation token anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _INPUT_VALIDATION_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-INPUT-VALIDATION: deployment plan describes API endpoints but has no "
+        "input-validation or schema-validation strategy. Add a validation section stating "
+        "which library or middleware validates request bodies (e.g., Zod, Joi, Pydantic, "
+        "JSON Schema, OpenAPI request validation, marshmallow) and the rejection behavior "
+        "(OWASP API6:2023, OWASP A03:2021 Injection, Kiro production-readiness).",
+        line=api_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -4909,6 +5004,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_api_versioning(art, catalog))
     out.extend(_plan_missing_slo(art, catalog))
     out.extend(_plan_no_secrets_management(art, catalog))
+    out.extend(_plan_no_input_validation(art, catalog))
     out.extend(_plan_container_no_resource_limits(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
