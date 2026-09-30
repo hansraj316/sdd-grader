@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 99
-Last run: 2026-09-29
-Open loop PRs: 0
+Iteration: 100
+Last run: 2026-09-30
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -104,10 +104,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-_(none)_
+- #242 → PR #248 plan-no-input-validation — PLAN-NO-INPUT-VALIDATION: deployment plan exposes API endpoints (REST/GraphQL/gRPC/webhook/HTTP endpoint/request body/request payload/POST endpoint) with no input-validation, sanitization, or schema-validation strategy; _INPUT_VALIDATION_API_RE (9-alternative) + _INPUT_VALIDATION_SILENCE_RE (19-pattern silence) + _plan_no_input_validation(); deploy guard + API-vocab guard; fenced-block exclusion; aggregate finding at first API-vocab non-fenced line; plan-only; 18 unit tests (6 fire, 12 silent); pytest 1563 green; benchmark good=100.0 bad<70 precision=0.982 PASS; opened PR #248; awaiting CI.
 
 ## Merged
 
+- iter 100 (2026-09-30): Phase 1 no open loop/* PRs; Phase 2 found 5 open loop-candidate issues (#242–#246); Phase 4 implemented #242 (PLAN-NO-INPUT-VALIDATION): _INPUT_VALIDATION_API_RE + _INPUT_VALIDATION_SILENCE_RE + _plan_no_input_validation() + dispatch in _plan_checks(); Phase 5 gate: pytest 1563 green, benchmark good=100.0 bad<70 precision=0.982 PASS; Phase 6 opened PR #248; awaiting CI.
 - iter 99 (2026-09-29): Phase 1 no open loop/* PRs; Phase 2 found open loop-candidate issues (#241–#246 from prior research); Phase 4 implemented #241 (DATA-MODEL-ENTITY-NO-INDEX): _DATA_MODEL_FK_TRIGGER_RE + _DATA_MODEL_INDEX_VOCAB_RE + _entity_full_text() + _data_model_entity_no_index() + dispatch in _data_model_checks(); corpus expected.json + judge.golden.json updated (merged_overall 89.3→88.7); Phase 5 gate: pytest 1545 green, benchmark gate PASS; Phase 6 opened PR #247; CI green (test+package both success); squash-merged PR #247 (issue #241 DATA-MODEL-ENTITY-NO-INDEX closed), 0 open loop PRs.
 - iter 98 (2026-09-28): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues; Phase 3 research → filed issue #239 (DATA-MODEL-ENTITY-NO-TIMESTAMPS); Phase 4 implemented; Phase 5 gate: pytest 1531 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #240; CI green (test+package both success); squash-merged PR #240 (issue #239 DATA-MODEL-ENTITY-NO-TIMESTAMPS closed), 0 open loop PRs.
 - iter 97 (2026-09-27): CI green on PR #238 (test+package both success); squash-merged PR #238 (issue #237 PLAN-CONTAINER-NO-RESOURCE-LIMITS closed), 0 open loop PRs.
