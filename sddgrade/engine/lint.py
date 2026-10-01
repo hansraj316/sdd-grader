@@ -4270,6 +4270,92 @@ def _plan_no_input_validation(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     )]
 
 
+# Relational database vocabulary that triggers PLAN-DB-NO-CONNECTION-POOLING.
+# Intentionally excludes generic terms like 'data store' and 'persistent storage'
+# to avoid false positives on plans that explicitly state no relational database is used.
+_DB_RELATIONAL_VOCAB_RE = re.compile(
+    r"\bpostgres(?:ql)?\b"
+    r"|\bmysql\b"
+    r"|\bmariadb\b"
+    r"|\baurora\b"
+    r"|\brds\b"
+    r"|\bsql\s+server\b"
+    r"|\bcockroachdb\b"
+    r"|\btidb\b"
+    r"|\bdatabase\b",
+    re.IGNORECASE,
+)
+
+# Silence: any connection-pooling vocabulary anywhere in the document.
+_CONNECTION_POOL_RE = re.compile(
+    r"\bconnection[\s_-]?pool\b"
+    r"|\bpool[\s_-]?size\b"
+    r"|\bpool[\s_-]?timeout\b"
+    r"|\bpgbouncer\b"
+    r"|\bpgpool\b"
+    r"|\bconnection[\s_-]?limit\b"
+    r"|\bmax[\s_-]?connections\b"
+    r"|\bpool[\s_-]?config\b"
+    r"|\bconnection[\s_-]?management\b"
+    r"|\bdb[\s_-]?pool\b"
+    r"|\bhikari(?:cp)?\b"
+    r"|\bc3p0\b"
+    r"|\bdruid\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_db_no_connection_pooling(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan provisions a relational database but has no connection-pooling
+    strategy (PLAN-DB-NO-CONNECTION-POOLING).
+
+    Every production relational database has a finite max_connections ceiling.
+    A plan that provisions a database without a connection-pool strategy opens one
+    OS-level connection per thread, exhausting the database budget under moderate load.
+    Amazon Kiro production-readiness and AWS RDS best practices require a
+    connection-pooling strategy. Distinct from PLAN-MISSING-CAPACITY and
+    PLAN-NO-RATE-LIMITING.
+
+    Guard: deployment vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line matches relational DB vocab.
+    Silence: any connection-pooling token anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-DB-NO-CONNECTION-POOLING")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced non-heading line mentions a relational database.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    db_hit: int | None = None
+    for i, line in enumerate(lines):
+        if not fenced[i] and not line.startswith("#") and _DB_RELATIONAL_VOCAB_RE.search(line):
+            db_hit = i + 1
+            break
+    if db_hit is None:
+        return []
+    # Silence: any connection-pooling token anywhere in the non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _CONNECTION_POOL_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-DB-NO-CONNECTION-POOLING: deployment plan provisions a relational database "
+        "but has no connection-pooling strategy. Add a connection pooling section naming "
+        "the pool technology (e.g., PgBouncer, HikariCP, SQLAlchemy pool) and specify "
+        "pool_size, max_connections, and pool_timeout "
+        "(Kiro production-readiness, AWS RDS best practices, Twelve-Factor VI).",
+        line=db_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -5006,6 +5092,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_secrets_management(art, catalog))
     out.extend(_plan_no_input_validation(art, catalog))
     out.extend(_plan_container_no_resource_limits(art, catalog))
+    out.extend(_plan_db_no_connection_pooling(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
