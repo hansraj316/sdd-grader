@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 100
-Last run: 2026-09-30
-Open loop PRs: 0
+Iteration: 101
+Last run: 2026-10-01
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -104,10 +104,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-_(none)_
+- [~] #243 → PR #249 plan-db-no-connection-pooling — PLAN-DB-NO-CONNECTION-POOLING: deployment plan provisions a relational database with no connection-pooling strategy; _DB_RELATIONAL_VOCAB_RE (9-alternative) + _CONNECTION_POOL_RE (13-token silence) + _plan_db_no_connection_pooling(); deploy guard; fenced-block + heading exclusion; 17 unit tests (6 fire, 11 silent); pytest 1580 green; benchmark good=100.0 bad=50.8 precision=0.982 PASS (2026-10-01; awaiting CI)
 
 ## Merged
 
+- iter 101 (2026-10-01): Phase 1 no open loop/* PRs; Phase 2 found 4 open loop-candidate issues (#243–#246); Phase 4 implemented #243 (PLAN-DB-NO-CONNECTION-POOLING): _DB_RELATIONAL_VOCAB_RE + _CONNECTION_POOL_RE + _plan_db_no_connection_pooling() + dispatch in _plan_checks(); Phase 5 gate: pytest 1580 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #249; awaiting CI.
 - iter 100 (2026-09-30): Phase 1 no open loop/* PRs; Phase 2 found 5 open loop-candidate issues (#242–#246); Phase 4 implemented #242 (PLAN-NO-INPUT-VALIDATION): _INPUT_VALIDATION_API_RE + _INPUT_VALIDATION_SILENCE_RE + _plan_no_input_validation() + dispatch in _plan_checks(); Phase 5 gate: pytest 1563 green, benchmark good=100.0 bad<70 precision=0.982 PASS; Phase 6 opened PR #248; CI green (test+package both success); squash-merged PR #248 (issue #242 PLAN-NO-INPUT-VALIDATION closed), 0 open loop PRs.
 - #242 → PR #248 plan-no-input-validation — PLAN-NO-INPUT-VALIDATION: deployment plan exposes API endpoints (REST/GraphQL/gRPC/webhook/HTTP endpoint/request body/request payload/POST endpoint) with no input-validation, sanitization, or schema-validation strategy; _INPUT_VALIDATION_API_RE (9-alternative) + _INPUT_VALIDATION_SILENCE_RE (19-pattern silence) + _plan_no_input_validation(); deploy guard + API-vocab guard; fenced-block exclusion; aggregate finding at first API-vocab non-fenced line; plan-only; 18 unit tests (6 fire, 12 silent); pytest 1563 green; benchmark good=100.0 bad<70 precision=0.982 PASS (2026-09-30, CI green; squash-merged).
 - iter 99 (2026-09-29): Phase 1 no open loop/* PRs; Phase 2 found open loop-candidate issues (#241–#246 from prior research); Phase 4 implemented #241 (DATA-MODEL-ENTITY-NO-INDEX): _DATA_MODEL_FK_TRIGGER_RE + _DATA_MODEL_INDEX_VOCAB_RE + _entity_full_text() + _data_model_entity_no_index() + dispatch in _data_model_checks(); corpus expected.json + judge.golden.json updated (merged_overall 89.3→88.7); Phase 5 gate: pytest 1545 green, benchmark gate PASS; Phase 6 opened PR #247; CI green (test+package both success); squash-merged PR #247 (issue #241 DATA-MODEL-ENTITY-NO-INDEX closed), 0 open loop PRs.
