@@ -1703,6 +1703,83 @@ def _spec_qvscribe_timebox_vague(art: Artifact, catalog: dict[str, Pitfall]) -> 
     ]
 
 
+# SPEC-QVSCRIBE-INDIRECT-REFERENCE: intra-document positional cross-reference in a
+# normative requirement line ("as mentioned above", "see section", "per section", etc.)
+# makes the requirement non-self-contained.
+# QVscribe Indirect Reference defect (Level 2 Clarity); ISO 29148 §5.2.1.2.
+_INDIRECT_REF_RE = re.compile(
+    r"""(?:
+        \bthe\s+above\b
+        | \bas\s+mentioned\s+above\b
+        | \bas\s+stated\s+above\b
+        | \bas\s+described\s+above\b
+        | \bsee\s+section\b
+        | \bper\s+section\b
+        | \brefer\s+to\s+section\b
+        | \bas\s+per\s+section\b
+        | \bin\s+section\s+\d
+        | \bas\s+in\s+section\s+\d
+    )""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _indirect_ref_in_parens(line: str, match_start: int) -> bool:
+    """Return True if match_start falls inside an open parenthetical on *line*."""
+    depth = 0
+    for ch in line[:match_start]:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth = max(0, depth - 1)
+    return depth > 0
+
+
+def _spec_qvscribe_indirect_reference(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Normative requirement with intra-document positional cross-reference (SPEC-QVSCRIBE-INDIRECT-REFERENCE).
+
+    QVscribe Level-2 Clarity defect.  Phrases like 'as mentioned above', 'see section',
+    or 'per section 3.2' make the requirement's meaning contingent on document position,
+    breaking standalone traceability (ISO/IEC/IEEE 29148:2018 §5.2.1.2).
+
+    Scoped to requirement-bearing lines via _requirement_mask()/_fence_mask().
+    Parenthetical references ('see section' inside '(...)') are silenced because
+    they add context without making the requirement itself positional.
+    Blockquote lines ('>') are always skipped.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-INDIRECT-REFERENCE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if line.lstrip().startswith(">"):
+            continue
+        m = _INDIRECT_REF_RE.search(line)
+        if m and not _indirect_ref_in_parens(line, m.start()):
+            count += 1
+            if first_line is None:
+                first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-QVSCRIBE-INDIRECT-REFERENCE: {count} requirement line(s) use a positional "
+            "cross-reference ('as mentioned above', 'see section', etc.) making the requirement "
+            "non-self-contained; state the referenced content inline or use a labelled "
+            "identifier (e.g. FR-007) instead of a document position.",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-MAQA-MISSING-PRIORITY: spec with ≥3 FR- lines but no priority annotation.
 _PRIORITY_MARKER_RE = re.compile(
     r"""(?:
@@ -5031,6 +5108,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_acceptance_section(art, catalog))
     out.extend(_spec_missing_scope(art, catalog))
     out.extend(_spec_reference_unresolved(art, catalog))
+    out.extend(_spec_qvscribe_indirect_reference(art, catalog))
     return out
 
 
