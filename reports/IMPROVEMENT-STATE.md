@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 102
 Last run: 2026-10-02
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -104,11 +104,12 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- [~] #244 → PR #250 spec-qvscribe-indirect-reference — SPEC-QVSCRIBE-INDIRECT-REFERENCE: normative requirement line with intra-document positional cross-reference ('as mentioned above', 'see section', 'per section', etc.); _INDIRECT_REF_RE 10-alternative + _indirect_ref_in_parens() parenthetical silence + _spec_qvscribe_indirect_reference(); scoped via _requirement_mask()/_fence_mask(); blockquote lines excluded; spec-only; 17 unit tests (8 fire, 9 silent); pytest 1597 green; benchmark good=100.0 bad=50.8 precision=0.982 PASS. Awaiting CI.
+_(none)_
 
 ## Merged
 
-- iter 102 (2026-10-02): Phase 1 no open loop/* PRs; Phase 2 found 3 open loop-candidate issues (#244–#246); Phase 4 implemented #244 (SPEC-QVSCRIBE-INDIRECT-REFERENCE): _INDIRECT_REF_RE 10-alternative + _indirect_ref_in_parens() + _spec_qvscribe_indirect_reference() + dispatch in _spec_checks(); Phase 5 gate: pytest 1597 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #250; awaiting CI.
+- iter 102 (2026-10-02): Phase 1 no open loop/* PRs; Phase 2 found 3 open loop-candidate issues (#244–#246); Phase 4 implemented #244 (SPEC-QVSCRIBE-INDIRECT-REFERENCE): _INDIRECT_REF_RE 10-alternative + _indirect_ref_in_parens() + _spec_qvscribe_indirect_reference() + dispatch in _spec_checks(); Phase 5 gate: pytest 1597 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #250; CI green (test+package both success); squash-merged PR #250 (issue #244 SPEC-QVSCRIBE-INDIRECT-REFERENCE closed), 0 open loop PRs.
+- #244 → PR #250 spec-qvscribe-indirect-reference — SPEC-QVSCRIBE-INDIRECT-REFERENCE: normative requirement line with intra-document positional cross-reference ('as mentioned above', 'see section', 'per section', 'refer to section', 'as per section', 'the above', 'in section N'); _INDIRECT_REF_RE 10-alternative VERBOSE + _indirect_ref_in_parens() parenthetical silence + _spec_qvscribe_indirect_reference(); scoped via _requirement_mask()/_fence_mask(); blockquote lines excluded; spec-only; 17 unit tests (8 fire, 9 silent); pytest 1597 green; benchmark good=100.0 bad=50.8 precision=0.982 PASS (2026-10-02, CI green; squash-merged).
 - iter 101 (2026-10-01): Phase 1 no open loop/* PRs; Phase 2 found 4 open loop-candidate issues (#243–#246); Phase 4 implemented #243 (PLAN-DB-NO-CONNECTION-POOLING): _DB_RELATIONAL_VOCAB_RE + _CONNECTION_POOL_RE + _plan_db_no_connection_pooling() + dispatch in _plan_checks(); Phase 5 gate: pytest 1580 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #249; CI green (test+package both success); squash-merged PR #249 (issue #243 PLAN-DB-NO-CONNECTION-POOLING closed), 0 open loop PRs.
 - #243 → PR #249 plan-db-no-connection-pooling — PLAN-DB-NO-CONNECTION-POOLING: deployment plan provisions a relational database (postgres/mysql/mariadb/aurora/rds/sql server/cockroachdb/tidb/database) with no connection-pooling strategy; _DB_RELATIONAL_VOCAB_RE (9-alternative) + _CONNECTION_POOL_RE (13-token silence: connection pool/pool size/pool timeout/pgbouncer/pgpool/connection limit/max_connections/pool config/connection management/db pool/hikari/c3p0/druid) + _plan_db_no_connection_pooling(); deploy guard; fenced-block + heading exclusion; aggregate finding at first relational-DB-vocab non-fenced non-heading line; plan-only; 17 unit tests (6 fire, 11 silent); pytest 1580 green; benchmark good=100.0 bad=50.8 precision=0.982 PASS (2026-10-01, CI green; squash-merged).
 - iter 100 (2026-09-30): Phase 1 no open loop/* PRs; Phase 2 found 5 open loop-candidate issues (#242–#246); Phase 4 implemented #242 (PLAN-NO-INPUT-VALIDATION): _INPUT_VALIDATION_API_RE + _INPUT_VALIDATION_SILENCE_RE + _plan_no_input_validation() + dispatch in _plan_checks(); Phase 5 gate: pytest 1563 green, benchmark good=100.0 bad<70 precision=0.982 PASS; Phase 6 opened PR #248; CI green (test+package both success); squash-merged PR #248 (issue #242 PLAN-NO-INPUT-VALIDATION closed), 0 open loop PRs.
