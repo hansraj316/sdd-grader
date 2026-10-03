@@ -2226,6 +2226,65 @@ def _spec_missing_scope(art: Artifact, catalog: dict[str, Pitfall]) -> list[Find
     ]
 
 
+# SPEC-MISSING-INTERFACE-SECTION: spec with ≥5 normative lines (shall/must/FR-) but no
+# External Interfaces / API Contracts / Integration Points section heading.
+# ISO/IEC/IEEE 29148:2018 §9.6.5.3; IEEE 830-1998 §3.2 External Interface Requirements.
+_INTERFACE_HEADING_RE = re.compile(
+    r"""
+    \b(?:
+        external\s+(?:interfaces?|systems?|services?|apis?)   # External Interface(s) / External System(s)
+        | integration[- ]points?                               # Integration Point(s)
+        | api[- ]contracts?                                    # API Contract(s)
+        | system[- ](?:interfaces?|boundaries|boundary)        # System Interface(s) / System Boundary
+        | interfaces?                                          # bare Interface / Interfaces
+    )\b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_INTERFACE_FR_RE = re.compile(r"\bFR-\d+\b")
+_INTERFACE_NORMATIVE_RE = re.compile(r"\b(?:shall|must)\b|\b(?:FR|NFR)-\d+\b", re.IGNORECASE)
+
+
+def _spec_missing_interface_section(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with ≥5 normative lines but no External Interfaces / API Contracts heading.
+
+    ISO/IEC/IEEE 29148:2018 §9.6.5.3 requires external interface requirements.
+    Guard: ≥5 non-fenced normative lines (shall/must/FR-/NFR-) AND ≥1 FR-NNN
+    line present (pure-NFR specs are skipped).  Check: no section heading
+    contains an interface-class keyword.
+    """
+    p = catalog.get("SPEC-MISSING-INTERFACE-SECTION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    normative_count = 0
+    has_fr = False
+    for i, ln in enumerate(lines):
+        if fenced[i]:
+            continue
+        if _INTERFACE_NORMATIVE_RE.search(ln):
+            normative_count += 1
+        if _INTERFACE_FR_RE.search(ln):
+            has_fr = True
+    if normative_count < 5 or not has_fr:
+        return []
+    for s in art.sections:
+        if _INTERFACE_HEADING_RE.search(s.title):
+            return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-MISSING-INTERFACE-SECTION: spec has 5+ normative requirements but no "
+            "External Interfaces / Integration Points / API Contracts section; "
+            "add a section naming each external system or API the feature interacts with "
+            "(ISO/IEC/IEEE 29148:2018 §9.6.5.3 / IEEE 830-1998 §3.2).",
+            line=1,
+        )
+    ]
+
+
 # SPEC-REFERENCE-UNRESOLVED: normative requirement cites external standard via bracket
 # notation (e.g., [RFC 7662], [ISO 27001]) but spec has no References/Bibliography section.
 # QVscribe QV-201 "Incomplete Requirement"; IBM RQA external-reference check;
@@ -5107,6 +5166,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_stakeholder(art, catalog))
     out.extend(_spec_missing_acceptance_section(art, catalog))
     out.extend(_spec_missing_scope(art, catalog))
+    out.extend(_spec_missing_interface_section(art, catalog))
     out.extend(_spec_reference_unresolved(art, catalog))
     out.extend(_spec_qvscribe_indirect_reference(art, catalog))
     return out

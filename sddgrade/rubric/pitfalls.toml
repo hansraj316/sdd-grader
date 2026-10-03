@@ -1360,6 +1360,17 @@ detect = "Guard: plan artifact with deploy vocabulary (_DEPLOY_VOCAB_RE/_DEPLOY_
 fix = "Add a Connection Pooling section to the deployment plan. Name the connection-pool technology used (e.g., PgBouncer, pgpool-II, SQLAlchemy connection pool, HikariCP, c3p0, Druid) and specify pool_size, max_overflow, and pool_timeout parameters. Example: 'Database connections are managed via PgBouncer in transaction mode. Pool size: 20 connections per application instance; max_connections on RDS set to 100. SQLAlchemy engine configured with pool_size=10, max_overflow=5, pool_timeout=30s.'"
 
 [[pitfall]]
+id = "SPEC-MISSING-INTERFACE-SECTION"
+name = "Spec with substantial requirements but no External Interfaces section"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §9.6.5.3 explicitly requires an SRS to include descriptions of external interfaces: user interfaces, hardware interfaces, software/API interfaces, and communication interfaces. IEEE 830-1998 §3.2 likewise mandates an External Interface Requirements section. A spec that contains substantial functional requirements but no interface section leaves integration contracts undefined, allowing implementation teams to choose incompatible API shapes, authentication mechanisms, or data formats independently. This defect is categorically distinct from SPEC-MISSING-SCOPE (boundary of the system) and SPEC-MISSING-STAKEHOLDER (who uses the system): an Interfaces section names the technical contracts the system must honour, not just who interacts with it or what it covers."
+detect = "Guard: spec artifact AND ≥5 non-fenced normative lines matching \\b(?:shall|must)\\b or \\b(?:FR|NFR)-\\d+\\b AND at least one FR-\\d line present (pure-NFR specs skipped). Heading scan: check all '#'-prefixed section titles for an interface-class keyword: interface(s), external system, external service, external api, integration point, api contract, system boundary. Fire once at file level (line 1) if the guard passes and no qualifying heading exists. Spec-only."
+fix = "Add an '## External Interfaces' (or '## API Contracts' / '## Integration Points' / '## System Interfaces') section to the spec. For each external system, API, or service the feature interacts with, state: the interface name, the protocol or format (REST/gRPC/WebSocket/CSV/etc.), the direction of data flow (inbound/outbound), and any authentication mechanism. Example: '## External Interfaces\\n- **Export API** (outbound, REST/JSON): provides the task-list CSV download endpoint; authenticated via Bearer token (FR-004).\\n- **Notification Service** (outbound, gRPC): delivers push events; authenticated via mTLS.'"
+
+[[pitfall]]
 id = "SPEC-QVSCRIBE-INDIRECT-REFERENCE"
 name = "Normative requirement with intra-document positional cross-reference"
 dimension = "clarity"
