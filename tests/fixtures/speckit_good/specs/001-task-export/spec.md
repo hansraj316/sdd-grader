@@ -48,6 +48,11 @@ shared file is scoped to what matters.
 - Titles containing commas or quotes are correctly escaped per RFC 4180.
 - An export of more than 10,000 tasks completes without truncation.
 
+## External Interfaces
+
+- **Export API** (outbound, REST/JSON): exposes the task-list CSV download endpoint; authenticated via Bearer token.
+- **Storage Service** (internal): provides read access to the user's task records; no external contract required.
+
 ## Requirements
 
 ### Functional Requirements
