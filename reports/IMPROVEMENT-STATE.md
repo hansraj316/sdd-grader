@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 103
-Last run: 2026-10-03
-Open loop PRs: 0
+Iteration: 104
+Last run: 2026-10-04
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -104,10 +104,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-_(none)_
+- #245 → PR #252 loop/data-model-no-cardinality — DATA-MODEL-NO-CARDINALITY (awaiting CI)
 
 ## Merged
 
+- iter 104 (2026-10-04): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#245 DATA-MODEL-NO-CARDINALITY); Phase 4 implemented _DATA_MODEL_RELATIONSHIP_TRIGGER_RE (8-alternative) + _DATA_MODEL_CARDINALITY_RE (6-keyword + 5 notation forms) + _data_model_no_cardinality(); corpus expected.json + judge.golden.json updated (merged_overall 88.7→88.1); 15 unit tests (6 fire, 9 silent); Phase 5 gate: pytest 1626 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #252; awaiting CI.
 - iter 103 (2026-10-03): Phase 1 no open loop/* PRs; Phase 2 found 2 open loop-candidate issues (#245–#246); Phase 4 implemented #246 (SPEC-MISSING-INTERFACE-SECTION): _INTERFACE_HEADING_RE VERBOSE plural-safe + _INTERFACE_FR_RE + _INTERFACE_NORMATIVE_RE + _spec_missing_interface_section(); guard ≥5 normative lines + ≥1 FR-NNN; pure-NFR skipped; wired into _spec_checks(); good fixture updated with External Interfaces section; 14 unit tests (4 fire, 10 silent); Phase 5 gate: pytest 1611 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #251; CI green (test+package both success); squash-merged PR #251 (issue #246 SPEC-MISSING-INTERFACE-SECTION closed), 0 open loop PRs.
 - iter 102 (2026-10-02): Phase 1 no open loop/* PRs; Phase 2 found 3 open loop-candidate issues (#244–#246); Phase 4 implemented #244 (SPEC-QVSCRIBE-INDIRECT-REFERENCE): _INDIRECT_REF_RE 10-alternative + _indirect_ref_in_parens() + _spec_qvscribe_indirect_reference() + dispatch in _spec_checks(); Phase 5 gate: pytest 1597 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #250; CI green (test+package both success); squash-merged PR #250 (issue #244 SPEC-QVSCRIBE-INDIRECT-REFERENCE closed), 0 open loop PRs.
 - #244 → PR #250 spec-qvscribe-indirect-reference — SPEC-QVSCRIBE-INDIRECT-REFERENCE: normative requirement line with intra-document positional cross-reference ('as mentioned above', 'see section', 'per section', 'refer to section', 'as per section', 'the above', 'in section N'); _INDIRECT_REF_RE 10-alternative VERBOSE + _indirect_ref_in_parens() parenthetical silence + _spec_qvscribe_indirect_reference(); scoped via _requirement_mask()/_fence_mask(); blockquote lines excluded; spec-only; 17 unit tests (8 fire, 9 silent); pytest 1597 green; benchmark good=100.0 bad=50.8 precision=0.982 PASS (2026-10-02, CI green; squash-merged).
