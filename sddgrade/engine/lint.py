@@ -5471,11 +5471,90 @@ def _data_model_entity_no_index(
     ]
 
 
+_DATA_MODEL_RELATIONSHIP_TRIGGER_RE = re.compile(
+    r"""
+    \b(?:
+        foreign[_\s]key
+        | \breferences\b
+        | belongs[_\s]to
+        | has[_\s]many
+        | has[_\s]one
+        | one-to-
+        | many-to-
+        | [a-z]\w+_id          # e.g. user_id, order_id (bare 'id' excluded by prefix)
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+_DATA_MODEL_CARDINALITY_RE = re.compile(
+    r"""
+    (?:
+        \b(?:
+            one-to-one
+            | one-to-many
+            | many-to-many
+            | many-to-one
+            | cardinality
+            | multiplicity
+        )\b
+        | \b(?:1\s*:\s*1|1\s*:\s*[Nn]|[Nn]\s*:\s*[Mm]|[Nn]\s*:\s*1)\b
+        | 1:\*
+        | 0\s*\.\.[0-9*]
+        | [0-9]\s*\.\.[0-9*]
+    )
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _data_model_no_cardinality(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    p = catalog.get("DATA-MODEL-NO-CARDINALITY")
+    if not p or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    # Guard: ≥2 entity headings (level-3+, not structural sub-headings).
+    entities = _entities(art)
+    if len(entities) < 2:
+        return []
+
+    lines = art.raw.splitlines()
+    fence_mask = _fence_mask(lines)
+
+    # Silence: if cardinality notation appears anywhere in non-fenced text, skip.
+    for i, line in enumerate(lines):
+        if fence_mask[i]:
+            continue
+        if _DATA_MODEL_CARDINALITY_RE.search(line):
+            return []
+
+    # Trigger: find first non-fenced non-heading line with relationship vocabulary.
+    for i, line in enumerate(lines):
+        if fence_mask[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _DATA_MODEL_RELATIONSHIP_TRIGGER_RE.search(line):
+            return [
+                _from_pitfall(
+                    p, art.path,
+                    "Data model describes entity relationships (FK/references/belongs-to/has-many/"
+                    "_id fields) but contains no cardinality declarations (1:1, 1:N, N:M, "
+                    "one-to-many, etc.).",
+                    line=i + 1,
+                )
+            ]
+    return []
+
+
 def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
     out.extend(_data_model_entity_no_pk(art, catalog))
     out.extend(_data_model_entity_no_timestamps(art, catalog))
     out.extend(_data_model_entity_no_index(art, catalog))
+    out.extend(_data_model_no_cardinality(art, catalog))
     return out
 
 

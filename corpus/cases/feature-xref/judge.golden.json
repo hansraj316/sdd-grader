@@ -27,7 +27,7 @@
     }
   ],
   "expect": {
-    "merged_overall": 88.7,
+    "merged_overall": 88.1,
     "judge_pitfalls": [
       "PLAN-NO-RATIONALE",
       "XREF-CONTRADICTION"
@@ -51,6 +51,6 @@
         "dimension": "consistency"
       }
     ],
-    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against. Updated 2026-08-01: TASKS-NO-ESTIMATE lint finding added; score recalculated from 90.4 to 89.9. Updated 2026-09-28: DATA-MODEL-ENTITY-NO-TIMESTAMPS lint finding added (Order+Invoice entities lack audit timestamps); score recalculated from 89.9 to 89.3. Updated 2026-09-29: DATA-MODEL-ENTITY-NO-INDEX lint finding added (Order+Invoice entities have FK fields but no index declarations); score recalculated from 89.3 to 88.7."
+    "merged_overall_rationale": "Re-derived 2026-07-09 on the merged engine: judge finding penalties are halved and capped (#51), so judged scores sit higher than the pre-hardening values this fixture was first authored against. Updated 2026-08-01: TASKS-NO-ESTIMATE lint finding added; score recalculated from 90.4 to 89.9. Updated 2026-09-28: DATA-MODEL-ENTITY-NO-TIMESTAMPS lint finding added (Order+Invoice entities lack audit timestamps); score recalculated from 89.9 to 89.3. Updated 2026-09-29: DATA-MODEL-ENTITY-NO-INDEX lint finding added (Order+Invoice entities have FK fields but no index declarations); score recalculated from 89.3 to 88.7. Updated 2026-10-04: DATA-MODEL-NO-CARDINALITY lint finding added (Order+Invoice entities have FK-style _id fields but no cardinality declarations); score recalculated from 88.7 to 88.1."
   }
 }
