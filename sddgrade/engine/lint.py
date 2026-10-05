@@ -4492,6 +4492,96 @@ def _plan_db_no_connection_pooling(art: Artifact, catalog: dict[str, Pitfall]) -
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-MISSING-AUDIT-LOG: plan describes privileged/admin operations with no
+# audit-log strategy (ISO 27001 A.12.4.1, GDPR Art.30, OWASP A09:2021, Kiro).
+# ---------------------------------------------------------------------------
+
+# Trigger: admin/privileged/sensitive operation vocabulary on non-fenced lines.
+_AUDIT_SENSITIVE_OP_RE = re.compile(
+    r"\badmin\s+user\b"
+    r"|\badmin(?:istrat\w+)?\s+(?:action|panel|dashboard|console|portal)\b"
+    r"|\brole[\s_-]?(?:assignment|management|grant|change)\b"
+    r"|\bassign\w*\s+role\b"
+    r"|\bpermission[\s_-]?(?:management|grant|revoke|change)\b"
+    r"|\buser[\s_-]?management\b"
+    r"|\baccount[\s_-]?(?:creat|delet|terminat|suspend)\w*\b"
+    r"|\bpassword[\s_-]?reset\b"
+    r"|\bbulk[\s_-](?:delet|expor|impor|purge)\w*\b"
+    r"|\bprivileged?(?:\s+\w+)?\s+(?:access|operation|action)\b",
+    re.IGNORECASE,
+)
+
+# Silence: any audit-log strategy vocabulary anywhere in non-fenced text.
+_AUDIT_LOG_RE = re.compile(
+    r"\baudit[\s_-]?(?:log|trail|event|record|table|db)\b"
+    r"|\baccess[\s_-]?log\b"
+    r"|\bactivity[\s_-]?log\b"
+    r"|\bevent[\s_-]?log\b"
+    r"|\bsecurity[\s_-]?log\b"
+    r"|\btransaction[\s_-]?log\b"
+    r"|\bnon[\s_-]?repudiation\b"
+    r"|\bcloudtrail\b"
+    r"|\bstackdriver\b"
+    r"|\bcloudwatch[\s_-]?logs?\b"
+    r"|\bauditing\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_audit_log(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan describes privileged operations with no audit-log strategy
+    (PLAN-MISSING-AUDIT-LOG).
+
+    ISO 27001:2022 A.12.4.1 requires event logging for privileged actions.
+    GDPR Art. 30 requires records of processing activities. Kiro production-readiness
+    mandates an audit-logging gate for plans with admin/role/account operations.
+    OWASP Top 10:2021 A09 flags missing security logging as a critical gap.
+
+    Guard: deploy vocabulary present (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE).
+    Trigger: ≥1 non-fenced non-heading line contains admin/privileged op vocab.
+    Silence: any audit-log strategy vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-AUDIT-LOG")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    # Silence: audit-log vocabulary found anywhere.
+    if _AUDIT_LOG_RE.search(non_fenced_text):
+        return []
+    # Trigger: find first matching non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _AUDIT_SENSITIVE_OP_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-AUDIT-LOG: deployment plan describes privileged operations "
+        "(admin actions, role assignments, user management, or bulk data operations) "
+        "but has no audit-log or audit-trail strategy. Add an audit-log section naming "
+        "what operations are recorded, where logs are stored, and the retention period "
+        "(ISO 27001:2022 A.12.4.1, GDPR Art. 30, OWASP A09:2021, Kiro).",
+        line=trigger_line,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -5231,6 +5321,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_input_validation(art, catalog))
     out.extend(_plan_container_no_resource_limits(art, catalog))
     out.extend(_plan_db_no_connection_pooling(art, catalog))
+    out.extend(_plan_missing_audit_log(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
