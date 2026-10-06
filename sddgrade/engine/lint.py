@@ -1149,6 +1149,88 @@ def _spec_gherkin_no_error_scenario(
     ]
 
 
+# SPEC-GHERKIN-BACKGROUND-MISUSED: Background block contains When or Then steps.
+_BACKGROUND_HEADING_RE = re.compile(r"^\s*(?:#+\s*)?background\s*:", re.IGNORECASE)
+_SCENARIO_HEADING_FULL_RE = re.compile(
+    r"^\s*(?:#+\s*)?scenario(?:\s+(?:outline|template))?\s*:",
+    re.IGNORECASE,
+)
+_GHERKIN_WHEN_OR_THEN_RE = re.compile(
+    r"^\s*[-*+]?\s*(?:when|then)\b", re.IGNORECASE
+)
+
+
+def _spec_gherkin_background_misused(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Gherkin Background block contains When or Then steps (SPEC-GHERKIN-BACKGROUND-MISUSED).
+
+    Gherkin spec: Background may only contain Given steps. A When step in Background
+    replays an action before every scenario (coupling tests); a Then step asserts before
+    any action, which is semantically incoherent. Guard: at least one Background: heading
+    (non-fenced) AND formal-Gherkin mode (When + Then both present in doc).
+    """
+    p = catalog.get("SPEC-GHERKIN-BACKGROUND-MISUSED")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    # Quick pre-check: need a Background: heading at all.
+    has_background = any(
+        not fenced[i] and _BACKGROUND_HEADING_RE.match(line)
+        for i, line in enumerate(lines)
+    )
+    if not has_background:
+        return []
+    # Formal-Gherkin guard: When and Then must both exist somewhere in doc.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+
+    in_background = False
+    blank_streak = 0
+    first_hit: int | None = None
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            blank_streak = 0
+            continue
+        stripped = line.strip()
+        if not stripped:
+            blank_streak += 1
+            if blank_streak >= 2 and in_background:
+                in_background = False
+            continue
+        blank_streak = 0
+
+        if _BACKGROUND_HEADING_RE.match(line):
+            in_background = True
+            continue
+
+        # A Scenario heading ends the background block.
+        if _SCENARIO_HEADING_FULL_RE.match(line):
+            in_background = False
+            continue
+
+        if in_background and _GHERKIN_WHEN_OR_THEN_RE.match(line):
+            if first_hit is None:
+                first_hit = i + 1  # 1-indexed
+
+    if first_hit is None:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-GHERKIN-BACKGROUND-MISUSED: Background block contains When or Then "
+            "step(s); Background may only hold Given (precondition) steps. Move action "
+            "and assertion steps into individual Scenario blocks.",
+            line=first_hit,
+        )
+    ]
+
+
 # SPEC-QVSCRIBE-AND-OR: "and/or" ambiguous conjunction on requirement-bearing lines.
 _AND_OR_RE = re.compile(r"\band/or\b", re.IGNORECASE)
 
@@ -5232,6 +5314,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_gherkin_no_then(art, catalog))
     out.extend(_spec_gherkin_duplicate_scenario(art, catalog))
     out.extend(_spec_gherkin_no_error_scenario(art, catalog))
+    out.extend(_spec_gherkin_background_misused(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
     out.extend(_spec_missing_glossary(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
