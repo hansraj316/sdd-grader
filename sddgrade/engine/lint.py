@@ -5723,12 +5723,91 @@ def _data_model_no_cardinality(
     return []
 
 
+_SOFT_DELETE_ENTITY_TRIGGER_RE = re.compile(
+    r"""
+    \b(?:
+        user
+        | account
+        | profile
+        | order
+        | post
+        | message
+        | comment
+        | item
+        | product
+        | invoice
+        | transaction
+        | record
+        | content
+        | event
+        | notification
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+_SOFT_DELETE_SILENCE_RE = re.compile(
+    r"""
+    \b(?:
+        deleted_at
+        | is_deleted
+        | soft.?delete
+        | archived_at
+        | logical.?delete
+        | tombstone
+        | deleted
+        | archived
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _data_model_missing_soft_delete(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    p = catalog.get("DATA-MODEL-MISSING-SOFT-DELETE")
+    if not p or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    entities = _entities(art)
+    if len(entities) < 2:
+        return []
+
+    lines = art.raw.splitlines()
+    fence_mask = _fence_mask(lines)
+
+    for i, line in enumerate(lines):
+        if fence_mask[i]:
+            continue
+        if _SOFT_DELETE_SILENCE_RE.search(line):
+            return []
+
+    triggered: list[str] = [
+        name for name in entities
+        if _SOFT_DELETE_ENTITY_TRIGGER_RE.search(name)
+    ]
+    if not triggered:
+        return []
+
+    examples = ", ".join(f"'{n}'" for n in triggered[:3])
+    suffix = f" (and {len(triggered) - 3} more)" if len(triggered) > 3 else ""
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Data model contains user-visible/transactional entity/entities with no soft-delete "
+            f"strategy anywhere in the document: {examples}{suffix}.",
+        )
+    ]
+
+
 def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
     out.extend(_data_model_entity_no_pk(art, catalog))
     out.extend(_data_model_entity_no_timestamps(art, catalog))
     out.extend(_data_model_entity_no_index(art, catalog))
     out.extend(_data_model_no_cardinality(art, catalog))
+    out.extend(_data_model_missing_soft_delete(art, catalog))
     return out
 
 
