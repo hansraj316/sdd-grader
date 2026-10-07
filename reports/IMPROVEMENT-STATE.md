@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 106
-Last run: 2026-10-06
-Open loop PRs: 0
+Iteration: 107
+Last run: 2026-10-07
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -29,8 +29,8 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] data-model-entity-no-timestamps — DATA-MODEL-ENTITY-NO-TIMESTAMPS: entity with no audit-timestamp columns (ISO 27001 A.12.4, GDPR Art.30, Kiro) → issue #239 → PR #240 → merged 2026-09-28
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
 - [x] plan-missing-audit-log — PLAN-MISSING-AUDIT-LOG: plan with privileged ops but no audit-log strategy → issue #253 → PR #256 → merged 2026-10-05
-- [ ] spec-gherkin-background-misused — SPEC-GHERKIN-BACKGROUND-MISUSED: Gherkin Background block with When/Then steps → issue #254
-- [ ] data-model-missing-soft-delete — DATA-MODEL-MISSING-SOFT-DELETE: data model user-visible entities with no soft-delete strategy → issue #255
+- [x] spec-gherkin-background-misused — SPEC-GHERKIN-BACKGROUND-MISUSED: Gherkin Background block with When/Then steps → issue #254 → PR #257 → merged 2026-10-06
+- [~] data-model-missing-soft-delete — DATA-MODEL-MISSING-SOFT-DELETE: data model user-visible entities with no soft-delete strategy → issue #255 → PR #258
 - [x] report-sarif — already implemented as sddgrade/report/sarif.py (closed issue #14)
 - [x] pitfall-nfr-thresholds — Detect non-functional requirements (performance/security/availability) stated without a measurable threshold. (ISO/IEC/IEEE 29148 "verifiable") → merged in #1
 - [x] pitfall-passive-voice — SPEC-PASSIVE-VOICE pitfall + lint check → merged in #9
@@ -107,10 +107,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-_(none)_
+- #255 → PR #258 data-model-missing-soft-delete (awaiting CI)
 
 ## Merged
 
+- iter 107 (2026-10-07): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#255 DATA-MODEL-MISSING-SOFT-DELETE); Phase 4 implemented _SOFT_DELETE_ENTITY_TRIGGER_RE (15-alternative) + _SOFT_DELETE_SILENCE_RE (8-pattern document-level silence) + _data_model_missing_soft_delete(); corpus feature-xref accepted_extras updated + judge.golden.json merged_overall 88.1→87.5; 15 unit tests (5 fire, 10 silent); pytest 1671 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #258; awaiting CI.
 - iter 106 (2026-10-06): Phase 1 no open loop/* PRs; Phase 2 found 2 open loop-candidate issues (#254, #255); Phase 4 implemented #254 (SPEC-GHERKIN-BACKGROUND-MISUSED): _BACKGROUND_HEADING_RE + _GHERKIN_WHEN_OR_THEN_RE + _spec_gherkin_background_misused(); 13 unit tests (5 fire, 8 silent); pytest 1656 green; benchmark good=100.0 bad<70 precision=0.982 PASS; opened PR #257; CI green (test+package both success); squash-merged PR #257 (issue #254 SPEC-GHERKIN-BACKGROUND-MISUSED closed), 0 open loop PRs.
 - iter 105 (2026-10-05): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created 3 new issues #253 (PLAN-MISSING-AUDIT-LOG), #254 (SPEC-GHERKIN-BACKGROUND-MISUSED), #255 (DATA-MODEL-MISSING-SOFT-DELETE); Phase 4 implemented #253: _AUDIT_SENSITIVE_OP_RE (10-alternative) + _AUDIT_LOG_RE (11-token silence) + _plan_missing_audit_log(); 17 unit tests (7 fire, 10 silent); pytest 1643 green; benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #256; CI green (test+package both success); squash-merged PR #256 (issue #253 PLAN-MISSING-AUDIT-LOG closed), 0 open loop PRs.
 - iter 104 (2026-10-04): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#245 DATA-MODEL-NO-CARDINALITY); Phase 4 implemented _DATA_MODEL_RELATIONSHIP_TRIGGER_RE (8-alternative) + _DATA_MODEL_CARDINALITY_RE (6-keyword + 5 notation forms) + _data_model_no_cardinality(); corpus expected.json + judge.golden.json updated (merged_overall 88.7→88.1); 15 unit tests (6 fire, 9 silent); Phase 5 gate: pytest 1626 green, benchmark good=100.0 bad=50.8 precision=0.982 PASS; Phase 6 opened PR #252; CI green (test+package both success); squash-merged PR #252 (issue #245 DATA-MODEL-NO-CARDINALITY closed), 0 open loop PRs.
