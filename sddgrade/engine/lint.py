@@ -4664,6 +4664,99 @@ def _plan_missing_audit_log(art: Artifact, catalog: dict[str, Pitfall]) -> list[
     )]
 
 
+# PLAN-NO-PAGINATION: API deployment plan exposes list/search endpoints with no pagination strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: list/search/collection endpoint vocabulary on non-fenced non-heading lines.
+_PLAN_LIST_VOCAB_RE = re.compile(
+    r"\blist[\s_](?:endpoint|api|route|resource|view)\b"
+    r"|\bsearch[\s_](?:endpoint|api|route)\b"
+    r"|\bquery[\s_](?:endpoint|api|route)\b"
+    r"|\bget[\s_-]all\b"
+    r"|\bretrieve[\s_-]?all\b"
+    r"|\bfetch[\s_-]?all\b"
+    r"|\breturns?\s+(?:a\s+)?(?:list|collection)\s+of\b"
+    r"|\bcollection[\s_](?:endpoint|api|route)\b"
+    r"|\bGET\s+/\w+s\b"
+    r"|\b/\w+s\s+(?:endpoint|route)\b",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Silence: any pagination vocabulary anywhere in non-fenced text silences the check.
+_PAGINATION_RE = re.compile(
+    r"\bpaginat"
+    r"|\bpage[\s_-]?size\b"
+    r"|\bper[\s_-]?page\b"
+    r"|\bpage[\s_-]?token\b"
+    r"|\bnext[\s_-]?token\b"
+    r"|\bcursor\b"
+    r"|\blimit\b"
+    r"|\boffset\b"
+    r"|\bscroll\b"
+    r"|\btotal[\s_-]?count\b"
+    r"|\bhas[\s_-]?next\b"
+    r"|\bhas[\s_-]?more\b"
+    r"|\bmax[\s_-]?results?\b"
+    r"|\bpage[\s_-]?number\b"
+    r"|\binfinite[\s_-]?scroll\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_pagination(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan exposes list/search endpoints with no pagination strategy (PLAN-NO-PAGINATION).
+
+    Unbounded collection APIs can exhaust memory, exceed gateway timeouts, and degrade
+    service availability as data sets grow. Kiro production-readiness checklist,
+    Tessl API design checklist, and OWASP API4:2023 all require pagination on
+    collection endpoints.
+
+    Guard A: deployment vocabulary present.
+    Guard B: list/search/collection endpoint vocabulary on ≥1 non-fenced non-heading line.
+    Silence: any pagination vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-NO-PAGINATION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard A: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Guard B: list/search/collection endpoint vocabulary on ≥1 non-fenced non-heading line.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    list_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _PLAN_LIST_VOCAB_RE.search(line):
+            list_hit = i + 1
+            break
+    if list_hit is None:
+        return []
+    # Silence: any pagination vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _PAGINATION_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-PAGINATION: deployment plan describes list or search API endpoints "
+        "but has no pagination strategy. Unbounded collection responses can exhaust "
+        "memory and trigger gateway timeouts as the data set grows. Add a pagination "
+        "section naming the strategy (offset-based: limit/offset; cursor-based: "
+        "cursor/pageToken; keyset-based: after_id), the default and maximum page size, "
+        "and the response envelope format (Kiro production-readiness, Tessl API design "
+        "checklist, OWASP API4:2023 Unrestricted Resource Consumption).",
+        line=list_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -5405,6 +5498,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_container_no_resource_limits(art, catalog))
     out.extend(_plan_db_no_connection_pooling(art, catalog))
     out.extend(_plan_missing_audit_log(art, catalog))
+    out.extend(_plan_no_pagination(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
