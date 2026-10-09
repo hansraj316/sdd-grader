@@ -4757,6 +4757,97 @@ def _plan_no_pagination(art: Artifact, catalog: dict[str, Pitfall]) -> list[Find
     )]
 
 
+# PLAN-MISSING-CORS-POLICY: browser-facing API deployment plan with no CORS policy.
+# ---------------------------------------------------------------------------
+
+# Trigger: browser-facing API vocabulary on non-fenced non-heading lines.
+_BROWSER_API_VOCAB_RE = re.compile(
+    r"\bSPA\b"
+    r"|\bReact\b"
+    r"|\bVue\b"
+    r"|\bAngular\b"
+    r"|\bNext\.?js\b"
+    r"|\bNuxt\b"
+    r"|\bfrontend\b"
+    r"|\bweb[\s_-]?client\b"
+    r"|\bbrowser[\s_-]?client\b"
+    r"|\bbrowser[\s_-]?based\b"
+    r"|\bfetch\s+API\b"
+    r"|\bXMLHttpRequest\b",
+    re.IGNORECASE,
+)
+
+# Silence: any CORS policy vocabulary anywhere in non-fenced text silences the check.
+_CORS_SILENCE_RE = re.compile(
+    r"\bCORS\b"
+    r"|\bcross[\s_-]?origin\b"
+    r"|\bAccess-Control-Allow-Origin\b"
+    r"|\bAccess-Control-Allow-Headers\b"
+    r"|\bAccess-Control-Allow-Methods\b"
+    r"|\bsame[\s_-]?origin\b"
+    r"|\bcors[\s_-]?policy\b"
+    r"|\bcors[\s_-]?config\w*\b"
+    r"|\bcors[\s_-]?middleware\b"
+    r"|\bcors[\s_-]?headers?\b"
+    r"|\ballow[\s_-]?origin\b"
+    r"|\bpreflight\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_cors_policy(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Browser-facing API deployment plan with no CORS policy (PLAN-MISSING-CORS-POLICY).
+
+    CORS misconfiguration (OWASP API07:2023) allows cross-origin exploitation of
+    browser-facing APIs. Tessl deployment checklist and Kiro production-readiness
+    both require a CORS policy for every browser-exposed API.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains browser-facing API vocabulary.
+    Silence: any CORS policy vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-CORS-POLICY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: browser-facing API vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _BROWSER_API_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: CORS policy vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _CORS_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-CORS-POLICY: deployment plan describes a browser-facing API "
+        "(SPA/React/Vue/Angular/Next.js/Nuxt/frontend/web client) but has no CORS "
+        "policy. Without explicit CORS headers, malicious websites can make "
+        "credentialed cross-origin requests to the API on behalf of authenticated "
+        "users. Add a CORS policy section naming allowed origins, methods, headers, "
+        "and whether credentials are permitted (OWASP API07:2023 Security "
+        "Misconfiguration, Tessl deployment checklist, Kiro production-readiness).",
+        line=trigger_line,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -5499,6 +5590,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_db_no_connection_pooling(art, catalog))
     out.extend(_plan_missing_audit_log(art, catalog))
     out.extend(_plan_no_pagination(art, catalog))
+    out.extend(_plan_missing_cors_policy(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
