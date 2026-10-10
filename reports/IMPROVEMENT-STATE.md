@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 110
 Last run: 2026-10-10
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -109,11 +109,11 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## In PR
 
-- #261 → PR #264 spec-nfr-availability-unmeasured — SPEC-NFR-AVAILABILITY-UNMEASURED: awaiting CI
+_(none)_
 
 ## Merged
 
-- iter 110 (2026-10-10): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#261 SPEC-NFR-AVAILABILITY-UNMEASURED); Phase 4 implemented _AVAIL_CLAIM_RE (7-alternative) + _AVAIL_NUMERIC_SILENCE_RE (99.x%, four/five/three nines, X.Y% uptime) + _spec_nfr_availability_unmeasured(); 17 unit tests (7 fire, 10 silent); pytest 1719 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #264; awaiting CI.
+- iter 110 (2026-10-10): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#261 SPEC-NFR-AVAILABILITY-UNMEASURED); Phase 4 implemented _AVAIL_CLAIM_RE (7-alternative) + _AVAIL_NUMERIC_SILENCE_RE (99.x%, four/five/three nines, X.Y% uptime) + _spec_nfr_availability_unmeasured(); 17 unit tests (7 fire, 10 silent); pytest 1719 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #264; CI green (test+package both success); squash-merged PR #264 (issue #261 SPEC-NFR-AVAILABILITY-UNMEASURED closed), 0 open loop PRs.
 - iter 109 (2026-10-09): Phase 1 no open loop/* PRs; Phase 2 found 2 open loop-candidate issues (#260 PLAN-MISSING-CORS-POLICY, #261 SPEC-NFR-AVAILABILITY-UNMEASURED); Phase 4 implemented #260: _BROWSER_API_VOCAB_RE (12-alternative) + _CORS_SILENCE_RE (12-token) + _plan_missing_cors_policy(); 16 unit tests (6 fire, 10 silent); pytest 1702 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #263; CI green (test+package both success); squash-merged PR #263 (issue #260 PLAN-MISSING-CORS-POLICY closed), 0 open loop PRs.
 - iter 108 (2026-10-08): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created 3 new issues #259 (PLAN-NO-PAGINATION), #260 (PLAN-MISSING-CORS-POLICY), #261 (SPEC-NFR-AVAILABILITY-UNMEASURED); Phase 4 implemented #259: _PLAN_LIST_VOCAB_RE (10-alternative) + _PAGINATION_RE (15-token silence) + _plan_no_pagination(); 15 unit tests (5 fire, 10 silent); pytest 1686 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #262; CI green (test+package both success); squash-merged PR #262 (issue #259 PLAN-NO-PAGINATION closed), 0 open loop PRs.
 - iter 107 (2026-10-07): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#255 DATA-MODEL-MISSING-SOFT-DELETE); Phase 4 implemented _SOFT_DELETE_ENTITY_TRIGGER_RE (15-alternative) + _SOFT_DELETE_SILENCE_RE (8-pattern document-level silence) + _data_model_missing_soft_delete(); corpus feature-xref accepted_extras updated + judge.golden.json merged_overall 88.1→87.5; 15 unit tests (5 fire, 10 silent); pytest 1671 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #258; CI green (success); squash-merged PR #258 (issue #255 DATA-MODEL-MISSING-SOFT-DELETE closed), 0 open loop PRs.
