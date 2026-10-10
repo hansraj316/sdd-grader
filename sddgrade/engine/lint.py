@@ -5361,6 +5361,73 @@ def _lexical_pitfalls(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
     return out
 
 
+# SPEC-NFR-AVAILABILITY-UNMEASURED: normative requirement with qualitative
+# availability claim but no numeric SLA.  ISO/IEC/IEEE 29148:2018 §5.2.5(a)
+# requires every requirement to be verifiable; 'highly available' has no
+# pass/fail criterion.  Canon Volere §9 Fit Criterion requires uptime % or MTTR.
+_AVAIL_CLAIM_RE = re.compile(
+    r"\b(?:"
+    r"highly\s+available"
+    r"|always\s+available"
+    r"|24[/x]7"
+    r"|always[\s-]on"
+    r"|continuously\s+available"
+    r"|non[\s-]?stop"
+    r"|round[\s-]the[\s-]clock"
+    r")\b",
+    re.IGNORECASE,
+)
+_AVAIL_NUMERIC_SILENCE_RE = re.compile(
+    r"(?:"
+    r"99\.\d+\s*%"
+    r"|four[\s-]nines"
+    r"|five[\s-]nines"
+    r"|three[\s-]nines"
+    r"|\d{1,2}\.\d+\s*%\s*(?:uptime|availability)"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_availability_unmeasured(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Normative req with qualitative availability claim, no numeric SLA (SPEC-NFR-AVAILABILITY-UNMEASURED).
+
+    ISO 29148 §5.2.5(a): requirement must be verifiable.  'Highly available'
+    has no binary acceptance criterion.  Canon Volere §9 requires uptime % or
+    MTTR.  Fires on the first normative line that has a qualitative availability
+    phrase (_AVAIL_CLAIM_RE) and no numeric SLA (_AVAIL_NUMERIC_SILENCE_RE).
+    Spec-only.
+    """
+    p = catalog.get("SPEC-NFR-AVAILABILITY-UNMEASURED")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _AVAIL_CLAIM_RE.search(line):
+            continue
+        if _AVAIL_NUMERIC_SILENCE_RE.search(line):
+            continue
+        return [
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-AVAILABILITY-UNMEASURED: normative requirement claims "
+                "availability qualitatively (e.g. 'highly available', 'always available', "
+                "'24/7') with no numeric SLA percentage — the requirement cannot be "
+                "verified (ISO 29148 §5.2.5(a); Canon Volere §9 Fit Criterion; MAQA "
+                "binary-verifiability). Replace with a measurable SLA: e.g. '99.9% "
+                "uptime per calendar month'.",
+                line=i,
+            )
+        ]
+    return []
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -5526,6 +5593,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_interface_section(art, catalog))
     out.extend(_spec_reference_unresolved(art, catalog))
     out.extend(_spec_qvscribe_indirect_reference(art, catalog))
+    out.extend(_spec_nfr_availability_unmeasured(art, catalog))
     return out
 
 
