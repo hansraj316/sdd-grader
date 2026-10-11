@@ -4848,6 +4848,105 @@ def _plan_missing_cors_policy(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-MISSING-DISTRIBUTED-TRACING
+# ---------------------------------------------------------------------------
+# Trigger: microservices / service-mesh / multi-service orchestration vocab.
+_MICROSERVICE_VOCAB_RE = re.compile(
+    r"\bmicroservice[s]?\b"
+    r"|\bservice[\s_-]?mesh\b"
+    r"|\bservice[\s_-]?discovery\b"
+    r"|\bapi[\s_-]?gateway\b"
+    r"|\binter[\s_-]?service\b"
+    r"|\bservice[\s_-]?to[\s_-]?service\b"
+    r"|\bsidecar\b"
+    r"|\bIstio\b"
+    r"|\bEnvoy\b"
+    r"|\bLinkerd\b"
+    r"|\bevent[\s_-]?driven[\s_-]?(?:architecture|system|microservice)\b"
+    r"|\bdistributed[\s_-]?system[s]?\b"
+    r"|\bmultiple[\s_-]?service[s]?\b",
+    re.IGNORECASE,
+)
+
+# Silence: any distributed-tracing tool or vocabulary anywhere in non-fenced text.
+_DISTRIBUTED_TRACING_RE = re.compile(
+    r"\bopentelemetry\b"
+    r"|\bOTEL\b"
+    r"|\bjaeger\b"
+    r"|\bzipkin\b"
+    r"|\bx[\s_-]?ray\b"
+    r"|\bdistributed[\s_-]?trac(?:e|ing)\b"
+    r"|\btrace[\s_-]?id\b"
+    r"|\bcorrelation[\s_-]?id\b"
+    r"|\btraceparent\b"
+    r"|\bW3C[\s_-]?trace\b"
+    r"|\btempo\b"
+    r"|\bdynatrace\b"
+    r"|\bnew[\s_-]?relic.*trac\b"
+    r"|\bAPM\b"
+    r"|\bOtlp\b"
+    r"|\bOTLP\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_distributed_tracing(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Microservices deployment plan with no distributed-tracing strategy.
+
+    In a multi-service architecture, a single user request fans out across many
+    services. Without distributed tracing (correlation IDs, spans, trace context
+    propagation), diagnosing latency regressions and cross-service errors is nearly
+    impossible. Kiro production-readiness gates require distributed tracing for any
+    multi-service deployment. OpenTelemetry is the CNCF standard for trace
+    instrumentation.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line with microservices/service-mesh vocab.
+    Silence: any distributed-tracing vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-DISTRIBUTED-TRACING")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: microservices/service-mesh vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _MICROSERVICE_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: distributed-tracing vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _DISTRIBUTED_TRACING_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-DISTRIBUTED-TRACING: deployment plan describes a "
+        "microservices or multi-service system but has no distributed-tracing "
+        "strategy. Without trace context propagation (OpenTelemetry/Jaeger/Zipkin/"
+        "X-Ray), diagnosing cross-service latency and errors is impractical. Add a "
+        "distributed tracing section naming the instrumentation library, trace "
+        "backend, and correlation-ID propagation approach (Kiro production-readiness, "
+        "CNCF Cloud Native Trail Map — Observability).",
+        line=trigger_line,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -5659,6 +5758,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_audit_log(art, catalog))
     out.extend(_plan_no_pagination(art, catalog))
     out.extend(_plan_missing_cors_policy(art, catalog))
+    out.extend(_plan_missing_distributed_tracing(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
