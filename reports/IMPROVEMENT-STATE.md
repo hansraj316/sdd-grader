@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 111
 Last run: 2026-10-11
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -27,7 +27,7 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 - [x] pitfall-negative-requirement — see issue #4 → merged in PR #11
 - [x] xref-dangling-req-ref — XREF-DANGLING-REQ-REF: task references undefined requirement ID → issue #111 → PR #114 → merged 2026-07-26
 - [x] data-model-entity-no-timestamps — DATA-MODEL-ENTITY-NO-TIMESTAMPS: entity with no audit-timestamp columns (ISO 27001 A.12.4, GDPR Art.30, Kiro) → issue #239 → PR #240 → merged 2026-09-28
-- [~] plan-missing-distributed-tracing — PLAN-MISSING-DISTRIBUTED-TRACING: microservices deployment plan with no distributed-tracing strategy (Kiro, CNCF) → issue #265 → PR #268
+- [x] plan-missing-distributed-tracing — PLAN-MISSING-DISTRIBUTED-TRACING: microservices deployment plan with no distributed-tracing strategy (Kiro, CNCF) → issue #265 → PR #268 → merged 2026-10-11
 - [ ] spec-ui-missing-accessibility — SPEC-UI-MISSING-ACCESSIBILITY: spec with frontend/UI FR lines but no WCAG/a11y requirement (Tessl, WCAG 2.1, Section 508) → issue #266
 - [ ] spec-fr-compound — SPEC-FR-COMPOUND: FR-/NFR- line with 2+ shall/must verbs = compound atomic violation (ISO 29148 §5.2.5(f), IBM RQA) → issue #267
 - [ ] adapter-openspec — Add an OpenSpec adapter (change proposals + specs) behind the existing ArtifactAdapter seam; `--tool openspec` / auto-detect. (OpenSpec)
@@ -110,13 +110,9 @@ Each idea: `[ ] <id> — <what> (source)`. Mark `[~]` in-PR, `[x]` merged, `[!]`
 (The loop's research phase expands this list from OpenSpec, AIDE, Canon, MAQA, Kiro,
 Tessl, and Spec-Kit extensions/presets.)
 
-## In PR
-
-- [~] plan-missing-distributed-tracing — see issue #265 → PR #268 (awaiting CI)
-
 ## Merged
 
-- iter 111 (2026-10-11): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created 3 new issues #265 (PLAN-MISSING-DISTRIBUTED-TRACING), #266 (SPEC-UI-MISSING-ACCESSIBILITY), #267 (SPEC-FR-COMPOUND); Phase 4 implemented #265: _MICROSERVICE_VOCAB_RE (12-alternative) + _DISTRIBUTED_TRACING_RE (15-token silence) + _plan_missing_distributed_tracing(); deploy guard + fenced-block exclusion; one aggregate finding; 17 unit tests (6 fire, 11 silent); pytest 1736 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #268; awaiting CI.
+- iter 111 (2026-10-11): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created 3 new issues #265 (PLAN-MISSING-DISTRIBUTED-TRACING), #266 (SPEC-UI-MISSING-ACCESSIBILITY), #267 (SPEC-FR-COMPOUND); Phase 4 implemented #265: _MICROSERVICE_VOCAB_RE (12-alternative) + _DISTRIBUTED_TRACING_RE (15-token silence) + _plan_missing_distributed_tracing(); deploy guard + fenced-block exclusion; one aggregate finding; 17 unit tests (6 fire, 11 silent); pytest 1736 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #268; CI green (test+package both success); squash-merged PR #268 (issue #265 PLAN-MISSING-DISTRIBUTED-TRACING closed), 0 open loop PRs.
 - iter 110 (2026-10-10): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#261 SPEC-NFR-AVAILABILITY-UNMEASURED); Phase 4 implemented _AVAIL_CLAIM_RE (7-alternative) + _AVAIL_NUMERIC_SILENCE_RE (99.x%, four/five/three nines, X.Y% uptime) + _spec_nfr_availability_unmeasured(); 17 unit tests (7 fire, 10 silent); pytest 1719 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #264; CI green (test+package both success); squash-merged PR #264 (issue #261 SPEC-NFR-AVAILABILITY-UNMEASURED closed), 0 open loop PRs.
 - iter 109 (2026-10-09): Phase 1 no open loop/* PRs; Phase 2 found 2 open loop-candidate issues (#260 PLAN-MISSING-CORS-POLICY, #261 SPEC-NFR-AVAILABILITY-UNMEASURED); Phase 4 implemented #260: _BROWSER_API_VOCAB_RE (12-alternative) + _CORS_SILENCE_RE (12-token) + _plan_missing_cors_policy(); 16 unit tests (6 fire, 10 silent); pytest 1702 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #263; CI green (test+package both success); squash-merged PR #263 (issue #260 PLAN-MISSING-CORS-POLICY closed), 0 open loop PRs.
 - iter 108 (2026-10-08): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created 3 new issues #259 (PLAN-NO-PAGINATION), #260 (PLAN-MISSING-CORS-POLICY), #261 (SPEC-NFR-AVAILABILITY-UNMEASURED); Phase 4 implemented #259: _PLAN_LIST_VOCAB_RE (10-alternative) + _PAGINATION_RE (15-token silence) + _plan_no_pagination(); 15 unit tests (5 fire, 10 silent); pytest 1686 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #262; CI green (test+package both success); squash-merged PR #262 (issue #259 PLAN-NO-PAGINATION closed), 0 open loop PRs.
