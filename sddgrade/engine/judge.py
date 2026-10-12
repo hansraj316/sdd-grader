@@ -7,6 +7,8 @@ Spec-Kit's `--integration` model:
   slash command on their existing subscription and writes structured JSON; this module
   reads it. No API key.
 * **api**: optional key-based call for headless CI.
+* **jev**: optional TypeSafe Jev backend — typed yes/no judgments per requirement
+  and per artifact, turned into findings in code (see ``integrations/jev.py``).
 
 Either way the judge yields additional :class:`Finding` objects (semantic pitfalls the
 deterministic lint can't catch), which the scorer folds in alongside lint findings.
@@ -298,6 +300,14 @@ def judge(
         raw = backend_judge.judge(artifacts, root)
         notes = list(backend_judge.notes)
         model = backend_judge.model
+    elif backend == "jev":
+        from ..integrations.jev import JevJudge
+
+        jev_judge = JevJudge(cfg)
+        # Jev answers typed questions, so findings are built in code (with line
+        # numbers) rather than parsed from free-form judge output.
+        findings = jev_judge.judge(artifacts, root)
+        return findings, list(jev_judge.notes), jev_judge.model
     else:
         return [], [], None
     return to_findings(raw, artifacts, root), notes, model

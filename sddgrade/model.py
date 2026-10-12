@@ -339,7 +339,7 @@ class ReviewResult:
     @property
     def judge_used(self) -> bool:
         """True if the semantic judge actually contributed (not a degraded rules run)."""
-        return self.engine in ("agent", "api")
+        return self.engine in ("agent", "api", "jev")
 
     @property
     def coverage(self) -> str:
@@ -360,7 +360,7 @@ class ReviewResult:
         return (
             "Lint-only (no semantic judge ran). A high score means no KNOWN deterministic "
             "findings — NOT that the spec is complete or semantically correct. Run the "
-            "agent judge (or --api) for semantic review."
+            "agent judge (or --api / --jev) for semantic review."
         )
 
     def to_dict(self) -> dict[str, Any]:

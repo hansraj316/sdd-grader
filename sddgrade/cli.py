@@ -103,6 +103,10 @@ def review(
         False, "--api",
         help="Use the key-based API judge (CI/headless). Fails (exit 3) if it can't run.",
     ),
+    jev: bool = typer.Option(
+        False, "--jev",
+        help="Use the TypeSafe Jev judge (needs TYPESAFE_API_KEY). Fails (exit 3) if it can't run.",
+    ),
     json_out: bool = typer.Option(False, "--json", help="Emit machine-readable JSON."),
     fail_under: float | None = typer.Option(
         None, "--fail-under",
@@ -140,7 +144,9 @@ def review(
 
         maybe_show_banner()
 
-    backend = "rules" if rules else ("api" if api else "agent")
+    if api and jev:
+        raise typer.BadParameter("choose one judge: --api or --jev", param_hint="--jev")
+    backend = "rules" if rules else ("api" if api else ("jev" if jev else "agent"))
     exit_code = run_review(
         path, backend=backend, json_out=json_out, fail_under=fail_under,
         require_judge=require_judge, top_fixes=top_fixes, sarif_path=sarif,
