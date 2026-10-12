@@ -1,17 +1,37 @@
 [project]
 name = "sddgrade"
-version = "0.3.0"
+version = "0.4.0"
 description = "Benchmark & review tool for Spec-Driven Development artifacts (GitHub Spec-Kit)."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
-authors = [{ name = "SDD-Grader" }]
-keywords = ["spec-kit", "spec-driven-development", "review", "lint", "benchmark"]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Hansraj Singh Thakur" }]
+keywords = ["spec-kit", "openspec", "spec-driven-development", "requirements", "review", "lint", "llm-judge", "ci"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+
 dependencies = [
     "typer>=0.12",
     "rich>=13.7",
     "readchar>=4.0",  # arrow-key selection in `sddgrade init` (same as Spec-Kit)
 ]
+
+[project.urls]
+Homepage = "https://hansraj316.github.io/sdd-grader/"
+Repository = "https://github.com/hansraj316/sdd-grader"
+Issues = "https://github.com/hansraj316/sdd-grader/issues"
+Changelog = "https://github.com/hansraj316/sdd-grader/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 api = ["anthropic>=0.40"]

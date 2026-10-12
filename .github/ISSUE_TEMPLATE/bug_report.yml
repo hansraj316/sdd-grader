@@ -1,0 +1,30 @@
+name: Bug report
+description: Wrong finding, false positive, crash, or bad score
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Include the command you ran and what you expected instead.
+      placeholder: "`sddgrade review --rules specs/` flags FR-003 as ambiguous, but it states a p95 latency..."
+    validations:
+      required: true
+  - type: textarea
+    id: artifact
+    attributes:
+      label: Minimal artifact that reproduces it
+      description: The smallest spec/plan/tasks snippet that triggers the problem. Remove anything confidential.
+      render: markdown
+  - type: input
+    id: version
+    attributes:
+      label: sddgrade version
+      placeholder: output of `sddgrade --version`
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Review mode
+      options: ["--rules (lint only)", "agent judge (default)", "--api", "--jev"]

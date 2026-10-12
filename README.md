@@ -1,5 +1,9 @@
 # sddgrade
 
+[![CI](https://github.com/hansraj316/sdd-grader/actions/workflows/ci.yml/badge.svg)](https://github.com/hansraj316/sdd-grader/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+
 **A CI-grade linter and reviewer for AI-generated [GitHub Spec-Kit](https://github.com/github/spec-kit) artifacts.**
 
 <p align="center"><a href="https://hansraj316.github.io/sdd-grader/"><img src="docs/assets/init.svg" alt="sddgrade init — guided setup with the SDDGRADE banner, agent selection, and next steps" width="720"></a></p>
@@ -19,7 +23,7 @@ per repo, steps 3–5 every time the specs change:
 
 | # | Where | Run | What happens |
 |---|-------|-----|--------------|
-| 1 | terminal | `uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.3.0` | Install the CLI ([more options](#install)) |
+| 1 | terminal | `uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.4.0` | Install the CLI ([more options](#install)) |
 | 2 | terminal | `sddgrade init` | Guided setup: pick your agent, detect the toolchain, install the `/sddgrade.*` commands |
 | 3 | your agent | `/sddgrade.judge` | Your AI agent semantically reviews the artifacts and writes a hash-pinned judgment |
 | 4 | terminal | `sddgrade review` | Merge lint + judgment into the scored report below |
@@ -131,13 +135,13 @@ Requires Python 3.11+. Any one of these works:
 
 ```bash
 # uv (recommended) — pin a released version for reproducible installs & CI gates:
-uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.3.0
+uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git@v0.4.0
 
 # zero-install, run straight from the repo:
-uvx --from git+https://github.com/hansraj316/sdd-grader.git@v0.3.0 sddgrade review
+uvx --from git+https://github.com/hansraj316/sdd-grader.git@v0.4.0 sddgrade review
 
 # pip / pipx, from the wheel attached to each GitHub release:
-pip install https://github.com/hansraj316/sdd-grader/releases/download/v0.3.0/sddgrade-0.3.0-py3-none-any.whl
+pip install https://github.com/hansraj316/sdd-grader/releases/download/v0.4.0/sddgrade-0.4.0-py3-none-any.whl
 
 # track tip-of-main (moves daily; scores can change between installs):
 uv tool install sddgrade --from git+https://github.com/hansraj316/sdd-grader.git
@@ -195,7 +199,7 @@ pitfalls at commit time — no LLM required, no API key needed:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/hansraj316/sdd-grader
-    rev: v0.3.0          # pin to a release tag
+    rev: v0.4.0          # pin to a release tag
     hooks:
       - id: sddgrade     # runs: sddgrade review --rules --fail-under 60
 ```
@@ -281,6 +285,14 @@ delta semantics, growing the labeled corpus, self-updating pitfall catalog,
 rewrite/`--fix`, and shipping as a Spec-Kit extension. See [`docs/`](docs) for
 architecture and roadmap.
 
+## Contributing
+
+Issues and PRs are welcome. New pitfall checks and corpus cases that show a missed
+defect or a false positive are especially valuable. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for setup and the checklist. Report security issues
+privately per [SECURITY.md](SECURITY.md). Release notes are in
+[CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
-MIT
+[MIT](LICENSE) © Hansraj Singh Thakur and sddgrade contributors.
