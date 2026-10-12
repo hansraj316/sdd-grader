@@ -1,0 +1,21 @@
+name: Feature or new check
+description: Propose a new pitfall check, report format, or integration
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What spec defect or workflow gap should sddgrade catch?
+      placeholder: "Specs often say 'secure' with no threat model, and nothing flags it."
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example artifact text (bad and good)
+      render: markdown
+  - type: input
+    id: source
+    attributes:
+      label: Source or rationale (optional)
+      placeholder: Spec-Kit docs, ISO 29148, a blog post, your team's experience...
