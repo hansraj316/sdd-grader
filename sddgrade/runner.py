@@ -103,7 +103,7 @@ def run_review(
     judge_error: str | None = None
     judge_notes: list[str] = []
     judge_model: str | None = None
-    if backend in ("agent", "api"):
+    if backend in ("agent", "api", "jev"):
         judge_findings, judge_notes, judge_model, engine_label, judge_error = _run_judge(
             artifacts, backend, root, cfg, err_console
         )
@@ -118,7 +118,7 @@ def run_review(
     # Explicitly requesting the API judge (`--api`) implies --require-judge: someone
     # gating CI on the key-based backend wants a hard failure when it can't run, not a
     # silently weaker lint-only score. The interactive agent default stays forgiving.
-    if backend == "api":
+    if backend in ("api", "jev"):
         require_judge = True
 
     if judge_error is not None and not require_judge:
@@ -136,6 +136,13 @@ def run_review(
                 "lint-only score as if it were the requested lint+semantic review. "
                 "Fix the API setup (set ANTHROPIC_API_KEY, install `sddgrade[api]`, "
                 "check network/model access) or run without --api to accept lint-only."
+            )
+        elif backend == "jev":
+            msg = (
+                f"the --jev judge failed to run: {judge_error}. Refusing to emit a "
+                "lint-only score as if it were the requested lint+semantic review. "
+                "Set TYPESAFE_API_KEY and check network access to api.typesafe.ai, "
+                "or run without --jev to accept lint-only."
             )
         else:
             msg = (

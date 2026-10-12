@@ -41,6 +41,7 @@ semantic judge for the deeper review (see Review modes).
 | **Lint-only** (`rules`) | `sddgrade review --rules` | No known *deterministic* findings: required sections present, no unresolved `[NEEDS CLARIFICATION]`, traceability intact, no lexical pitfalls. Fast, free, reproducible. **Not** a semantic guarantee. |
 | **Agent-judged** (default) | `sddgrade review` after `init` | Lint **plus** a semantic review by your own AI agent (ambiguity, contradictions, over-engineering, INVEST). No API key. |
 | **API-judged** (`--api`) | `sddgrade review --api` | Same semantic review via a key-based API call, for headless CI. |
+| **Jev-judged** (`--jev`) | `sddgrade review --jev` | Lint **plus** typed per-requirement judgments from TypeSafe's Jev (ambiguous / unverifiable / compound / implementation leak), prompt-injection detection, and plan over-engineering — each finding carries Jev's probability and a line number. Needs `TYPESAFE_API_KEY`. See [docs/jev-judge.md](docs/jev-judge.md). |
 
 Every report states its **coverage** (`lint-only` vs `lint+semantic`) so a green CI check
 is never mistaken for full validation. Scores render as **integers**: only `--rules`
@@ -88,7 +89,8 @@ A **hybrid engine**:
   `sddgrade init --integration <agent>` scaffolds a Spec-Kit-style slash-command
   family; your agent judges the artifacts and writes structured JSON back, which
   the CLI merges and scores. A key-based `--api` backend exists for headless CI,
-  and `--rules` runs lint-only.
+  a `--jev` backend asks TypeSafe's Jev for calibrated yes/no judgments per
+  requirement, and `--rules` runs lint-only.
 
 ### Agent integration: the `/sddgrade.*` command family
 
@@ -152,7 +154,8 @@ sddgrade` from PyPI activates once the Trusted Publisher in
 
 Upgrade via your installer, e.g. `uv tool upgrade sddgrade`. Check the installed
 version with `sddgrade --version`. The optional API judge needs
-`pip install 'sddgrade[api]'` and an `ANTHROPIC_API_KEY`.
+`pip install 'sddgrade[api]'` and an `ANTHROPIC_API_KEY`; the Jev judge needs only a
+`TYPESAFE_API_KEY` (no extra packages).
 
 ## Commands
 
