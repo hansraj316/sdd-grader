@@ -5488,6 +5488,50 @@ _AVAIL_NUMERIC_SILENCE_RE = re.compile(
 )
 
 
+# SPEC-FR-COMPOUND: FR-/NFR- requirement line with two or more shall/must verbs.
+_FR_ID_RE_STRICT = re.compile(r"\b(?:FR|NFR)-\d+\b", re.IGNORECASE)
+_MODAL_VERB_RE = re.compile(r"\b(?:shall|must)\b", re.IGNORECASE)
+_PAREN_CONTENT_RE = re.compile(r"\([^)]*\)")
+
+
+def _spec_fr_compound(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """FR-/NFR- requirement line with two or more shall/must verbs (SPEC-FR-COMPOUND).
+
+    ISO/IEC/IEEE 29148:2018 §5.2.5(f) atomicity: each requirement shall be a single,
+    independently-verifiable statement.  A line carrying two explicit normative modal
+    verbs bundles two separate requirements that must be split.  IBM RQA 'one verb per
+    requirement' rule.  Scoped via _requirement_mask() / _fence_mask(); spec-only; fires
+    one finding per offending line.  Parenthetical citations (e.g. 'per ISO 29148 §5.2.5')
+    are stripped before counting to avoid false positives from normative-verb mentions
+    inside citations.
+    """
+    p = catalog.get("SPEC-FR-COMPOUND")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    out: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _FR_ID_RE_STRICT.search(line):
+            continue
+        stripped = _PAREN_CONTENT_RE.sub("", line)
+        if len(_MODAL_VERB_RE.findall(stripped)) >= 2:
+            out.append(
+                _from_pitfall(
+                    p, art.path,
+                    "SPEC-FR-COMPOUND: requirement line packs two or more normative "
+                    "verbs (shall/must) into a single FR-/NFR- statement — violates "
+                    "ISO 29148 §5.2.5(f) atomicity (IBM RQA: one verb per requirement). "
+                    "Split into separate, individually-traceable FR/NFR lines.",
+                    line=i,
+                )
+            )
+    return out
+
+
 def _spec_nfr_availability_unmeasured(
     art: Artifact, catalog: dict[str, Pitfall]
 ) -> list[Finding]:
@@ -5693,6 +5737,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_reference_unresolved(art, catalog))
     out.extend(_spec_qvscribe_indirect_reference(art, catalog))
     out.extend(_spec_nfr_availability_unmeasured(art, catalog))
+    out.extend(_spec_fr_compound(art, catalog))
     return out
 
 
