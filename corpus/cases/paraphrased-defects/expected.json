@@ -1,10 +1,10 @@
 {
     "quality": "medium",
     "score_band": [
-        32,
-        81
+        15,
+        62
     ],
-    "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium \u2014 five real defects \u2014 but the engine currently sees only one, scoring 88 before extra structural findings. Floor lowered to 32 because SPEC-MISSING-SCOPE (added iter 94) now fires as an accepted_extra, dropping the score to 34; ceiling 81 keeps band width < 50 (failable gate) while allowing the score to rise if future accepted_extras are removed. Engine output at labeling time: 40.",
+    "band_rationale": "Anti-circularity case (#53a): the true quality is LOW-medium \u2014 five real defects \u2014 but the engine currently sees only one, scoring 88 before extra structural findings. Floor lowered to 15 because SPEC-UI-MISSING-ACCESSIBILITY (added iter 113) also fires (Svelte in FR-004 is a UI framework), dropping the score to 22; ceiling 62 keeps band width < 50 (failable gate) while allowing the score to rise if future accepted_extras are removed. Engine output at labeling time: 22.",
     "expect_pitfalls": [
         "SPEC-NON-MEASURABLE-SUCCESS"
     ],
@@ -19,7 +19,8 @@
         "SPEC-MISSING-ASSUMPTIONS",
         "SPEC-MISSING-STAKEHOLDER",
         "SPEC-MISSING-ACCEPTANCE-SECTION",
-        "SPEC-MISSING-SCOPE"
+        "SPEC-MISSING-SCOPE",
+        "SPEC-UI-MISSING-ACCESSIBILITY"
     ],
     "known_misses": [
         "SPEC-AMBIGUOUS-WORDING",

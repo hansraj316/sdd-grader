@@ -5488,6 +5488,105 @@ _AVAIL_NUMERIC_SILENCE_RE = re.compile(
 )
 
 
+# SPEC-UI-MISSING-ACCESSIBILITY: spec with frontend/UI vocab in FR-/NFR- lines but no
+# WCAG / a11y requirement.  Tessl frontend quality checklist, WCAG 2.1, Section 508,
+# EN 301 549, ISO 9241-171:2008.
+_UI_VOCAB_RE = re.compile(
+    r"(?:"
+    r"\bReact\b"
+    r"|\bVue\b"
+    r"|\bAngular\b"
+    r"|\bSvelte\b"
+    r"|\bNextjs?\b"
+    r"|\bNuxt\b"
+    r"|\bfrontend\b"
+    r"|\bweb[\s_-]?app\b"
+    r"|\buser[\s_-]?interface\b"
+    r"|\bUI\b"
+    r"|\bSPA\b"
+    r"|\bweb[\s_-]?client\b"
+    r"|\bbrowser\b"
+    r"|\bpage\s+shall\b"
+    r"|\bscreen\s+shall\b"
+    r"|\bui[\s_-]?component\b"
+    r")",
+    re.IGNORECASE,
+)
+_ACCESSIBILITY_RE = re.compile(
+    r"(?:"
+    r"\bwcag\b"
+    r"|(?<!\w)a11y(?!\w)"
+    r"|\baccessib"
+    r"|\bscreen[\s_-]?reader\b"
+    r"|\bkeyboard[\s_-]?nav"
+    r"|\baria[\s_-]?label\b"
+    r"|\bcolor[\s_-]?contrast\b"
+    r"|\bcolour[\s_-]?contrast\b"
+    r"|\bfocus[\s_-]?order\b"
+    r"|\btab[\s_-]?order\b"
+    r"|\balt[\s_-]?text\b"
+    r"|\bsection[\s_-]?508\b"
+    r"|\ben[\s_-]?301[\s_-]?549\b"
+    r"|\bassistive[\s_-]?tech"
+    r"|\bhigh[\s_-]?contrast\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_ui_missing_accessibility(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Spec with frontend/UI FR lines but no WCAG/a11y requirement (SPEC-UI-MISSING-ACCESSIBILITY).
+
+    Guard: spec artifact + ≥3 non-fenced FR-/NFR- lines.
+    Trigger: any non-fenced non-heading line has UI vocabulary (_UI_VOCAB_RE).
+    Silence: any non-fenced line anywhere contains accessibility vocabulary
+             (_ACCESSIBILITY_RE) → return [].
+    Fires one aggregate finding at the first trigger line.
+    Tessl frontend quality checklist, WCAG 2.1, Section 508, EN 301 549,
+    ISO 9241-171:2008.
+    """
+    p = catalog.get("SPEC-UI-MISSING-ACCESSIBILITY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    # Document-level accessibility silence scan.
+    for i, (ln, in_fence) in enumerate(zip(lines, fenced)):
+        if not in_fence and _ACCESSIBILITY_RE.search(ln):
+            return []
+    # Find first UI-vocab trigger on a non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, (ln, in_fence) in enumerate(zip(lines, fenced), start=1):
+        if in_fence:
+            continue
+        if ln.lstrip().startswith("#"):
+            continue
+        if _UI_VOCAB_RE.search(ln):
+            trigger_line = i
+            break
+    if trigger_line is None:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            "SPEC-UI-MISSING-ACCESSIBILITY: spec contains frontend/UI requirements "
+            "(React/Vue/Angular/SPA/browser) but no accessibility requirement — "
+            "add a WCAG 2.1 Level AA conformance target and a11y NFR "
+            "(Tessl frontend checklist, Section 508, EN 301 549, ISO 9241-171).",
+            line=trigger_line,
+        )
+    ]
+
+
 # SPEC-FR-COMPOUND: FR-/NFR- requirement line with two or more shall/must verbs.
 _FR_ID_RE_STRICT = re.compile(r"\b(?:FR|NFR)-\d+\b", re.IGNORECASE)
 _MODAL_VERB_RE = re.compile(r"\b(?:shall|must)\b", re.IGNORECASE)
@@ -5738,6 +5837,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_indirect_reference(art, catalog))
     out.extend(_spec_nfr_availability_unmeasured(art, catalog))
     out.extend(_spec_fr_compound(art, catalog))
+    out.extend(_spec_ui_missing_accessibility(art, catalog))
     return out
 
 

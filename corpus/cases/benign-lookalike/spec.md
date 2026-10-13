@@ -47,6 +47,16 @@ products appear without manual entry.
 - FR-003: The system shall remain scalable to 250,000 imported rows per day without exceeding the 10-minute window per file.
 - FR-004: The system shall report every rejected row with its line number plus one reason code drawn from the documented list.
 
+### Non-Functional Requirements
+
+- NFR-001: The operations import interface shall conform to WCAG 2.1 Level AA (keyboard navigation and screen reader compatibility required).
+
+## External Interfaces
+
+- **File upload endpoint**: The browser submits the catalog file via a multipart POST to `/api/catalog/import`; the server returns a job ID for status polling.
+- **Import status API**: Clients poll `GET /api/catalog/import/{job_id}/status` for progress and completion; response conforms to the existing API envelope schema.
+- **SSO provider**: The operations interface authenticates via the organisation's existing SAML 2.0 SSO; the import service trusts the SSO session cookie.
+
 ## Success Criteria
 
 ### Measurable Outcomes
