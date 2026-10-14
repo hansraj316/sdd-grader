@@ -4947,6 +4947,89 @@ def _plan_missing_distributed_tracing(art: Artifact, catalog: dict[str, Pitfall]
     )]
 
 
+# ---------------------------------------------------------------------------
+# PLAN-MISSING-LOAD-TEST
+# ---------------------------------------------------------------------------
+# Performance-sensitive signals: throughput, concurrency, TPS/RPS, peak load vocab.
+_PERF_SENSITIVE_RE = re.compile(
+    r"\bhigh[\s_-]?(?:volume|traffic|load|throughput)\b"
+    r"|\bconcurrent[\s_-]?(?:users?|requests?|connections?|sessions?)\b"
+    r"|\b(?:peak|burst)[\s_-]?(?:load|traffic|demand|throughput)\b"
+    r"|\b\d[\d,]*\s*(?:k\s+)?(?:tps|rps|qps)\b"
+    r"|\b(?:requests?|transactions?)\s+per\s+(?:second|minute)\b"
+    r"|\bthroughput\s+(?:target|sla|slo|requirement|nfr|goal)\b"
+    r"|\b\d[\d,]*\s+(?:thousand|million)\s+(?:concurrent|simultaneous)\b",
+    re.IGNORECASE,
+)
+
+# Load-test silence: any of these terms means a load-test plan is present.
+_LOAD_TEST_SILENCE_RE = re.compile(
+    r"\bload[\s_-]?test\w*\b"
+    r"|\bperformance[\s_-]?test\w*\b"
+    r"|\bstress[\s_-]?test\w*\b"
+    r"|\bsoak[\s_-]?test\w*\b"
+    r"|\bvolume[\s_-]?test\w*\b"
+    r"|\bperftest\b"
+    r"|\bbenchmark(?:ing)?\b"
+    r"|\bjmeter\b"
+    r"|\bk6\b"
+    r"|\blocust\b"
+    r"|\bartillery\b"
+    r"|\bgatling\b"
+    r"|\bvegeta\b"
+    r"|\bngrinder\b"
+    r"|\bblaze?meter\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_load_test(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan with performance-sensitive targets but no load-test strategy (PLAN-MISSING-LOAD-TEST).
+
+    Tessl spec-first requires plans citing throughput/concurrency/TPS targets to include
+    a load-testing strategy. ISO 25010 §8.5 (Performance Efficiency testability) requires
+    performance NFRs to be verified by performance tests. Distinct from
+    PLAN-NO-TESTING-STRATEGY (fires when NO testing vocab exists): a plan can name unit
+    and integration tests and still omit load testing entirely.
+    """
+    p = catalog.get("PLAN-MISSING-LOAD-TEST")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard A: deployment vocabulary must be present.
+    has_deploy_section = any(_DEPLOY_SECTION_RE.search(s.title) for s in art.sections)
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Guard B: find first non-fenced non-heading line with performance-sensitive vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    perf_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if _PERF_SENSITIVE_RE.search(line):
+            perf_hit = i + 1
+            break
+    if perf_hit is None:
+        return []
+    # Silence: any load-test vocabulary anywhere in the document.
+    if _LOAD_TEST_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-LOAD-TEST: deployment plan specifies performance targets "
+        "(throughput/concurrency/TPS/RPS/peak load) but has no load-testing or "
+        "performance-testing strategy. Add a load-test section naming the tool "
+        "(k6/JMeter/Locust/Gatling/Vegeta), target metrics, and pass/fail thresholds "
+        "(Tessl spec-first deployment checklist, ISO 25010 §8.5 Performance Efficiency).",
+        line=perf_hit,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -5904,6 +5987,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_pagination(art, catalog))
     out.extend(_plan_missing_cors_policy(art, catalog))
     out.extend(_plan_missing_distributed_tracing(art, catalog))
+    out.extend(_plan_missing_load_test(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
