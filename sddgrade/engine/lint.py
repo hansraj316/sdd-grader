@@ -5753,6 +5753,50 @@ def _spec_nfr_availability_unmeasured(
     return []
 
 
+# SPEC-TBD-PLACEHOLDER: requirement line with TBD/TBC/TODO/FIXME placeholder.
+_TBD_PLACEHOLDER_RE = re.compile(
+    r"(?<![`\w])\b(TBD|TBC|TODO|FIXME)\b(?![`\w])",
+    re.IGNORECASE,
+)
+_INLINE_CODE_RE = re.compile(r"`[^`]*`")
+
+
+def _spec_tbd_placeholder(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Normative requirement line with TBD/TBC/TODO/FIXME placeholder (SPEC-TBD-PLACEHOLDER).
+
+    ISO/IEC/IEEE 29148:2018 §5.2.4(a) requires requirements to be 'complete'.
+    IBM RQA classifies TBD/TBC tokens as Level-1 completeness defects.
+    Scoped via _requirement_mask() + _fence_mask().  Inline code spans are
+    excluded.  One finding per offending line.  Spec-only.
+    """
+    p = catalog.get("SPEC-TBD-PLACEHOLDER")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        # Strip inline code spans so `TBD` inside backticks is ignored.
+        stripped = _INLINE_CODE_RE.sub("", line)
+        if _TBD_PLACEHOLDER_RE.search(stripped):
+            findings.append(
+                _from_pitfall(
+                    p,
+                    art.path,
+                    f"SPEC-TBD-PLACEHOLDER: requirement line {i} contains a placeholder "
+                    f"({_TBD_PLACEHOLDER_RE.search(stripped).group(0).upper()}) — "
+                    "requirement is incomplete and unverifiable "
+                    "(ISO 29148 §5.2.4(a) completeness; IBM RQA Level-1 defect). "
+                    "Replace with a concrete, testable statement before baselining the spec.",
+                    line=i,
+                )
+            )
+    return findings
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -5921,6 +5965,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_nfr_availability_unmeasured(art, catalog))
     out.extend(_spec_fr_compound(art, catalog))
     out.extend(_spec_ui_missing_accessibility(art, catalog))
+    out.extend(_spec_tbd_placeholder(art, catalog))
     return out
 
 
