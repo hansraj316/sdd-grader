@@ -5030,6 +5030,126 @@ def _plan_missing_load_test(art: Artifact, catalog: dict[str, Pitfall]) -> list[
     )]
 
 
+# PLAN-MISSING-ENCRYPTION-AT-REST: sensitive data stored without at-rest encryption strategy.
+# ---------------------------------------------------------------------------
+
+# Storage trigger: plan mentions a persistent store that could hold sensitive data.
+_ENCRYPTION_STORAGE_RE = re.compile(
+    r"\bpostgres(?:ql)?\b"
+    r"|\bmysql\b"
+    r"|\bmariadb\b"
+    r"|\bmongodb\b"
+    r"|\bredis\b"
+    r"|\bs3[\s_-]?bucket\b"
+    r"|\bgcs[\s_-]?bucket\b"
+    r"|\bazure[\s_-]?blob\b"
+    r"|\bblob[\s_-]?storage\b"
+    r"|\bobject[\s_-]?stor(?:age|e)\b"
+    r"|\bdata(?:base|[\s_-]store|[\s_-]volume)\b"
+    r"|\bpersistent[\s_-]stor(?:age|e)\b",
+    re.IGNORECASE,
+)
+
+# Sensitivity trigger: plan deals with personal/sensitive data.
+_ENCRYPTION_SENSITIVE_RE = re.compile(
+    r"\buser[\s_-]?data\b"
+    r"|\bpersonal[\s_-]?data\b"
+    r"|\bP\.?I\.?I\.?\b"
+    r"|\bemail[\s_-]?address\b"
+    r"|\bphone[\s_-]?number\b"
+    r"|\bpayment\b"
+    r"|\bcredit[\s_-]?card\b"
+    r"|\bhealth[\s_-]?record\b"
+    r"|\bmedical[\s_-]?record\b"
+    r"|\bsensitive[\s_-]?data\b"
+    r"|\bpersonally[\s_-]identifiable\b"
+    r"|\bHIPAA\b"
+    r"|\bGDPR\b"
+    r"|\bCCPA\b",
+    re.IGNORECASE,
+)
+
+# Silence: any at-rest encryption vocabulary anywhere in non-fenced text.
+_ENCRYPT_AT_REST_RE = re.compile(
+    r"\bencrypt\w{0,10}\s+at[\s_-]?rest\b"
+    r"|\bat[\s_-]?rest\s+\w{0,10}encr\w*\b"
+    r"|\bkms\b"
+    r"|\baes[\s_-]?(?:128|192|256)\b"
+    r"|\bdata[\s_-]?encrypt\w*\b"
+    r"|\bserver[\s_-]?side[\s_-]?encr\w*\b"
+    r"|\bsse[\s_-]?[a-z0-9]{0,5}\b"
+    r"|\btransparent[\s_-]?encr\w*\b"
+    r"|\bdisk[\s_-]?encr\w*\b"
+    r"|\bvolume[\s_-]?encr\w*\b"
+    r"|\b(?:rds|ebs|gcs|azure)[\s_-]?encr\w*\b"
+    r"|\btde\b"
+    r"|\bcmk\b"
+    r"|\bcustomer[\s_-]managed[\s_-]key\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_encryption_at_rest(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Deployment plan stores sensitive data but has no at-rest encryption strategy
+    (PLAN-MISSING-ENCRYPTION-AT-REST).
+
+    OWASP A02:2021 (Cryptographic Failures) requires encryption at rest for sensitive data.
+    GDPR Art. 32 mandates encryption of personal data as a technical security measure.
+    SOC 2 CC6.1 requires assets containing sensitive data to be encrypted at rest.
+
+    Guard: deploy vocabulary AND storage vocabulary AND sensitivity vocabulary must all be
+    present in the document. Silence: any at-rest encryption vocabulary (_ENCRYPT_AT_REST_RE)
+    found in non-fenced text. One aggregate finding at first storage-trigger line.
+    """
+    p = catalog.get("PLAN-MISSING-ENCRYPTION-AT-REST")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    # Guard: storage vocabulary must be present.
+    if not _ENCRYPTION_STORAGE_RE.search(non_fenced_text):
+        return []
+    # Guard: sensitivity vocabulary must be present.
+    if not _ENCRYPTION_SENSITIVE_RE.search(non_fenced_text):
+        return []
+    # Silence: at-rest encryption vocabulary found anywhere in non-fenced text.
+    if _ENCRYPT_AT_REST_RE.search(non_fenced_text):
+        return []
+    # Trigger: find first non-fenced non-heading storage-trigger line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _ENCRYPTION_STORAGE_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-ENCRYPTION-AT-REST: deployment plan stores sensitive/personal data "
+        "(PII, payment, health records, or GDPR-regulated data) in a database or object "
+        "store with no encryption-at-rest strategy. Specify the encryption algorithm "
+        "(AES-256), key management tool (AWS KMS, GCP KMS, Azure Key Vault), and whether "
+        "encryption is server-side (SSE, TDE) or transparent "
+        "(OWASP A02:2021 Cryptographic Failures, GDPR Art. 32, SOC 2 CC6.1).",
+        line=trigger_line,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -6033,6 +6153,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_cors_policy(art, catalog))
     out.extend(_plan_missing_distributed_tracing(art, catalog))
     out.extend(_plan_missing_load_test(art, catalog))
+    out.extend(_plan_missing_encryption_at_rest(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
