@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 116
-Last run: 2026-10-15
-Open loop PRs: 0
+Iteration: 117
+Last run: 2026-10-16
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -112,6 +112,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Merged
 
+- iter 117 (2026-10-16): Phase 1 no open loop/* PRs; Phase 2 found 2 open loop-candidate issues (#280 PLAN-MISSING-ENCRYPTION-AT-REST, #281 DATA-MODEL-NO-FK-CONSTRAINT); Phase 4 implemented #280: _ENCRYPTION_STORAGE_RE (11-alternative) + _ENCRYPTION_SENSITIVE_RE (13-alternative) + _ENCRYPT_AT_REST_RE (13-pattern silence) + _plan_missing_encryption_at_rest(); deploy guard + storage guard + sensitivity guard; non-fenced text scan for silence; aggregate finding at first storage-trigger non-fenced non-heading line; plan-only; 16 unit tests (6 fire, 10 silent); pytest 1824 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #283; awaiting CI.
 - iter 116 (2026-10-15): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created 3 new issues #279 (SPEC-TBD-PLACEHOLDER), #280 (PLAN-MISSING-ENCRYPTION-AT-REST), #281 (DATA-MODEL-NO-FK-CONSTRAINT); Phase 4 implemented #279: _TBD_PLACEHOLDER_RE (case-insensitive \b(TBD|TBC|TODO|FIXME)\b) + _INLINE_CODE_RE (strips backtick spans) + _spec_tbd_placeholder(); scoped via _requirement_mask()/_fence_mask(); one finding per offending requirement line; 12 unit tests (6 fire, 6 silent); pytest 1808 green; benchmark good=100.0 bad<70 precision=0.983 PASS; Phase 6 opened PR #282; CI green (test+package both success); squash-merged PR #282 (issue #279 SPEC-TBD-PLACEHOLDER closed), 0 open loop PRs.
 - iter 115 (2026-10-14): Phase 1 PR #278 CI green (test+package both success); squash-merged PR #278 (issue #277 PLAN-MISSING-LOAD-TEST closed), 0 open loop PRs.
 - iter 114 (2026-10-14): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 created issue #277 (PLAN-MISSING-LOAD-TEST); Phase 4 implemented _PERF_SENSITIVE_RE (7-alternative: high-volume/traffic/load/throughput, concurrent users/requests/connections/sessions, peak/burst load/traffic/demand, N TPS/RPS/QPS, requests/transactions per second/minute, throughput target/slo/nfr, N thousand/million concurrent) + _LOAD_TEST_SILENCE_RE (14-token: load test/performance test/stress test/soak test/volume test/perftest/benchmark/jmeter/k6/locust/artillery/gatling/vegeta/ngrinder/blazemeter) + _plan_missing_load_test(); deploy guard + fenced-block + heading exclusion; one aggregate finding at first perf-sensitive non-fenced non-heading line; plan-only; 17 unit tests (6 fire, 11 silent); pytest 1796 green; benchmark good=100.0 bad<70 precision=0.983 PASS; Phase 6 opened PR #278; CI green → merged iter 115.
