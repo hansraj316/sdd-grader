@@ -6550,6 +6550,70 @@ def _data_model_missing_soft_delete(
     ]
 
 
+_DATA_MODEL_FK_FIELD_TRIGGER_RE = re.compile(
+    r"""
+    \b(?:
+        FK
+        | foreign[_\s]key
+        | \breferences\b
+        | [a-z]\w+_id          # e.g. user_id, order_id (bare 'id' excluded by prefix)
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+_DATA_MODEL_FK_CONSTRAINT_SILENCE_RE = re.compile(
+    r"""
+    \b(?:
+        foreign[_\s]key
+        | \breferences\b
+        | on[_\s]delete
+        | on[_\s]update
+        | cascade
+        | restrict
+        | set[_\s]null
+        | no[_\s]action
+        | fk_\w+
+        | constraint
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _data_model_no_fk_constraint(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    p = catalog.get("DATA-MODEL-NO-FK-CONSTRAINT")
+    if not p or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    entities = _entities(art)
+    if not entities:
+        return []
+
+    missing: list[str] = []
+    for name in entities:
+        full_text = _entity_full_text(art, name)
+        if not _DATA_MODEL_FK_FIELD_TRIGGER_RE.search(full_text):
+            continue
+        if not _DATA_MODEL_FK_CONSTRAINT_SILENCE_RE.search(full_text):
+            missing.append(name)
+
+    if not missing:
+        return []
+
+    examples = ", ".join(f"'{n}'" for n in missing[:3])
+    suffix = f" (and {len(missing) - 3} more)" if len(missing) > 3 else ""
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Data-model entity/entities with FK field(s) but no referential-integrity "
+            f"constraint vocabulary (ON DELETE/CASCADE/RESTRICT/CONSTRAINT fk_): {examples}{suffix}.",
+        )
+    ]
+
+
 def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
     out.extend(_data_model_entity_no_pk(art, catalog))
@@ -6557,6 +6621,7 @@ def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findi
     out.extend(_data_model_entity_no_index(art, catalog))
     out.extend(_data_model_no_cardinality(art, catalog))
     out.extend(_data_model_missing_soft_delete(art, catalog))
+    out.extend(_data_model_no_fk_constraint(art, catalog))
     return out
 
 

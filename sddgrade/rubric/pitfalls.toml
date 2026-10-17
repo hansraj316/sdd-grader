@@ -1426,6 +1426,17 @@ detect = "Guard: data-model artifact with ≥2 entity headings (level-3+ heading
 fix = "Add a soft-delete strategy to the data model for user-visible entities. The simplest approach is a 'deleted_at TIMESTAMP NULL' column (NULL = active, non-NULL = soft-deleted) or a boolean 'is_deleted BOOLEAN DEFAULT FALSE' column. For entities with a status enum, add a 'deleted' or 'archived' variant to the enum definition. Document the strategy in a 'Data Lifecycle' section: which entities support soft-delete, which columns implement it, and whether there is a retention/purge schedule. If hard-delete is intentional (e.g., ephemeral log entries), state this explicitly to suppress the check."
 
 [[pitfall]]
+id = "DATA-MODEL-NO-FK-CONSTRAINT"
+name = "Data-model entity has FK field patterns but no referential-integrity constraint vocabulary"
+dimension = "completeness"
+artifacts = ["data-model"]
+severity = "high"
+method = "lint"
+why = "A data model that introduces foreign-key fields (columns ending in _id, or explicit FK/foreign-key vocabulary) without specifying referential-integrity constraint behaviour leaves critical integrity decisions unspecified. Implementers may silently omit constraints, leading to orphaned rows, phantom references, and cascade-delete surprises at runtime. MAQA data-integrity attribute requires that entity relationships be fully specified. ISO/IEC/IEEE 29148:2018 §5.2.5(a) requires every requirement to be unambiguous — an FK field with no ON DELETE / CASCADE / RESTRICT semantics is ambiguous by definition. Canon Volere Fit Criterion for data integrity requires constraint behaviour to be documented. Kiro data-model completeness gate flags any entity that declares FK columns without accompanying constraint declarations. This is distinct from DATA-MODEL-ENTITY-NO-INDEX (which checks for missing index declarations on FK columns) and DATA-MODEL-NO-CARDINALITY (which checks for missing 1:1/1:N/N:M declarations at the relationship level): referential-integrity constraints are the column-level declaration of what the database enforces, not the schema-level cardinality annotation."
+detect = "Per entity (level-3+ heading, not a structural sub-heading). Collect full entity text via _entity_full_text(). FK trigger: entity text matches \\b[a-z]\\w+_id\\b (FK-style field name), or contains 'FK', 'foreign key', or 'references' keyword. Silence: entity text contains any of: foreign key, references, on delete, on update, cascade, restrict, set null, no action, fk_, constraint. If trigger fires and silence is absent, fire one finding per entity. data-model artifact only."
+fix = "For each entity that has FK-style fields, add a constraint specification in the entity body. Minimally, state the cascade/restrict behaviour for each FK column. Examples: '- user_id UUID NOT NULL REFERENCES user(id) ON DELETE CASCADE', '- CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT', or a 'Constraints' sub-section listing 'fk_order_user: user_id → user.id ON DELETE CASCADE'. If the data model is informal (entity-relationship prose rather than DDL), add a Relationships sub-section or an ERD note stating delete behaviour for each FK. If hard-delete is intentional and no cascade semantics apply, state 'no cascade constraint; application-layer deletion responsibility' to suppress this check."
+
+[[pitfall]]
 id = "PLAN-NO-PAGINATION"
 name = "Deployment plan exposes list/search API endpoints with no pagination strategy"
 dimension = "completeness"
