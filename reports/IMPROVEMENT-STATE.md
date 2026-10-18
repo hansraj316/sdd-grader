@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 118
-Last run: 2026-10-17
-Open loop PRs: 0
+Iteration: 119
+Last run: 2026-10-18
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -112,6 +112,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Merged
 
+- iter 119 (2026-10-18): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created 3 new issues #285 (PLAN-MISSING-SMOKE-TEST), #286 (PLAN-MISSING-DEPENDENCY-VULNERABILITY-SCAN), #287 (SPEC-NFR-CONCURRENCY-UNQUANTIFIED); Phase 4 implemented #285: _PROD_DEPLOY_RE (8-alternative: to prod/production, go-live, ship to prod, to staging, staging environment/pipeline, production environment/release/pipeline, release to production) + _SMOKE_TEST_SILENCE_RE (15-alternative: smoke test, post-deploy test, post-release check, sanity check, deploy sanity, post-deploy verif/validat, verif deploy, acceptance test after, e2e after deploy, healthcheck after deploy, rollout validat, deployment verif/validat) + _plan_missing_smoke_test(); deploy guard + prod-deploy trigger + silence; one aggregate finding; plan-only; 13 unit tests (5 fire, 8 silent); pytest 1850 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #288; awaiting CI.
 - iter 118 (2026-10-17): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#281 DATA-MODEL-NO-FK-CONSTRAINT); Phase 4 implemented _DATA_MODEL_FK_FIELD_TRIGGER_RE (4-alternative: \w+_id/FK/foreign key/references) + _DATA_MODEL_FK_CONSTRAINT_SILENCE_RE (10-alternative: foreign key/references/on delete/on update/cascade/restrict/set null/no action/fk_/constraint) + _data_model_no_fk_constraint(); per-entity scan via _entity_full_text(); corpus feature-xref accepted_extras + judge.golden.json score 87.5→86.3; 13 unit tests (5 fire, 8 silent); pytest 1837 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #284; CI green (test+package both success); squash-merged PR #284 (issue #281 DATA-MODEL-NO-FK-CONSTRAINT closed), 0 open loop PRs.
 - iter 117 (2026-10-16): Phase 1 no open loop/* PRs; Phase 2 found 2 open loop-candidate issues (#280 PLAN-MISSING-ENCRYPTION-AT-REST, #281 DATA-MODEL-NO-FK-CONSTRAINT); Phase 4 implemented #280: _ENCRYPTION_STORAGE_RE (11-alternative) + _ENCRYPTION_SENSITIVE_RE (13-alternative) + _ENCRYPT_AT_REST_RE (13-pattern silence) + _plan_missing_encryption_at_rest(); deploy guard + storage guard + sensitivity guard; non-fenced text scan for silence; aggregate finding at first storage-trigger non-fenced non-heading line; plan-only; 16 unit tests (6 fire, 10 silent); pytest 1824 green; benchmark good=100.0 bad=50.8 precision=0.983 PASS; Phase 6 opened PR #283; CI green (test+package both success); squash-merged PR #283 (issue #280 PLAN-MISSING-ENCRYPTION-AT-REST closed), 0 open loop PRs.
 - iter 116 (2026-10-15): Phase 1 no open loop/* PRs; Phase 2 no open loop-candidate issues → Phase 3 research; created 3 new issues #279 (SPEC-TBD-PLACEHOLDER), #280 (PLAN-MISSING-ENCRYPTION-AT-REST), #281 (DATA-MODEL-NO-FK-CONSTRAINT); Phase 4 implemented #279: _TBD_PLACEHOLDER_RE (case-insensitive \b(TBD|TBC|TODO|FIXME)\b) + _INLINE_CODE_RE (strips backtick spans) + _spec_tbd_placeholder(); scoped via _requirement_mask()/_fence_mask(); one finding per offending requirement line; 12 unit tests (6 fire, 6 silent); pytest 1808 green; benchmark good=100.0 bad<70 precision=0.983 PASS; Phase 6 opened PR #282; CI green (test+package both success); squash-merged PR #282 (issue #279 SPEC-TBD-PLACEHOLDER closed), 0 open loop PRs.
