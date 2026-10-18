@@ -5150,6 +5150,93 @@ def _plan_missing_encryption_at_rest(
     )]
 
 
+# PLAN-MISSING-SMOKE-TEST: production/staging deploy with no post-deploy smoke-test strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: plan line describing a release to production or staging environment.
+_PROD_DEPLOY_RE = re.compile(
+    r"\bto\s+prod(?:uction)?\b"
+    r"|\bprod(?:uction)?\s+(?:deploy\w*|release|environment)\b"
+    r"|\bproduction\s+(?:release|environment|deploy\w*|pipeline)\b"
+    r"|\bgo[\s_-]?live\b"
+    r"|\bship\w*\s+to\s+prod(?:uction)?\b"
+    r"|\bto\s+stag(?:ing)?\b"
+    r"|\bstag(?:ing)?\s+(?:deploy\w*|environment|pipeline)\b"
+    r"|\brelease\s+to\s+prod(?:uction)?\b",
+    re.IGNORECASE,
+)
+
+# Silence: any post-deploy smoke test / verification vocabulary anywhere in the document.
+_SMOKE_TEST_SILENCE_RE = re.compile(
+    r"\bsmoke[\s_-]?test\b"
+    r"|\bpost[\s_-]?deploy\w*\s+test\b"
+    r"|\bpost[\s_-]?release\s+check\b"
+    r"|\bsanity[\s_-]?check\b"
+    r"|\bdeploy\w*\s+sanity\b"
+    r"|\bpost[\s_-]?deploy\w*\s+verif\w*\b"
+    r"|\bverif\w*\s+deploy\w*\b"
+    r"|\bpost[\s_-]?deploy\w*\s+validat\w*\b"
+    r"|\bdeploy\w*\s+validat\w*\b"
+    r"|\bacceptance\s+test\w*\s+after\b"
+    r"|\be2e\s+after\s+deploy\w*\b"
+    r"|\bhealthcheck\s+after\s+deploy\w*\b"
+    r"|\brollout\s+validat\w*\b"
+    r"|\bdeployment\s+verif\w*\b"
+    r"|\bdeployment\s+validat\w*\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_smoke_test(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan releases to production/staging but has no post-deploy smoke test
+    (PLAN-MISSING-SMOKE-TEST).
+
+    Kiro production-readiness gate requires a post-deploy verification step. Tessl's
+    spec-first deployment checklist mandates a deploy-validation stage. Google SRE Book
+    Ch.17 treats smoke tests as a mandatory post-deploy layer.
+
+    Distinct from PLAN-NO-TESTING-STRATEGY (no testing at all), PLAN-MISSING-HEALTH-CHECK
+    (runtime liveness probes), and PLAN-MISSING-LOAD-TEST (performance testing).
+    """
+    p = catalog.get("PLAN-MISSING-SMOKE-TEST")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(_DEPLOY_SECTION_RE.search(s.title) for s in art.sections)
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: find first non-fenced non-heading line with production/staging deploy vocab.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if _PROD_DEPLOY_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: any smoke-test / post-deploy verification vocabulary anywhere in the document.
+    if _SMOKE_TEST_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-SMOKE-TEST: deployment plan describes releasing to production or "
+        "staging but has no post-deploy smoke-test or verification strategy. Add a "
+        "'Post-Deploy Verification' section naming the tool (Postman, curl, Playwright, k6 "
+        "smoke suite), the checks run (e.g. /health returns 200, key flows complete), and "
+        "the rollback trigger on failure "
+        "(Kiro production-readiness gate, Tessl deploy checklist, Google SRE Book Ch.17).",
+        line=trigger_line,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -6154,6 +6241,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_distributed_tracing(art, catalog))
     out.extend(_plan_missing_load_test(art, catalog))
     out.extend(_plan_missing_encryption_at_rest(art, catalog))
+    out.extend(_plan_missing_smoke_test(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
