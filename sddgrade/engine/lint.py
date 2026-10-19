@@ -5150,6 +5150,101 @@ def _plan_missing_encryption_at_rest(
     )]
 
 
+# PLAN-MISSING-DEPENDENCY-VULNERABILITY-SCAN: new packages/libraries without vuln scanning.
+# ---------------------------------------------------------------------------
+
+# Trigger: plan line describing installing or adding a new package/library/dependency.
+_NEW_DEP_VOCAB_RE = re.compile(
+    r"\bnpm\s+install\b"
+    r"|\bpip\s+install\b"
+    r"|\byarn\s+add\b"
+    r"|\bpoetry\s+add\b"
+    r"|\bgo\s+get\b"
+    r"|\bcargo\s+add\b"
+    r"|\bgem\s+install\b"
+    r"|\bapt[\s-]get\s+install\b"
+    r"|\bbrew\s+install\b"
+    r"|\bnew\b.{0,30}\b(?:package|library|lib)\b"
+    r"|\badd\b.{0,30}\bdependenc(?:y|ies)\b"
+    r"|\bthird[\s-]?party\b.{0,20}\blib\b"
+    r"|\bvendor\b.{0,20}\blib\b"
+    r"|\binstall\b.{0,20}\bpackage\b"
+    r"|\badd\b.{0,20}\bpackage\b",
+    re.IGNORECASE,
+)
+
+# Silence: any dependency vulnerability scanning tool or strategy anywhere in the document.
+_DEP_VULN_SCAN_SILENCE_RE = re.compile(
+    r"\bsnyk\b"
+    r"|\bdependabot\b"
+    r"|\bdependency[\s-]check\b"
+    r"|\bowasp\b.{0,20}\bdep\b"
+    r"|\bnpm\s+audit\b"
+    r"|\bpip[\s-]audit\b"
+    r"|\bsafety[\s-]check\b"
+    r"|\btrivy\b"
+    r"|\bgrype\b"
+    r"|\bosv[\s-]?scan\b"
+    r"|\bgovulncheck\b"
+    r"|\bbundler[\s-]audit\b"
+    r"|\bvuln\w*[\s-]scan\b"
+    r"|\bsecurity[\s-]audit\b"
+    r"|\bsupply[\s-]chain\b"
+    r"|\bsbom\b"
+    r"|\bsoftware[\s-]bill\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_dependency_vulnerability_scan(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Deployment plan introduces new dependencies but has no vulnerability scanning strategy
+    (PLAN-MISSING-DEPENDENCY-VULNERABILITY-SCAN).
+
+    OWASP A06:2021 (Vulnerable and Outdated Components) is a top-ten web application security
+    risk. Kiro production-readiness gate and Tessl security checklist both require a dependency
+    vulnerability audit step. ISO/IEC 27001 A.12.6 requires technical vulnerability management.
+    """
+    p = catalog.get("PLAN-MISSING-DEPENDENCY-VULNERABILITY-SCAN")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(_DEPLOY_SECTION_RE.search(s.title) for s in art.sections)
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: find first non-fenced non-heading line with new-dependency vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if _NEW_DEP_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: any vulnerability scanning vocabulary anywhere in the document.
+    if _DEP_VULN_SCAN_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-DEPENDENCY-VULNERABILITY-SCAN: deployment plan introduces new "
+        "packages or libraries but has no dependency vulnerability scanning strategy. Add a "
+        "'Dependency Security Audit' section naming the scanner (Snyk, npm audit, pip-audit, "
+        "Trivy, Dependabot), when it runs (CI step after install), and the policy for "
+        "blocking deploys on HIGH/CRITICAL CVEs "
+        "(OWASP A06:2021, Kiro production-readiness gate, ISO/IEC 27001 A.12.6).",
+        line=trigger_line,
+    )]
+
+
 # PLAN-MISSING-SMOKE-TEST: production/staging deploy with no post-deploy smoke-test strategy.
 # ---------------------------------------------------------------------------
 
@@ -6242,6 +6337,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_load_test(art, catalog))
     out.extend(_plan_missing_encryption_at_rest(art, catalog))
     out.extend(_plan_missing_smoke_test(art, catalog))
+    out.extend(_plan_missing_dependency_vulnerability_scan(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
