@@ -6099,6 +6099,65 @@ def _spec_tbd_placeholder(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fi
     return findings
 
 
+# SPEC-NFR-CONCURRENCY-UNQUANTIFIED: normative requirement claims concurrency
+# or simultaneity without a numeric bound.
+# Sources: ISO 29148 §5.2.5(a)/(i), QVscribe QV-104, Canon Volere Scale/Meter/Must.
+_NFR_CONCURRENCY_RE = re.compile(
+    r"(?:"
+    r"\bconcurren(?:t|tly|cy)\b"
+    r"|\bsimultan(?:eous|eously)\b"
+    r"|\bparallel.{0,20}\b(?:users?|requests?|sessions?|connections?|clients?)\b"
+    r"|\bat\s+the\s+same\s+time\b"
+    r")",
+    re.IGNORECASE,
+)
+_NFR_CONCURRENCY_NUMERIC_RE = re.compile(
+    r"(?:"
+    r"\d+\s*(?:concurrent|simultaneous|parallel|user|session|connection|client|request|thread)"
+    r"|(?:up\s+to|at\s+least|minimum|maximum|min|max)[\s\w]{0,15}\d+"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_concurrency_unquantified(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Normative req with concurrency claim but no numeric bound (SPEC-NFR-CONCURRENCY-UNQUANTIFIED).
+
+    ISO 29148 §5.2.5(a) requires requirements to be verifiable.  'Support
+    concurrent users' has no acceptance criterion without a count.  QVscribe
+    QV-104 classifies this as an imprecise-measurement Level-1 defect.  Fires
+    once per offending normative line.  Spec-only.
+    """
+    p = catalog.get("SPEC-NFR-CONCURRENCY-UNQUANTIFIED")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _NFR_CONCURRENCY_RE.search(line):
+            continue
+        if _NFR_CONCURRENCY_NUMERIC_RE.search(line):
+            continue
+        findings.append(
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-CONCURRENCY-UNQUANTIFIED: normative requirement claims "
+                "concurrency or simultaneity without a numeric bound — the requirement "
+                "cannot be verified (ISO 29148 §5.2.5(a); QVscribe QV-104 Imprecise "
+                "Measurement; Canon Volere Scale/Meter/Must). Add a specific count: "
+                "e.g. 'at least 500 concurrent users at steady state'.",
+                line=i,
+            )
+        )
+    return findings
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -6268,6 +6327,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_fr_compound(art, catalog))
     out.extend(_spec_ui_missing_accessibility(art, catalog))
     out.extend(_spec_tbd_placeholder(art, catalog))
+    out.extend(_spec_nfr_concurrency_unquantified(art, catalog))
     return out
 
 
