@@ -5245,6 +5245,101 @@ def _plan_missing_dependency_vulnerability_scan(
     )]
 
 
+# PLAN-NO-TLS-ENFORCEMENT: plan exposes API/web service with no TLS/HTTPS transport security.
+# ---------------------------------------------------------------------------
+
+# Trigger: plan line with API-exposure vocabulary (REST, GraphQL, gRPC, webhook, web service…).
+_TLS_API_VOCAB_RE = re.compile(
+    r"\bapi\b"
+    r"|\brest(?:ful)?\b"
+    r"|\bgraphql\b"
+    r"|\bgrpc\b"
+    r"|\bwebhook\b"
+    r"|\bhttp\s+(?:api|service|server|endpoint|request)\b"
+    r"|\bweb\s+(?:service|server|application|app)\b"
+    r"|\bexposes?\s+(?:port|endpoint)\b"
+    r"|\bpublic\s+(?:api|endpoint|service)\b"
+    r"|\bclient\s+(?:request|traffic)\b",
+    re.IGNORECASE,
+)
+
+# Silence: any TLS/HTTPS/SSL vocabulary anywhere in the document.
+_TLS_ENFORCEMENT_SILENCE_RE = re.compile(
+    r"\btls\b"
+    r"|\bhttps\b"
+    r"|\bssl\b"
+    r"|\bcertif(?:icate)?\b"
+    r"|\bmtls\b"
+    r"|\bmutual\s+tls\b"
+    r"|\btransport\s+(?:layer\s+)?security\b"
+    r"|\bacm\b"
+    r"|\blet'?s\s+encrypt\b"
+    r"|\bhsts\b"
+    r"|\bstarttls\b"
+    r"|\bport\s+443\b"
+    r"|\btls[\s-]terminat\b"
+    r"|\bssl[\s-]terminat\b"
+    r"|\bssl[\s-]offload\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_tls_enforcement(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan exposes an API or web service with no TLS/HTTPS transport security
+    (PLAN-NO-TLS-ENFORCEMENT).
+
+    OWASP A02:2021 (Cryptographic Failures) covers data in transit. The existing
+    PLAN-MISSING-SECURITY fires only when ALL security vocabulary is absent — it is silenced
+    the moment any auth keyword (JWT, OAuth) appears. A plan that mentions JWT but says nothing
+    about TLS silences PLAN-MISSING-SECURITY while leaving transport encryption unaddressed.
+    PLAN-MISSING-ENCRYPTION-AT-REST covers data at rest; this covers data in transit.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains API-exposure vocabulary.
+    Silence: any TLS/HTTPS/SSL vocabulary present anywhere in the doc.
+    """
+    p = catalog.get("PLAN-NO-TLS-ENFORCEMENT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: must look like a deployment plan.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Silence: any TLS/HTTPS/SSL vocabulary anywhere in the document (non-fenced).
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _TLS_ENFORCEMENT_SILENCE_RE.search(non_fenced_text):
+        return []
+    # Trigger: find first non-fenced non-heading line with API-exposure vocabulary.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        if _TLS_API_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-TLS-ENFORCEMENT: deployment plan exposes an API or web service but "
+        "specifies no TLS/HTTPS transport security. Enforce TLS for all client-facing "
+        "traffic: terminate TLS at the load balancer (AWS ALB with ACM certificate, "
+        "nginx with Let's Encrypt, or a service-mesh sidecar for mTLS). Redirect HTTP "
+        "to HTTPS (HSTS header, port 443 only). "
+        "(OWASP A02:2021 Cryptographic Failures, Kiro security gate, CNCF security trail).",
+        line=trigger_line,
+    )]
+
+
 # PLAN-MISSING-SMOKE-TEST: production/staging deploy with no post-deploy smoke-test strategy.
 # ---------------------------------------------------------------------------
 
@@ -6398,6 +6493,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_encryption_at_rest(art, catalog))
     out.extend(_plan_missing_smoke_test(art, catalog))
     out.extend(_plan_missing_dependency_vulnerability_scan(art, catalog))
+    out.extend(_plan_no_tls_enforcement(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
