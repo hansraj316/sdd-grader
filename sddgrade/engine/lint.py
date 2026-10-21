@@ -1066,6 +1066,60 @@ def _spec_gherkin_duplicate_scenario(
     ]
 
 
+# SPEC-GHERKIN-SCENARIO-UNNAMED: Gherkin Scenario block with no title after the colon.
+# ---------------------------------------------------------------------------
+
+
+def _spec_gherkin_scenario_unnamed(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Gherkin Scenario/Outline/Template block with no title (SPEC-GHERKIN-SCENARIO-UNNAMED).
+
+    Cucumber BDD specification requires every scenario to carry a descriptive name.
+    Test runners (JUnit, Allure, Cucumber HTML) index results by scenario title; an
+    unnamed scenario appears as an anonymous entry in all reports, making failures
+    unidentifiable and traceability matrices ambiguous.  The existing
+    SPEC-GHERKIN-DUPLICATE-SCENARIO explicitly skips empty titles, so unnamed scenarios
+    are invisible to all existing checks.
+
+    Guard: formal-Gherkin mode — a When line-leader AND a Then line-leader present.
+    Detection: non-fenced Scenario:/Scenario Outline:/Scenario Template: line whose
+    captured title group (after the colon) is empty.
+    One aggregate finding at the first offending line.
+    Applies to spec artifacts only.
+    """
+    p = catalog.get("SPEC-GHERKIN-SCENARIO-UNNAMED")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Require formal-Gherkin mode: both When and Then line-leaders present.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    hits: list[int] = []
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        m = _SCENARIO_TITLE_RE.match(line)
+        if m and not m.group(1).strip():
+            hits.append(i + 1)
+
+    if not hits:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-GHERKIN-SCENARIO-UNNAMED: {len(hits)} Scenario block(s) have no title "
+            "after the colon. Give each Gherkin scenario a unique, descriptive title so test "
+            "reports and traceability matrices remain identifiable.",
+            line=hits[0],
+        )
+    ]
+
+
 # SPEC-GHERKIN-NO-ERROR-SCENARIO: Gherkin suite with ≥2 scenarios but no error/failure path.
 _GHERKIN_ERROR_VOCAB_RE = re.compile(
     r"""
@@ -6389,6 +6443,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_gherkin_scenario_outline_no_examples(art, catalog))
     out.extend(_spec_gherkin_no_then(art, catalog))
     out.extend(_spec_gherkin_duplicate_scenario(art, catalog))
+    out.extend(_spec_gherkin_scenario_unnamed(art, catalog))
     out.extend(_spec_gherkin_no_error_scenario(art, catalog))
     out.extend(_spec_gherkin_background_misused(art, catalog))
     out.extend(_spec_maqa_missing_priority(art, catalog))
