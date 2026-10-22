@@ -1591,3 +1591,14 @@ method = "lint"
 why = "Cucumber BDD specification and Gherkin best practices require every scenario to carry a descriptive name. Test runners (JUnit, Allure, Cucumber HTML report) index results by scenario title; an unnamed scenario appears as an anonymous entry in all reports, making failures unidentifiable. The existing SPEC-GHERKIN-DUPLICATE-SCENARIO explicitly skips empty titles (if not title: continue), so unnamed scenarios are currently invisible to all checks. MAQA test-traceability requirement demands every test item have a unique, meaningful identifier."
 detect = "Guard: formal-Gherkin mode — at least one When line-leader AND at least one Then line-leader in document. Trigger: non-fenced line matching ^\\s*(?:#+\\s*|[-*+]\\s*)?scenario(?:\\s+(?:outline|template))?\\s*:\\s*$ (Scenario/Outline/Template keyword with colon and nothing after). One aggregate finding at first offending line. Spec-only."
 fix = "Add a unique, descriptive title after every 'Scenario:', 'Scenario Outline:', and 'Scenario Template:' keyword. The title should describe what the scenario validates, e.g. 'Scenario: User logs in with valid credentials' or 'Scenario Outline: User login with <role>'. Titles are used in JUnit XML reports, Allure dashboards, and traceability matrices — a blank title produces an anonymous row that cannot be acted on. Reference: Cucumber/Gherkin specification, MAQA test-traceability requirement."
+
+[[pitfall]]
+id = "DATA-MODEL-ENUM-NO-VALUES"
+name = "Enum-typed field in data-model table with no allowed values listed"
+dimension = "completeness"
+artifacts = ["data-model"]
+severity = "high"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.2.5 completeness: an enum field with undocumented values leaves the domain undefined, making the spec non-verifiable and forcing implementers to reverse-engineer the domain from code. Data-modeling best practice treats enum fields as closed sets that must be explicitly stated in the spec so that database CHECK constraints, API validation logic, and test fixtures can all be derived from a single source of truth."
+detect = "Guard: data-model artifact. Scan every non-fenced pipe-delimited table row. Trigger: any cell matches \\benum\\b (case-insensitive). Silence: the matching cell OR the last cell in the same row contains a value-separator pattern ('/', ',', or '('). Skip separator rows (cells composed only of '-', ':', whitespace). One finding per offending row (not aggregate)."
+fix = "Add the allowed values directly in the Type column or the Notes/Description column using '/' or ',' as separators. Examples: '| status | enum | open / in_progress / done |' or '| role | enum | admin, editor, viewer |' or '| state | enum | States: (active, inactive, pending) |'. If the value set is large, reference the authoritative list: '| type | enum | See CATEGORY_TYPE constants |'. Reference: ISO/IEC/IEEE 29148:2018 §5.2.5; data-modeling best practice."
