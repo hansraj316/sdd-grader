@@ -6945,6 +6945,66 @@ def _data_model_missing_soft_delete(
     ]
 
 
+_DATA_MODEL_ENUM_TYPE_RE = re.compile(r"\benum\b", re.IGNORECASE)
+_DATA_MODEL_ENUM_VALUES_RE = re.compile(r"[/,(]")
+_DATA_MODEL_TABLE_SEPARATOR_RE = re.compile(r"^\s*\|[\s\-:|]+\|\s*$")
+
+
+def _data_model_enum_no_values(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """DATA-MODEL-ENUM-NO-VALUES: enum-typed field with no allowed values (ISO 29148 §5.2.5).
+
+    Scans every non-fenced pipe-delimited table row in the data-model artifact.
+    Fires when any cell matches \\benum\\b (case-insensitive) and neither that cell
+    nor the last cell in the row contains a value-separator ('/', ',', or '(').
+    One finding per offending row.
+    """
+    p = catalog.get("DATA-MODEL-ENUM-NO-VALUES")
+    if p is None or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    out: list[Finding] = []
+
+    for i, (ln, in_fence) in enumerate(zip(lines, fenced)):
+        if in_fence:
+            continue
+        stripped = ln.strip()
+        # Must be a pipe-delimited table row
+        if not (stripped.startswith("|") and stripped.endswith("|")):
+            continue
+        # Skip separator rows (cells composed only of -, :, whitespace)
+        if _DATA_MODEL_TABLE_SEPARATOR_RE.match(stripped):
+            continue
+        cells = [c.strip() for c in stripped.split("|")[1:-1]]
+        if len(cells) < 2:
+            continue
+        # Skip header-like rows where all cells are title-case / no enum word
+        enum_cell_idx: int | None = None
+        for idx, cell in enumerate(cells):
+            if _DATA_MODEL_ENUM_TYPE_RE.search(cell):
+                enum_cell_idx = idx
+                break
+        if enum_cell_idx is None:
+            continue
+        enum_cell = cells[enum_cell_idx]
+        last_cell = cells[-1]
+        # Silence: enum cell or last (notes) cell already contains value separators
+        if _DATA_MODEL_ENUM_VALUES_RE.search(enum_cell) or _DATA_MODEL_ENUM_VALUES_RE.search(last_cell):
+            continue
+        field_name = cells[0] if cells else "unknown"
+        out.append(_from_pitfall(
+            p, art.path,
+            f"Enum-typed field '{field_name}' has no allowed values listed; "
+            "add '/' or ',' separated values in the Type or Notes column.",
+            line=i + 1,
+        ))
+
+    return out
+
+
 _DATA_MODEL_FK_FIELD_TRIGGER_RE = re.compile(
     r"""
     \b(?:
@@ -7017,6 +7077,7 @@ def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findi
     out.extend(_data_model_no_cardinality(art, catalog))
     out.extend(_data_model_missing_soft_delete(art, catalog))
     out.extend(_data_model_no_fk_constraint(art, catalog))
+    out.extend(_data_model_enum_no_values(art, catalog))
     return out
 
 
