@@ -1582,6 +1582,17 @@ detect = "Guard: plan artifact with deploy vocabulary (_DEPLOY_VOCAB_RE/_DEPLOY_
 fix = "Add a 'Transport Security' or 'TLS Enforcement' section to the deployment plan. Specify: (1) how TLS is terminated (AWS ALB with ACM certificate, nginx with Let's Encrypt, Cloudflare proxy, service-mesh sidecar for mTLS); (2) that HTTP is redirected to HTTPS on all endpoints; (3) that HSTS is configured (Strict-Transport-Security header); (4) minimum TLS version (TLS 1.2+, prefer TLS 1.3). Example: 'All client-facing traffic is served over HTTPS only (port 443). TLS is terminated at the AWS Application Load Balancer using an ACM-managed wildcard certificate. HTTP requests (port 80) are redirected to HTTPS with a 301. The service emits Strict-Transport-Security: max-age=63072000; includeSubDomains; preload.' Reference: OWASP A02:2021 Cryptographic Failures, Kiro security gate, CNCF security trail."
 
 [[pitfall]]
+id = "XREF-FR-NO-AC"
+name = "Functional requirement with no acceptance criterion referencing it"
+dimension = "traceability"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "ISO/IEC/IEEE 29148:2018 §5.2.8 mandates bidirectional traceability: every functional requirement must trace forward to at least one acceptance criterion that explicitly names it. The existing SPEC-AC-NO-FR-LINK fires only when no co-reference line exists anywhere in the document — it passes the moment a single FR-NNN/AC-NNN pair is linked. XREF-FR-NO-AC is per-requirement: it catches the common case where most FRs are linked but one or more are silently orphaned (e.g. a late-added FR-007 that never received an AC). Canon Volere Fit Criterion requires every requirement to be 'closed' by a measurable fit criterion; an orphaned FR has no test coverage and cannot be handed to QA."
+detect = "Guard: spec artifact must contain ≥1 FR-NNN identifier AND ≥1 AC-NNN identifier on non-fenced, non-heading lines. Collect all FR-NNN identifiers from non-fenced non-heading spec lines (dict FR-NNN → first line number). Collect all AC-NNN-bearing lines from non-fenced spec; for each such line, record every FR-NNN it co-references. For each FR-NNN with no AC line mentioning it, emit one finding anchored to its first definition line."
+fix = "For each orphaned FR-NNN, add an acceptance-criterion line in the Acceptance Criteria section: 'AC-NNN [FR-NNN]: Given …, When …, Then …' The FR-NNN tag makes the link explicit and enables mechanical traceability checks. If the AC already exists but lacks the tag, add '[FR-NNN]' to that AC line. Reference: ISO/IEC/IEEE 29148:2018 §5.2.8; Canon Volere Fit Criterion."
+
+[[pitfall]]
 id = "SPEC-GHERKIN-SCENARIO-UNNAMED"
 name = "Gherkin Scenario block with no title after the colon"
 dimension = "completeness"
