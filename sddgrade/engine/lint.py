@@ -475,6 +475,8 @@ _FR_NFR_LINE_RE = re.compile(r"\b(?:FR|NFR)-\d+\b", re.IGNORECASE)
 # FR-NNN only (not NFR-NNN) — used by SPEC-AC-NO-FR-LINK co-reference check.
 # \bFR-\d+\b cannot match NFR-NNN because 'F' in NFR is not at a word boundary.
 _FR_ID_RE = re.compile(r"\bFR-\d+\b", re.IGNORECASE)
+# Capturing variant — used by XREF-FR-NO-AC to collect individual FR-NNN tokens.
+_FR_ID_CAPTURE_RE = re.compile(r"\b(FR-\d+)\b", re.IGNORECASE)
 # AC-NNN non-capturing variant for presence checks (SPEC-AC-NO-FR-LINK).
 # (A capturing variant _AC_ID_RE is used by the XREF-AC-NO-TASK cross-artifact check.)
 _AC_NNN_RE = re.compile(r"\bAC-\d+\b", re.IGNORECASE)
@@ -515,6 +517,64 @@ def _spec_ac_no_fr_link(art: Artifact, catalog: dict[str, Pitfall]) -> list[Find
             "co-references both; add explicit FR↔AC links (e.g. 'AC-001 [FR-001]: …').",
         )
     ]
+
+
+def _xref_fr_no_ac(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """FR-NNN identifiers in spec with no AC-NNN line co-referencing them (XREF-FR-NO-AC).
+
+    Guard: both FR-NNN and AC-NNN must appear on non-fenced, non-heading spec lines.
+    For each FR-NNN that no AC-NNN-bearing line also mentions, emits one finding at the
+    FR's first definition line.
+
+    ISO/IEC/IEEE 29148:2018 §5.2.8 bidirectional traceability / Canon Volere Fit Criterion.
+    """
+    p = catalog.get("XREF-FR-NO-AC")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    # Collect FR-NNN IDs from non-fenced, non-heading lines; record first occurrence lineno.
+    fr_lines: dict[str, int] = {}  # normalised "FR-NNN" → 1-based line number
+    has_ac = False
+    for lineno, (ln, in_fence) in enumerate(zip(lines, fenced), start=1):
+        if in_fence or ln.lstrip().startswith("#"):
+            continue
+        for m in _FR_ID_CAPTURE_RE.finditer(ln):
+            key = m.group(1).upper()
+            if key not in fr_lines:
+                fr_lines[key] = lineno
+        if _AC_NNN_RE.search(ln):
+            has_ac = True
+
+    # Guard: both identifier types must exist.
+    if not fr_lines or not has_ac:
+        return []
+
+    # Collect which FR-NNNs are co-referenced on AC-NNN-bearing lines.
+    referenced: set[str] = set()
+    for ln, in_fence in zip(lines, fenced):
+        if in_fence or ln.lstrip().startswith("#"):
+            continue
+        if not _AC_NNN_RE.search(ln):
+            continue
+        for m in _FR_ID_CAPTURE_RE.finditer(ln):
+            referenced.add(m.group(1).upper())
+
+    # Emit one finding per orphaned FR-NNN, ordered numerically.
+    out: list[Finding] = []
+    for fr_id in sorted(fr_lines, key=lambda x: int(x.split("-")[1])):
+        if fr_id not in referenced:
+            out.append(
+                _from_pitfall(
+                    p,
+                    art.path,
+                    f"XREF-FR-NO-AC: {fr_id} has no AC-NNN line that co-references it; "
+                    "add 'AC-NNN [FR-NNN]: …' or tag an existing AC line with the FR identifier.",
+                    line=fr_lines[fr_id],
+                )
+            )
+    return out
 
 
 def _spec_fr_no_story(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -6435,6 +6495,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ac_vague_outcome(art, catalog))
     out.extend(_spec_fr_no_story(art, catalog))
     out.extend(_spec_ac_no_fr_link(art, catalog))
+    out.extend(_xref_fr_no_ac(art, catalog))
     out.extend(_spec_us_no_ac(art, catalog))
     out.extend(_spec_qvscribe_and_or(art, catalog))
     out.extend(_spec_maqa_ac_conditional(art, catalog))
