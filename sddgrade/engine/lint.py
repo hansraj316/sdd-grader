@@ -4422,6 +4422,102 @@ def _plan_container_no_resource_limits(
     )]
 
 
+# PLAN-NO-MULTI-REPLICA — container/K8s plan with no replica count or HA strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: container/K8s orchestration vocabulary (broader than _CONTAINER_VOCAB_RE).
+_MULTI_REPLICA_K8S_VOCAB_RE = re.compile(
+    r"\bkubernetes\b"
+    r"|\bk8s\b"
+    r"|\bpod\b"
+    r"|\bhelm\s+(?:chart|install|deploy|release)\b"
+    r"|\bdeployment\.yaml\b"
+    r"|\bkustomize\b"
+    r"|\boci\s+image\b"
+    r"|\bcontainer\s+image\b"
+    r"|\becs\s+(?:task|service|cluster)\b"
+    r"|\baws\s+fargate\b"
+    r"|\bgoogle\s+cloud\s+run\b"
+    r"|\bazure\s+container\b"
+    r"|\bdocker\s+(?:compose|swarm)\b",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Silence: any replica-count or HA vocabulary anywhere in non-fenced text.
+_MULTI_REPLICA_SILENCE_RE = re.compile(
+    r"\breplicas?\b"
+    r"|\breplicacount\b"
+    r"|\bdesired[\s_-]?count\b"
+    r"|\bmin(?:imum)?[\s_-]?replicas?\b"
+    r"|\bmax(?:imum)?[\s_-]?replicas?\b"
+    r"|\binstance[\s_-]?count\b"
+    r"|\bnum[\s_-]?instances?\b"
+    r"|\b(?<![a-z])ha(?![a-z])\b"
+    r"|\bhigh[\s_-]?availability\b"
+    r"|\b(?<![a-z])hpa(?![a-z])\b"
+    r"|\bhorizontal[\s_-]?pod[\s_-]?autoscaler\b"
+    r"|\bauto[\s_-]?scal(?:e|ing)\b"
+    r"|\b(?<![a-z])asg(?![a-z])\b"
+    r"|\bmulti[\s_-]?instance\b"
+    r"|\bmulti[\s_-]?replica\b"
+    r"|\bredundan(?:cy|t)\b"
+    r"|\bactive[\s_-]?active\b"
+    r"|\bactive[\s_-]?passive\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_multi_replica(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Container/K8s deployment plan with no replica count or HA strategy (PLAN-NO-MULTI-REPLICA).
+
+    A single-replica container deployment is a SPOF: rolling updates, node evictions, and
+    pod crashes cause full downtime until the replacement starts. CNCF Production Readiness
+    Checklist requires multiple instances; AWS Well-Architected REL-10 and Google SRE Book
+    Chapter 26 both mandate ≥2 replicas for user-facing workloads. Kiro's HA gate fires when
+    no replica count or HA strategy appears in a containerised plan.
+
+    Guard: deploy vocabulary present AND ≥1 non-fenced non-heading line matches K8s/container vocab.
+    Silence: any replica/HA vocabulary present anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-NO-MULTI-REPLICA")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(_DEPLOY_SECTION_RE.search(s.title) for s in art.sections)
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    # Silence: any HA/replica vocab anywhere in non-fenced text.
+    if _MULTI_REPLICA_SILENCE_RE.search(non_fenced_text):
+        return []
+    # K8s-vocab trigger: find first matching non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _MULTI_REPLICA_K8S_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-MULTI-REPLICA: deployment plan uses containers or Kubernetes/ECS "
+        "but specifies no replica count, HPA, or high-availability strategy. "
+        "A single-replica deployment is a SPOF during rolling updates and node evictions. "
+        "Add 'replicas: N' (≥2) or an HPA to prevent zero-availability gaps "
+        "(CNCF Production Readiness Checklist, AWS Well-Architected REL-10, "
+        "Google SRE Book Chapter 26, Kiro HA gate).",
+        line=trigger_line,
+    )]
+
+
 # Trigger: secrets/credential vocabulary on non-fenced non-heading plan lines.
 _SECRETS_TRIGGER_RE = re.compile(
     r"\bapi[_\-\s]?key\b"
@@ -6600,6 +6696,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_secrets_management(art, catalog))
     out.extend(_plan_no_input_validation(art, catalog))
     out.extend(_plan_container_no_resource_limits(art, catalog))
+    out.extend(_plan_no_multi_replica(art, catalog))
     out.extend(_plan_db_no_connection_pooling(art, catalog))
     out.extend(_plan_missing_audit_log(art, catalog))
     out.extend(_plan_no_pagination(art, catalog))
