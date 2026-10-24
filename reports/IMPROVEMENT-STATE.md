@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 125
-Last run: 2026-10-23
-Open loop PRs: 0
+Iteration: 126
+Last run: 2026-10-24
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -112,6 +112,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Merged
 
+- iter 126 (2026-10-24): Phase 1 — 0 open loop/* PRs, nothing to merge; Phase 2 found 3 open loop-candidate issues (#293, #296, #297); Phase 4 implemented #296 (PLAN-NO-MULTI-REPLICA): _MULTI_REPLICA_K8S_VOCAB_RE (15-alternative) + _MULTI_REPLICA_SILENCE_RE (19-pattern: replicas?, replicacount, desiredcount, min/max replicas, instance count, ha, high-availability, hpa, horizontal pod autoscaler, auto-scaling, asg, multi-instance, multi-replica, redundancy, active-active, active-passive) + _plan_no_multi_replica(); deploy guard + K8s-vocab trigger + document-level silence; one aggregate finding at first K8s-vocab non-fenced non-heading line; dispatched in _plan_checks() after _plan_container_no_resource_limits; 14 unit tests (5 fire, 9 silent); pytest 1940 green; benchmark good=100.0 precision=0.983 PASS; Phase 6 opened PR #302; awaiting CI.
 - iter 125 (2026-10-23): Phase 1 — 0 open loop/* PRs, nothing to merge; Phase 2 found 4 open loop-candidate issues (#292–#293, #296–#297); Phase 4 implemented #292 (XREF-FR-NO-AC): _FR_ID_CAPTURE_RE (capturing variant of _FR_ID_RE) + _xref_fr_no_ac(); collects FR-NNN first-line positions from non-fenced non-heading lines, guards on both FR+AC presence, emits one finding per orphaned FR-NNN ordered numerically; dispatch in _spec_checks() after _spec_ac_no_fr_link; 12 unit tests (5 fire, 7 silent); pytest 1926 green; benchmark good=100.0 precision=0.983 PASS; Phase 6 opened PR #301; CI green (success); squash-merged PR #301 (issue #292 XREF-FR-NO-AC closed), 0 open loop PRs.
 - iter 124 (2026-10-22): Phase 1 — merged PR #299 (SPEC-GHERKIN-SCENARIO-UNNAMED, CI green; issue #295 closed); Phase 2 found 5 open loop-candidate issues (#291–#293, #296–#297); Phase 4 implemented #291 (DATA-MODEL-ENUM-NO-VALUES): _DATA_MODEL_ENUM_TYPE_RE (\benum\b case-insensitive) + _DATA_MODEL_ENUM_VALUES_RE ([/,(] value-separator silence) + _DATA_MODEL_TABLE_SEPARATOR_RE (skip separator rows) + _data_model_enum_no_values(); per-row scan; one finding per row with line number; data-model-only; 11 unit tests (5 fire, 6 silent); pytest 1914 green; benchmark good=100.0 precision=0.983 PASS; Phase 6 opened PR #300; CI green (test+package both success); squash-merged PR #300 same run (issue #291 DATA-MODEL-ENUM-NO-VALUES closed), 0 open loop PRs.
 - iter 123 (2026-10-21): Phase 1 — merged PR #298 (PLAN-NO-TLS-ENFORCEMENT, CI green test+package both success); Phase 2 found 6 open loop-candidate issues (#291–#297 minus #294 closed on merge); Phase 4 implemented #295 (SPEC-GHERKIN-SCENARIO-UNNAMED): reuses _SCENARIO_TITLE_RE + _GHERKIN_WHEN_RE + _GHERKIN_THEN_RE + _fence_mask() from existing checks; _spec_gherkin_scenario_unnamed() fires when formal-Gherkin mode + non-fenced Scenario:/Outline:/Template: line has empty title group; one aggregate finding at first offending line; spec-only; wired into _spec_checks() after _spec_gherkin_duplicate_scenario; 11 unit tests (6 fire: bare Scenario:, Scenario Outline:, Scenario Template:, trailing-whitespace-only, heading-prefixed, multiple unnamed; 5 silent: titled scenario, titled outline, no formal-Gherkin, fenced block, prose "scenario:"); pytest 1903 green; benchmark good=100.0 bad<70 precision=0.983 PASS; Phase 6 opened PR #299; awaiting CI.
