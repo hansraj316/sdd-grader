@@ -5783,6 +5783,36 @@ def _tasks_no_estimate(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findi
     ]
 
 
+_PHASE_HEADING_DETECT_RE = re.compile(r"^#{1,4}\s+Phase\b", re.IGNORECASE)
+_DEPENDENCY_HEADING_RE = re.compile(r"dependenc|execution.order", re.IGNORECASE)
+
+
+def _tasks_no_phase_dependency(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Multi-phase tasks file with no execution-order/dependency section (TASKS-NO-PHASE-DEPENDENCY)."""
+    p = catalog.get("TASKS-NO-PHASE-DEPENDENCY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    phase_headings = [
+        i + 1
+        for i, ln in enumerate(lines)
+        if not fenced[i] and _PHASE_HEADING_DETECT_RE.match(ln)
+    ]
+    if len(phase_headings) < 2:
+        return []
+    if any(_DEPENDENCY_HEADING_RE.search(ln) for ln in lines if ln.lstrip().startswith("#")):
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"{len(phase_headings)} Phase sections found but no Dependencies or Execution Order section.",
+            line=1,
+        )
+    ]
+
+
 def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """User stories missing the 'so that [benefit]' clause (Connextra format / INVEST Valuable)."""
     p = catalog.get("SPEC-STORY-NO-BENEFIT")
@@ -6742,6 +6772,7 @@ def _tasks_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
 
     out.extend(_tasks_untraced_task(art, catalog))
     out.extend(_tasks_no_estimate(art, catalog))
+    out.extend(_tasks_no_phase_dependency(art, catalog))
     return out
 
 
