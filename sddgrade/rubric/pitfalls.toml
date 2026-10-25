@@ -1615,6 +1615,17 @@ detect = "Guard: data-model artifact. Scan every non-fenced pipe-delimited table
 fix = "Add the allowed values directly in the Type column or the Notes/Description column using '/' or ',' as separators. Examples: '| status | enum | open / in_progress / done |' or '| role | enum | admin, editor, viewer |' or '| state | enum | States: (active, inactive, pending) |'. If the value set is large, reference the authoritative list: '| type | enum | See CATEGORY_TYPE constants |'. Reference: ISO/IEC/IEEE 29148:2018 §5.2.5; data-modeling best practice."
 
 [[pitfall]]
+id = "TASKS-NO-PHASE-DEPENDENCY"
+name = "Multi-phase task file with no execution-order or dependency section"
+dimension = "completeness"
+artifacts = ["tasks"]
+severity = "medium"
+method = "lint"
+why = "Kiro task completeness and INVEST's Independent criterion require that when work is split across multiple phases, engineers and CI/CD pipelines must know which phases gate others. Without an explicit dependency or execution-order section, safe execution order cannot be determined, leading to integration failures and incorrect parallelisation. A tasks file with ≥2 Phase headings but no Dependencies / Execution Order section is an incomplete planning artifact that cannot be safely scheduled."
+detect = "Guard: tasks artifact with ≥2 non-fenced headings matching \\b(Phase)\\b (case-insensitive, ^#{1,4}\\s+Phase\\b). Silence: any heading in the file matches dependenc|execution.order (case-insensitive). One aggregate finding anchored at line 1. Tasks artifact only."
+fix = "Add a '## Dependencies & Execution Order' section (or '## Phase Dependencies') that lists which phases must complete before others can begin. Example: '## Dependencies & Execution Order\\nPhase 1 (Setup) must complete before Phase 2 (Implementation) starts. Phase 3 (Testing) may start in parallel with Phase 2 once Phase 1 infrastructure is stable.' If the phases are genuinely independent, state that explicitly."
+
+[[pitfall]]
 id = "PLAN-NO-MULTI-REPLICA"
 name = "Container/k8s deployment plan with no replica count or high-availability strategy"
 dimension = "completeness"
