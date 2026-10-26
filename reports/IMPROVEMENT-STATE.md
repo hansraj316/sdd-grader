@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 127
-Last run: 2026-10-25
-Open loop PRs: 0
+Iteration: 128
+Last run: 2026-10-26
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -112,6 +112,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Merged
 
+- iter 128 (2026-10-26): Phase 1 — 0 open loop/* PRs, nothing to merge; Phase 2 found 1 open loop-candidate issue (#297 SPEC-EARS-WHILE-EVENT-TRIGGER); Phase 4 implemented: _EARS_WHILE_EVENT_TRIGGER_RE (while + action-verb + shall in order) + _EARS_WHILE_EVENT_SHALL_RE + _spec_ears_while_event_trigger(); dispatched in _spec_checks() after _spec_ears_vague_trigger; pitfalls.toml entry (dimension=clarity); 15 unit tests (6 fire, 9 silent); pytest 1966 green; benchmark good=100.0 precision=0.983 PASS; Phase 6 opened PR #304; awaiting CI. Open loop PRs: 1.
 - iter 127 (2026-10-25): Phase 1 — 0 open loop/* PRs, nothing to merge; Phase 2 found 2 open loop-candidate issues (#293, #297); Phase 4 implemented #293 (TASKS-NO-PHASE-DEPENDENCY): _PHASE_HEADING_DETECT_RE (^#{1,4}\s+Phase\b case-insensitive) + _DEPENDENCY_HEADING_RE (dependenc|execution.order) + _tasks_no_phase_dependency(); fenced-block exclusion; ≥2 Phase headings guard; one aggregate finding at line 1; wired into _tasks_checks(); 11 unit tests (4 fire, 7 silent); pytest 1951 green; benchmark good=100.0 precision=0.983 PASS; Phase 6 opened PR #303; CI green (test+package both success); squash-merged PR #303 (issue #293 TASKS-NO-PHASE-DEPENDENCY closed), 0 open loop PRs.
 - iter 126 (2026-10-24): Phase 1 — 0 open loop/* PRs, nothing to merge; Phase 2 found 3 open loop-candidate issues (#293, #296, #297); Phase 4 implemented #296 (PLAN-NO-MULTI-REPLICA): _MULTI_REPLICA_K8S_VOCAB_RE (15-alternative) + _MULTI_REPLICA_SILENCE_RE (19-pattern: replicas?, replicacount, desiredcount, min/max replicas, instance count, ha, high-availability, hpa, horizontal pod autoscaler, auto-scaling, asg, multi-instance, multi-replica, redundancy, active-active, active-passive) + _plan_no_multi_replica(); deploy guard + K8s-vocab trigger + document-level silence; one aggregate finding at first K8s-vocab non-fenced non-heading line; dispatched in _plan_checks() after _plan_container_no_resource_limits; 14 unit tests (5 fire, 9 silent); pytest 1940 green; benchmark good=100.0 precision=0.983 PASS; Phase 6 opened PR #302; CI green (test+package both success); squash-merged PR #302 (issue #296 PLAN-NO-MULTI-REPLICA closed), 0 open loop PRs.
 - iter 125 (2026-10-23): Phase 1 — 0 open loop/* PRs, nothing to merge; Phase 2 found 4 open loop-candidate issues (#292–#293, #296–#297); Phase 4 implemented #292 (XREF-FR-NO-AC): _FR_ID_CAPTURE_RE (capturing variant of _FR_ID_RE) + _xref_fr_no_ac(); collects FR-NNN first-line positions from non-fenced non-heading lines, guards on both FR+AC presence, emits one finding per orphaned FR-NNN ordered numerically; dispatch in _spec_checks() after _spec_ac_no_fr_link; 12 unit tests (5 fire, 7 silent); pytest 1926 green; benchmark good=100.0 precision=0.983 PASS; Phase 6 opened PR #301; CI green (success); squash-merged PR #301 (issue #292 XREF-FR-NO-AC closed), 0 open loop PRs.
