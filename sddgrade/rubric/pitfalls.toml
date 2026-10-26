@@ -1030,6 +1030,17 @@ detect = "On non-fenced requirement-bearing lines (scoped via _requirement_mask(
 fix = "Replace the qualitative trigger condition with a numeric threshold that testers can objectively measure. Instead of 'When the load is high, the system shall shed requests' write 'When the request rate exceeds 1000 rps, the system shall shed requests with HTTP 503'. Instead of 'While the system is under heavy traffic, the system shall scale out' write 'While concurrent connections exceed 5000, the system shall scale out by adding at least one replica'. Every EARS trigger must be deterministically observable — a tester must be able to reproduce the trigger condition in a test environment by applying a specific, measurable stimulus."
 
 [[pitfall]]
+id = "SPEC-EARS-WHILE-EVENT-TRIGGER"
+name = "EARS While-clause uses a discrete user action instead of a persistent system state"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "EARS (Easy Approach to Requirements Syntax, Mavin et al. RE 2009; ISO/IEC/IEEE 29148:2018 Annex C) defines two distinct conditional patterns: (1) State-driven ('While'): 'While <system is in persistent state>, the <system> shall <response>' — the While-clause describes a continuous condition that persists for the duration of the required behaviour; (2) Event-driven ('When'): 'When <discrete event occurs>, the <system> shall <response>' — the When-clause describes a one-time trigger. Using a discrete user action verb (click, submit, select, enter, navigate) in a While-clause produces a semantically incorrect requirement: 'While the user clicks the submit button, the system shall validate' implies continuous validation for the entire duration of the click event, which is unimplementable and untestable. The existing SPEC-EARS-TRIGGER-INVERSION catches word-order errors ('shall … when'); SPEC-EARS-VAGUE-TRIGGER catches qualitative trigger conditions ('when the load is high'). This check catches While/When misclassification when word order is correct but the keyword choice is wrong."
+detect = "On non-fenced requirement-bearing lines (scoped via _requirement_mask()/_fence_mask()): FIRES when (1) the line matches '\\bwhile\\b[^.;\\n]{0,80}\\b(clicks?|presses?|submits?|selects?|enters?|types?|navigates?|uploads?|downloads?|triggers?|fires?|invokes?|drags?|drops?|swipes?)\\b[^.;\\n]{0,80}\\bshall\\b' — a While-keyword followed by a discrete action verb followed by shall. Applies to spec artifacts only. One aggregate finding anchored at the first offending line."
+fix = "Replace 'While' with 'When' when the trigger describes a discrete one-time user action. 'While the user clicks the submit button, the system shall validate the form' → 'When the user clicks the submit button, the system shall validate the form'. Reserve 'While' for persistent system states: 'While the user is authenticated, the system shall display the dashboard'. EARS state-driven requirements describe conditions that remain true for a sustained period (a session, a mode, a configuration state); event-driven requirements describe instantaneous transitions."
+
+[[pitfall]]
 id = "SPEC-SUBJECTIVE-ADJECTIVE"
 name = "Normative requirement uses an unmeasurable subjective adjective"
 dimension = "testability"

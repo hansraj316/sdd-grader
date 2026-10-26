@@ -2943,6 +2943,82 @@ def _spec_ears_vague_trigger(art: Artifact, catalog: dict[str, Pitfall]) -> list
     ]
 
 
+# SPEC-EARS-WHILE-EVENT-TRIGGER: EARS While-clause uses a discrete user action verb (click,
+# submit, select, etc.) instead of a persistent system state — misusing the EARS state-driven
+# pattern (EARS Mavin et al. RE 2009; ISO/IEC/IEEE 29148:2018 Annex C).
+# EARS defines two conditional patterns:
+#   State-driven (While): "While <persistent state>, the system shall <response>"
+#   Event-driven (When):  "When <discrete event>, the system shall <response>"
+# "While the user submits the form, the system shall validate" is semantically wrong —
+# it implies continuous validation for the duration of the submit event.
+# The correct keyword is "When".
+# Fires when: \bwhile\b + discrete-action-verb + \bshall\b (all in order, within 80 chars each)
+# Distinct from SPEC-EARS-TRIGGER-INVERSION (word-order) and SPEC-EARS-VAGUE-TRIGGER (qualitative).
+_EARS_WHILE_EVENT_TRIGGER_RE = re.compile(
+    r"""
+    \bwhile\b              # EARS While keyword
+    [^.;\n]{0,80}          # While-clause text (within sentence boundary)
+    \b(?:
+        clicks?|presses?|submits?|selects?|enters?|types?|navigates?|
+        uploads?|downloads?|triggers?|fires?|invokes?|drags?|drops?|swipes?
+    )\b                    # discrete one-time user action verb
+    [^.;\n]{0,80}          # remainder before modal
+    \bshall\b              # normative modal (confirms EARS form)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_EARS_WHILE_EVENT_SHALL_RE = re.compile(r"\bshall\b", re.IGNORECASE)
+
+
+def _spec_ears_while_event_trigger(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """EARS While-clause uses a discrete user action instead of a persistent state (SPEC-EARS-WHILE-EVENT-TRIGGER).
+
+    EARS (Mavin et al. RE 2009; ISO/IEC/IEEE 29148:2018 Annex C) defines:
+    - State-driven (While): the While-clause describes a continuous condition that persists.
+    - Event-driven (When): the When-clause describes a one-time discrete trigger.
+    Using a discrete action verb (click, submit, select) in a While-clause is a keyword-choice
+    error: it implies continuous behaviour for the duration of the event rather than a
+    one-time response to the event. SPEC-EARS-TRIGGER-INVERSION catches word-order errors;
+    SPEC-EARS-VAGUE-TRIGGER catches qualitative trigger conditions; this check catches
+    While/When misclassification when word order is correct but the keyword is wrong.
+    Scoped to requirement-bearing lines via _requirement_mask(); fenced blocks excluded.
+    One aggregate finding anchored at the first offending line.
+    """
+    p = catalog.get("SPEC-EARS-WHILE-EVENT-TRIGGER")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    first_line: int | None = None
+    count = 0
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if not _EARS_WHILE_EVENT_SHALL_RE.search(line):
+            continue
+        if not _EARS_WHILE_EVENT_TRIGGER_RE.search(line):
+            continue
+        count += 1
+        if first_line is None:
+            first_line = i + 1  # 1-indexed
+    if count == 0:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-EARS-WHILE-EVENT-TRIGGER: {count} requirement line(s) use an EARS While-clause "
+            "with a discrete user action verb (click/submit/select/enter/navigate) instead of a "
+            "persistent system state. Replace 'While' with 'When' for one-time events: "
+            "'When the user submits the form, the system shall validate' (not 'While the user "
+            "submits…'). Reserve 'While' for persistent states: 'While the user is authenticated' "
+            "(EARS Mavin et al. RE 2009; ISO/IEC/IEEE 29148:2018 Annex C).",
+            line=first_line,
+        )
+    ]
+
+
 # SPEC-SUBJECTIVE-ADJECTIVE: normative requirement line containing an unmeasurable subjective
 # quality adjective (QVscribe Level-1 Clarity Rule QV-114; ISO 29148 §5.2.5(a) Unambiguous,
 # §5.2.5(i) Verifiable).  Words like 'user-friendly', 'intuitive', 'seamless', 'elegant', etc.
@@ -6650,6 +6726,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_nfr_statistical_ambiguity(art, catalog))
     out.extend(_spec_missing_pii_handling(art, catalog))
     out.extend(_spec_ears_vague_trigger(art, catalog))
+    out.extend(_spec_ears_while_event_trigger(art, catalog))
     out.extend(_spec_subjective_adjective(art, catalog))
     out.extend(_spec_missing_revision_history(art, catalog))
     out.extend(_spec_nfr_percent_context_missing(art, catalog))
