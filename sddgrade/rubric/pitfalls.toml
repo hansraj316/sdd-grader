@@ -1637,6 +1637,17 @@ detect = "Guard: tasks artifact with ≥2 non-fenced headings matching \\b(Phase
 fix = "Add a '## Dependencies & Execution Order' section (or '## Phase Dependencies') that lists which phases must complete before others can begin. Example: '## Dependencies & Execution Order\\nPhase 1 (Setup) must complete before Phase 2 (Implementation) starts. Phase 3 (Testing) may start in parallel with Phase 2 once Phase 1 infrastructure is stable.' If the phases are genuinely independent, state that explicitly."
 
 [[pitfall]]
+id = "PLAN-MISSING-CIRCUIT-BREAKER"
+name = "Deployment plan with retry/timeout strategy but no circuit-breaker or fault-isolation pattern"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "high"
+method = "lint"
+why = "A retry loop without a circuit breaker causes cascading failure: when a downstream service degrades, every caller keeps retrying, exhausting thread pools and connection limits across the entire system. Netflix Hystrix, Resilience4j, Polly, and the CNCF Resilience Trail Map all treat circuit breakers as mandatory for any service that retries external calls. Kiro's production-readiness gate requires an explicit fault-isolation strategy (circuit breaker, bulkhead, or timeout policy with failure threshold) before any plan that introduces retry or timeout vocabulary ships to production. ISO/IEC 25010:2011 §4.2.1.2 Fault Tolerance requires the system to operate correctly in the presence of partial failures. This is distinct from PLAN-NO-IDEMPOTENCY (retry side-effects), PLAN-THIRD-PARTY-NO-FALLBACK (absence of a fallback path), and PLAN-NO-RATE-LIMITING (inbound quota enforcement)."
+detect = "Guard: deployment vocabulary present (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE). Trigger: any non-fenced, non-heading line contains retry/timeout vocabulary — \\bretry\\b, \\bretr(?:ies|ied)\\b, \\bbackoff\\b, \\bback-off\\b, \\btimeout\\b, \\btime-out\\b, \\bmax.?attempt, \\battempt.?limit, \\bretry.?policy, \\bexponential.?backoff. Silence: anywhere in the full document text (fenced or not) contains circuit-breaker vocabulary — circuit.?break, \\bhystrix\\b, resilience4j, \\bpolly\\b, \\bsentinel\\b (non-fenced check), \\bfailsafe\\b, bulkhead, fault.?isol, timeout.?strateg, fallback.?strateg, \\bopen.?state\\b, \\bhalf.?open\\b, \\btripped?\\b. One aggregate finding anchored at the first trigger non-fenced line. Plan artifact only."
+fix = "Add a 'Circuit Breaker / Fault Isolation' subsection to the deployment plan. State which library or pattern implements the circuit breaker for each external call site, the failure threshold (e.g. 50% error rate in a 10-second window), the open-state duration, and the fallback behaviour. Example: 'Payment service calls use Resilience4j CircuitBreaker with a 5-second sliding window, 50% failure threshold; when open, the cart service returns a cached estimate and enqueues the charge for retry.' Common options: Resilience4j (Java/Kotlin), Polly (.NET), Hystrix (legacy Java), go-resilience (Go), Pybreaker (Python), Sentinel (cloud-native), or a service-mesh policy (Istio outlier detection, Linkerd circuit breaking). Reference: Netflix Hystrix rationale; Resilience4j docs; CNCF Resilience Trail Map; Kiro production-readiness gate."
+
+[[pitfall]]
 id = "PLAN-NO-MULTI-REPLICA"
 name = "Container/k8s deployment plan with no replica count or high-availability strategy"
 dimension = "completeness"
