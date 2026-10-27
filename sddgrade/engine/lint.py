@@ -3761,6 +3761,93 @@ def _plan_no_idempotency(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fin
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-CIRCUIT-BREAKER: retry/timeout vocab with no circuit-breaker strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: any non-fenced plan line mentions retry or timeout semantics.
+_CIRCUIT_BREAKER_TRIGGER_RE = re.compile(
+    r"\bretry\b"
+    r"|\bretr(?:ies|ied)\b"
+    r"|\bbackoff\b"
+    r"|\bback-off\b"
+    r"|\btimeout\b"
+    r"|\btime-out\b"
+    r"|\bmax.?attempt"
+    r"|\battempt.?limit\b"
+    r"|\bretry.?polic"
+    r"|\bexponential.?backoff\b",
+    re.IGNORECASE,
+)
+
+# Silence: any circuit-breaker / fault-isolation vocabulary anywhere in the document.
+_CIRCUIT_BREAKER_SILENCE_RE = re.compile(
+    r"circuit.?break"
+    r"|\bhystrix\b"
+    r"|\bresilience4j\b"
+    r"|\bpolly\b"
+    r"|\bsentinel\b"
+    r"|\bfailsafe\b"
+    r"|\bbulkhead\b"
+    r"|\bfault.?isol"
+    r"|\btimeout.?strateg"
+    r"|\bfallback.?strateg"
+    r"|\bopen.?state\b"
+    r"|\bhalf.?open\b"
+    r"|\btripped?\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_circuit_breaker(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan with retry/timeout logic but no circuit-breaker strategy (PLAN-MISSING-CIRCUIT-BREAKER).
+
+    When a downstream service degrades, unbounded retries without a circuit breaker exhaust
+    thread pools and connection limits, causing cascading failures across the whole system.
+    Kiro production-readiness gate and Tessl fault-tolerance checklist both require an explicit
+    circuit-breaker or fault-isolation strategy for any plan that introduces retry/timeout vocab.
+
+    Sources: Netflix Hystrix; Resilience4j; CNCF Resilience Trail Map; Kiro production gate;
+    ISO/IEC 25010:2011 §4.2.1.2 Fault Tolerance.
+    Distinct from PLAN-NO-IDEMPOTENCY (retry side-effects) and PLAN-THIRD-PARTY-NO-FALLBACK
+    (fallback path absence).
+    """
+    p = catalog.get("PLAN-MISSING-CIRCUIT-BREAKER")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced, non-heading line contains retry/timeout vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _CIRCUIT_BREAKER_TRIGGER_RE.search(line):
+            trigger_hit = i + 1
+            break
+    if trigger_hit is None:
+        return []
+    # Silence: circuit-breaker vocabulary anywhere in the document.
+    if _CIRCUIT_BREAKER_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan mentions retry or timeout strategy but has no circuit-breaker "
+        "or fault-isolation pattern.",
+        line=trigger_hit,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-NO-GRACEFUL-SHUTDOWN: process stop/restart vocab with no graceful-shutdown strategy.
 # ---------------------------------------------------------------------------
 
@@ -6814,6 +6901,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_smoke_test(art, catalog))
     out.extend(_plan_missing_dependency_vulnerability_scan(art, catalog))
     out.extend(_plan_no_tls_enforcement(art, catalog))
+    out.extend(_plan_missing_circuit_breaker(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
