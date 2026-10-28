@@ -3848,6 +3848,105 @@ def _plan_missing_circuit_breaker(art: Artifact, catalog: dict[str, Pitfall]) ->
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-API-DOCUMENTATION: API endpoint vocab with no documentation strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: non-fenced plan line exposes an API endpoint.
+_API_ENDPOINT_VOCAB_RE = re.compile(
+    r"\bGET\s+/"
+    r"|\bPOST\s+/"
+    r"|\bPUT\s+/"
+    r"|\bPATCH\s+/"
+    r"|\bDELETE\s+/"
+    r"|\bREST(?:ful)?\s+(?:API|endpoint|service|resource)"
+    r"|\bAPI\s+endpoint"
+    r"|\bHTTP\s+endpoint"
+    r"|\bgraphql\s+(?:API|endpoint|schema|query|mutation)"
+    r"|\bgrpc\s+(?:service|endpoint|method|API)"
+    r"|\bwebhook\s+endpoint"
+    r"|\bAPI\s+route"
+    r"|\bHTTP\s+(?:resource|route)"
+    r"|\bendpoint\s+(?:GET|POST|PUT|PATCH|DELETE|route|path|URL)"
+    r"|\bexpose[sd]?\s+(?:an?\s+)?(?:API|endpoint|REST|HTTP)"
+    r"|\bpublishes?\s+(?:an?\s+)?(?:API|endpoint)"
+    r"|\bAPI\s+(?:call|request|response|handler)",
+    re.IGNORECASE,
+)
+
+# Silence: any API documentation vocabulary anywhere in the document.
+_API_DOC_SILENCE_RE = re.compile(
+    r"\bopenapi\b"
+    r"|\bswagger\b"
+    r"|\bapi\s+spec(?:ification)?"
+    r"|\bapi\s+ref(?:erence)?"
+    r"|\bapi\s+doc(?:umentation|s)?"
+    r"|\bapi\s+contract\b"
+    r"|\bredoc\b"
+    r"|\bapi[\s_-]blueprint\b"
+    r"|\braml\b"
+    r"|\bapidoc\b"
+    r"|\bstoplight\b"
+    r"|\bapi-docs\b"
+    r"|\bapi_docs\b"
+    r"|\bgenerate[sd]?\s+(?:the\s+)?(?:API|SDK)\s+(?:docs?|reference|spec)"
+    r"|\bdocument(?:ed)?\s+(?:the\s+)?API",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_api_documentation(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan exposes API endpoints with no documentation strategy (PLAN-MISSING-API-DOCUMENTATION).
+
+    Undocumented APIs leave the surface contract with consumers unspecified, causing integration
+    ambiguity and silent breaking changes. Canon Volere requires fit criteria to be testable and
+    documented; Kiro's production-readiness gate requires API contracts to be versioned and
+    documented before release; OpenAPI/Swagger best practices require an API spec for every
+    deployed endpoint. ISO/IEC 25010 maintainability sub-characteristic requires sufficient
+    documentation for the system to be understood and modified.
+
+    Sources: Canon Volere (documented fit criteria); Kiro production-readiness API gate;
+    Tessl API quality (documentation completeness); OpenAPI Initiative best practices;
+    ISO/IEC 25010:2023 §4.3.3 Maintainability.
+    Distinct from PLAN-MISSING-API-VERSIONING (version strategy) and PLAN-NO-INPUT-VALIDATION
+    (request schema enforcement).
+    """
+    p = catalog.get("PLAN-MISSING-API-DOCUMENTATION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced, non-heading line exposes API endpoint vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _API_ENDPOINT_VOCAB_RE.search(line):
+            trigger_hit = i + 1
+            break
+    if trigger_hit is None:
+        return []
+    # Silence: API documentation vocabulary anywhere in the document.
+    if _API_DOC_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan exposes API endpoints with no API documentation strategy "
+        "(OpenAPI/Swagger/API spec/API reference).",
+        line=trigger_hit,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-NO-GRACEFUL-SHUTDOWN: process stop/restart vocab with no graceful-shutdown strategy.
 # ---------------------------------------------------------------------------
 
@@ -6902,6 +7001,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_dependency_vulnerability_scan(art, catalog))
     out.extend(_plan_no_tls_enforcement(art, catalog))
     out.extend(_plan_missing_circuit_breaker(art, catalog))
+    out.extend(_plan_missing_api_documentation(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
