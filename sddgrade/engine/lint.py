@@ -7523,6 +7523,73 @@ def _data_model_no_fk_constraint(
     ]
 
 
+_DATA_MODEL_UNIQUE_SENSITIVE_RE = re.compile(
+    r"""
+    \b(?:
+        email
+        | username
+        | user_name
+        | \bslug\b
+        | \bsku\b
+        | serial_number
+        | serial_no
+        | external_id
+        | \bhandle\b
+        | \blogin\b
+        | phone_number
+        | phone_no
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+_DATA_MODEL_UNIQUE_CONSTRAINT_RE = re.compile(
+    r"""
+    \b(?:
+        unique
+        | uniqueness
+        | unique[_\s]key
+        | uk_\w+
+        | uc_\w+
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _data_model_missing_unique_constraint(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    p = catalog.get("DATA-MODEL-MISSING-UNIQUE-CONSTRAINT")
+    if not p or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    entities = _entities(art)
+    if not entities:
+        return []
+
+    missing: list[str] = []
+    for name in entities:
+        full_text = _entity_full_text(art, name)
+        if not _DATA_MODEL_UNIQUE_SENSITIVE_RE.search(full_text):
+            continue
+        if not _DATA_MODEL_UNIQUE_CONSTRAINT_RE.search(full_text):
+            missing.append(name)
+
+    if not missing:
+        return []
+
+    examples = ", ".join(f"'{n}'" for n in missing[:3])
+    suffix = f" (and {len(missing) - 3} more)" if len(missing) > 3 else ""
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Data-model entity/entities with uniqueness-sensitive fields (email/username/slug/sku/…) "
+            f"but no unique-constraint annotation: {examples}{suffix}.",
+        )
+    ]
+
+
 def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
     out.extend(_data_model_entity_no_pk(art, catalog))
@@ -7532,6 +7599,7 @@ def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findi
     out.extend(_data_model_missing_soft_delete(art, catalog))
     out.extend(_data_model_no_fk_constraint(art, catalog))
     out.extend(_data_model_enum_no_values(art, catalog))
+    out.extend(_data_model_missing_unique_constraint(art, catalog))
     return out
 
 

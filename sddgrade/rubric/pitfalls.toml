@@ -1659,6 +1659,17 @@ detect = "Guard: deployment vocabulary present (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION
 fix = "Add an 'API Documentation' subsection to the deployment plan. State which format will be used (OpenAPI 3.x / Swagger, RAML, API Blueprint), how the spec will be generated or maintained (code-first annotation, design-first file, CI linting via spectral/vacuum), where it will be published (Swagger UI, Redoc, Stoplight, developer portal), and the update policy for breaking vs. non-breaking changes. Example: 'API contract is defined as an OpenAPI 3.1 spec at api/openapi.yaml (code-first via FastAPI/SpringDoc). Redoc UI is served at /docs. spectral lints the spec on every PR. Breaking changes require a version bump and a migration guide.' Reference: OpenAPI Initiative; Kiro production-readiness API gate; Canon Volere fit-criteria documentation; ISO/IEC 25010:2023 §4.3.3."
 
 [[pitfall]]
+id = "DATA-MODEL-MISSING-UNIQUE-CONSTRAINT"
+name = "Data-model entity with uniqueness-sensitive fields but no unique constraint annotation"
+dimension = "completeness"
+artifacts = ["data_model"]
+severity = "high"
+method = "lint"
+why = "Fields that carry business identity (email, username, slug, SKU, serial number, external ID, handle, login, phone) must be unique at the database level. Omitting a unique constraint allows duplicate records to accumulate silently until a write-path collision exposes the integrity violation in production. ISO/IEC 27001:2022 Annex A 8.10 (information deletion and integrity) requires data integrity controls to be documented; GDPR Article 5(1)(d) accuracy principle requires data to remain accurate and free from duplication; MAQA completeness rule requires every entity constraint to be explicitly documented in the data model. A data model that specifies these field names without a uniqueness annotation is incomplete and will mislead engineers implementing the schema."
+detect = "Guard: data-model artifact with ≥2 entity headings (level-3+ headings not in structural headings list). Trigger: entity full text (body + child section bodies via _entity_full_text()) matches unique-sensitive field pattern — \\bemail\\b, \\busername\\b, \\buser_name\\b, \\bslug\\b, \\bsku\\b, \\bserial_number\\b, \\bserial_no\\b, \\bexternal_id\\b, \\bhandle\\b, \\blogin\\b, \\bphone_number\\b, \\bphone_no\\b. Silence: entity full text contains uniqueness vocabulary — \\bunique\\b (covers 'unique constraint', 'unique index', 'UNIQUE'), uk_\\w+, uc_\\w+, unique[_\\s]key, uniqueness. One aggregate finding listing offending entity names. Data-model artifact only."
+fix = "For each flagged entity, add a uniqueness annotation to the field definition or a 'Constraints' sub-section. Examples: '| email | VARCHAR(255) | NOT NULL, UNIQUE |', 'Unique: email, username (enforced via uk_users_email, uk_users_username)', 'UNIQUE KEY uk_products_sku (sku)'. Also add unique indexes (CREATE UNIQUE INDEX) for fields used in lookup queries. Reference: ISO/IEC 27001:2022 A.8.10; GDPR Art.5(1)(d); MAQA entity-constraint completeness."
+
+[[pitfall]]
 id = "PLAN-NO-MULTI-REPLICA"
 name = "Container/k8s deployment plan with no replica count or high-availability strategy"
 dimension = "completeness"
