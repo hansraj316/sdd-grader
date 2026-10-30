@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-29T07:26:13.300194+00:00",
+  "timestamp": "2026-10-30T07:32:05.473581+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -406,12 +406,12 @@
         "quality": "low",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 20.0,
+        "overall": 14.0,
         "score_band": [
-          18,
-          66
+          10,
+          57
         ],
-        "band_rationale": "Low: a Draft spec with an unresolved decision inside an FR, retained template header ('$ARGUMENTS'), a leaked API style, no edge cases, and no problem-statement section must fail the default 70 gate decisively. Ceiling lowered to 66 (was 70) to keep band width < 50. Floor lowered to 18 because SPEC-MISSING-SCOPE (added iter 94) now fires as an accepted_extra, dropping the score from 20 to 20; floor 18 asserts the engine still credits the real user story even with the additional finding. Engine output at labeling time: 20.",
+        "band_rationale": "Low: a Draft spec with an unresolved decision inside an FR, retained template header ('$ARGUMENTS'), a leaked API style, no edge cases, and no problem-statement section must fail the default 70 gate decisively. Ceiling lowered to 57 (was 66) to keep band width < 50. Floor lowered to 10 because SPEC-MISSING-ERROR-CODES (added iter 132) now fires as an accepted_extra (REST API endpoint with no error response specification), dropping the score from 20 to 14; floor 10 asserts the engine still credits the real user story even with the additional finding. Engine output at labeling time: 14.",
         "in_band": true,
         "true_positives": [
           "SPEC-IMPL-DETAIL-LEAK",
@@ -423,6 +423,7 @@
         "accepted_extras_detected": [
           "SPEC-MISSING-ACCEPTANCE-SECTION",
           "SPEC-MISSING-ASSUMPTIONS",
+          "SPEC-MISSING-ERROR-CODES",
           "SPEC-MISSING-GLOSSARY",
           "SPEC-MISSING-MOTIVATION",
           "SPEC-MISSING-OUT-OF-SCOPE",
@@ -437,8 +438,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 1.0,
         "precision": 1.0,
-        "correct_detections": 12,
-        "total_detections": 12,
+        "correct_detections": 13,
+        "total_detections": 13,
         "note": "Real-world-derived case (#53c): adapts the flawed spec shape seen in real Spec-Kit repos (e.g. the polymarket-kit MCP-server spec pattern) \u2014 a [NEEDS CLARIFICATION] marker left inside FR-003, the template's '$ARGUMENTS' input line retained, 'REST API' leaked into an FR, and the Review & Acceptance Checklist kept with every box unchecked. Known gap (not a labeled miss because no catalog rule covers it): lint does not flag a retained, fully-unchecked review checklist \u2014 SPEC-LEFTOVER-PLACEHOLDER only fires here because of '$ARGUMENTS'."
       }
     ],
@@ -446,9 +447,9 @@
       "n": 10,
       "mean_recall": 1.0,
       "mean_recall_incl_known_misses": 0.92,
-      "precision": 0.983,
-      "correct_detections": 59,
-      "total_detections": 60,
+      "precision": 0.984,
+      "correct_detections": 60,
+      "total_detections": 61,
       "band_failures": [],
       "unlabeled_unexpected": {},
       "known_false_positives": 1,
