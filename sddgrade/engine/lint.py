@@ -6755,6 +6755,92 @@ def _spec_nfr_concurrency_unquantified(
     return findings
 
 
+# SPEC-MISSING-ERROR-CODES: spec defines API/HTTP operations but no error response or
+# HTTP status code specification.
+# Sources: MAQA binary-verifiability; OpenAPI best practices (every operation needs ≥1
+# error response); ISO/IEC 25010:2023 §4.2.4 fault tolerance; IBM RQA completeness.
+_API_SPEC_VOCAB_RE = re.compile(
+    r"(?:"
+    r"\bHTTP\s+(?:GET|POST|PUT|PATCH|DELETE)\b"
+    r"|\b(?:GET|POST|PUT|PATCH|DELETE)\s+/"
+    r"|\bREST(?:ful)?\s+(?:API|endpoint|service|resource)\b"
+    r"|\bAPI\s+endpoint\b"
+    r"|\bHTTP\s+endpoint\b"
+    r"|\brequest\s+body\b"
+    r"|\bresponse\s+body\b"
+    r"|\bAPI\s+call\b"
+    r"|\bHTTP\s+(?:request|response|method)\b"
+    r"|\bAPI\s+(?:request|response|handler)\b"
+    r"|\bendpoints?\s+(?:shall|must|will)\b"
+    r"|\bAPI\s+(?:shall|must|will)\b"
+    r")",
+    re.IGNORECASE,
+)
+_ERROR_CODE_SILENCE_RE = re.compile(
+    r"(?:"
+    r"\b4xx\b"
+    r"|\b5xx\b"
+    r"|\b(?:HTTP\s+)?(?:400|401|403|404|405|408|409|410|422|429|500|502|503|504)\b"
+    r"|\berror\s+response\b"
+    r"|\berror\s+code\b"
+    r"|\bfailure\s+response\b"
+    r"|\bfailure\s+case\b"
+    r"|\bHTTP\s+error\b"
+    r"|\bstatus\s+codes?\b"
+    r"|\berror\s+handling\b"
+    r"|\berror\s+scenario\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_error_codes(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with API/HTTP vocab but no error response or status code spec.
+
+    Guard: spec artifact + ≥3 non-fenced FR-/NFR- lines.
+    Trigger: any non-fenced non-heading line matches API/HTTP vocabulary.
+    Silence: any non-fenced line contains error-code or failure-response vocabulary.
+    One aggregate finding at line 1.
+    Sources: MAQA binary-verifiability; OpenAPI best practices; ISO/IEC 25010:2023
+    §4.2.4 fault tolerance; IBM RQA completeness.
+    """
+    p = catalog.get("SPEC-MISSING-ERROR-CODES")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_count = sum(
+        1 for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    )
+    if req_count < 3:
+        return []
+    # Document-level silence: if any non-fenced line contains error-code vocabulary, pass.
+    for in_fence, ln in zip(fenced, lines):
+        if not in_fence and _ERROR_CODE_SILENCE_RE.search(ln):
+            return []
+    # Trigger: any non-fenced non-heading line with API/HTTP vocabulary.
+    for in_fence, ln in zip(fenced, lines):
+        if in_fence:
+            continue
+        if ln.lstrip().startswith("#"):
+            continue
+        if _API_SPEC_VOCAB_RE.search(ln):
+            return [
+                _from_pitfall(
+                    p,
+                    art.path,
+                    "SPEC-MISSING-ERROR-CODES: spec defines API/HTTP operations but "
+                    "specifies no error responses or HTTP status codes — add error cases "
+                    "(4xx/5xx) for each operation to make acceptance criteria "
+                    "binary-verifiable (MAQA binary-verifiability; OpenAPI best practices; "
+                    "ISO/IEC 25010:2023 §4.2.4 fault tolerance; IBM RQA completeness).",
+                    line=1,
+                )
+            ]
+    return []
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -6928,6 +7014,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ui_missing_accessibility(art, catalog))
     out.extend(_spec_tbd_placeholder(art, catalog))
     out.extend(_spec_nfr_concurrency_unquantified(art, catalog))
+    out.extend(_spec_missing_error_codes(art, catalog))
     return out
 
 
