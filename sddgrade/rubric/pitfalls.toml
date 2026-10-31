@@ -1670,6 +1670,17 @@ detect = "Guard: data-model artifact with ≥2 entity headings (level-3+ heading
 fix = "For each flagged entity, add a uniqueness annotation to the field definition or a 'Constraints' sub-section. Examples: '| email | VARCHAR(255) | NOT NULL, UNIQUE |', 'Unique: email, username (enforced via uk_users_email, uk_users_username)', 'UNIQUE KEY uk_products_sku (sku)'. Also add unique indexes (CREATE UNIQUE INDEX) for fields used in lookup queries. Reference: ISO/IEC 27001:2022 A.8.10; GDPR Art.5(1)(d); MAQA entity-constraint completeness."
 
 [[pitfall]]
+id = "PLAN-MISSING-WEBHOOK-RELIABILITY"
+name = "Deployment plan mentions webhooks but no retry/idempotency/signature strategy"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "high"
+method = "lint"
+why = "Webhook delivery is inherently unreliable: the target endpoint may be temporarily unavailable, return a transient error, or timeout. Without a retry strategy, events are silently lost. Without idempotency controls, a successful retry that was not acknowledged causes duplicate side effects (double charges, duplicate records, repeated notifications). Without signature verification (HMAC-SHA256), the receiver cannot authenticate that the event originated from the expected sender. Kiro's production-readiness gate and Stripe/Twilio/GitHub webhook integration best practices all require these three reliability properties before a webhook-based integration ships to production. ISO/IEC 25010:2023 §4.2.1 Reliability requires fault handling and recoverability to be specified. This is distinct from PLAN-ASYNC-NO-DLQ (async message queue dead-letter handling) and PLAN-NO-IDEMPOTENCY (general retry side-effects)."
+detect = "Guard: deployment vocabulary present (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE). Trigger: any non-fenced, non-heading plan line matches webhook vocabulary — \\bwebhook\\b, event.callback, event.subscription, outbound.event, deliver(y|s)?.endpoint, push.*endpoint, callback.url, callback.endpoint. Silence: anywhere in the full document text contains reliability vocabulary — \\bretry\\b, \\bretr(?:ies|ied)\\b, idempoten, at-least-once, exactly-once, delivery.guarantee, webhook.secret, \\bhmac\\b, signature.verif, exponential.backoff, \\back(?:nowledge)?\\b. One aggregate finding anchored at the first webhook trigger line. Plan artifact only."
+fix = "Add a 'Webhook Reliability' subsection to the deployment plan covering three areas: (1) Retry strategy — define the retry schedule (e.g. exponential backoff: 1 min, 5 min, 30 min, 2 h, 24 h up to N attempts), what constitutes a successful delivery (HTTP 2xx), and how to handle permanent failures (DLQ or alerting). (2) Idempotency — require receivers to deduplicate events using the delivery ID or idempotency key in the event payload or header (e.g. X-Webhook-Delivery-ID). (3) Signature verification — document the signing scheme (e.g. HMAC-SHA256 of the payload with a shared secret delivered as X-Hub-Signature-256), the key rotation policy, and which endpoints must validate the signature. Reference: Stripe webhook reliability guide; GitHub webhook security; Twilio webhook delivery; Kiro production-readiness event-delivery gate; ISO/IEC 25010:2023 §4.2.1."
+
+[[pitfall]]
 id = "PLAN-NO-MULTI-REPLICA"
 name = "Container/k8s deployment plan with no replica count or high-availability strategy"
 dimension = "completeness"

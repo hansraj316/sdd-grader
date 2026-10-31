@@ -3947,6 +3947,89 @@ def _plan_missing_api_documentation(art: Artifact, catalog: dict[str, Pitfall]) 
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-WEBHOOK-RELIABILITY: webhook vocab with no retry/idempotency/signature strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: any non-fenced plan line mentions webhook delivery vocabulary.
+_WEBHOOK_VOCAB_RE = re.compile(
+    r"\bwebhook\b"
+    r"|\bevent[.\s_-]callback\b"
+    r"|\bevent[.\s_-]subscription\b"
+    r"|\boutbound[.\s_-]event\b"
+    r"|\bdeliver(?:y|s)?[.\s_-]endpoint\b"
+    r"|\bcallback[.\s_-](?:url|endpoint)\b"
+    r"|\bpush[.\s_-].*endpoint\b",
+    re.IGNORECASE,
+)
+
+# Silence: any reliability vocabulary for webhook delivery anywhere in the document.
+_WEBHOOK_RELIABILITY_SILENCE_RE = re.compile(
+    r"\bretry\b"
+    r"|\bretr(?:ies|ied)\b"
+    r"|\bidempoten"
+    r"|\bat.?least.?once\b"
+    r"|\bexactly.?once\b"
+    r"|\bdelivery[.\s_-]guarantee\b"
+    r"|\bwebhook[.\s_-]secret\b"
+    r"|\bhmac\b"
+    r"|\bsignature[.\s_-]verif"
+    r"|\bexponential[.\s_-]backoff\b"
+    r"|\back(?:nowledge)?\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_webhook_reliability(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan mentions webhooks but no retry/idempotency/signature strategy (PLAN-MISSING-WEBHOOK-RELIABILITY).
+
+    Webhook delivery is inherently unreliable: endpoints may be unavailable, time out, or
+    return transient errors. Without a retry strategy events are silently lost; without
+    idempotency controls a retry causes duplicate side effects; without HMAC signature
+    verification the receiver cannot authenticate the sender.
+
+    Sources: Stripe webhook reliability guide; GitHub webhook security docs;
+    Twilio webhook delivery; Kiro production-readiness event-delivery gate;
+    ISO/IEC 25010:2023 §4.2.1 Reliability.
+    Distinct from PLAN-ASYNC-NO-DLQ (message-queue dead-letter queues) and
+    PLAN-NO-IDEMPOTENCY (general retry side-effects).
+    """
+    p = catalog.get("PLAN-MISSING-WEBHOOK-RELIABILITY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced, non-heading line contains webhook vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _WEBHOOK_VOCAB_RE.search(line):
+            trigger_hit = i + 1
+            break
+    if trigger_hit is None:
+        return []
+    # Silence: reliability vocabulary anywhere in the document.
+    if _WEBHOOK_RELIABILITY_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan mentions webhook delivery but has no retry, idempotency, "
+        "or signature-verification strategy.",
+        line=trigger_hit,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-NO-GRACEFUL-SHUTDOWN: process stop/restart vocab with no graceful-shutdown strategy.
 # ---------------------------------------------------------------------------
 
@@ -7089,6 +7172,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_tls_enforcement(art, catalog))
     out.extend(_plan_missing_circuit_breaker(art, catalog))
     out.extend(_plan_missing_api_documentation(art, catalog))
+    out.extend(_plan_missing_webhook_reliability(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
