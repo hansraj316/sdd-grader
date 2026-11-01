@@ -5982,6 +5982,78 @@ def _plan_missing_smoke_test(art: Artifact, catalog: dict[str, Pitfall]) -> list
     )]
 
 
+# Silence: zero-downtime / canary / blue-green / rolling deployment vocabulary.
+_ZERO_DOWNTIME_SILENCE_RE = re.compile(
+    r"\bblue[\s/._-]?green\b"
+    r"|\bcanary\s+(?:deploy\w*|release|rollout)\b"
+    r"|\brolling\s+(?:deploy\w*|update|restart|release)\b"
+    r"|\btraffic\s+(?:shifting|split(?:ting)?|shaping|switch(?:ing)?)\b"
+    r"|\bprogressive\s+delivery\b"
+    r"|\bzero[\s_-]?downtime\b"
+    r"|\bshadow\s+deploy\w*\b"
+    r"|\bin[\s_-]?place\s+.{0,20}health\b"
+    r"|\bparallel\s+(?:instance|deploy\w*)\b"
+    r"|\ba/b\s+deploy\w*\b"
+    r"|\bfeature\s+toggle\s+deploy\w*\b"
+    r"|\bmaxSurge\b"
+    r"|\bmaxUnavailable\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_zero_downtime_deploy(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Deployment plan releases to production but specifies no zero-downtime strategy
+    (PLAN-MISSING-ZERO-DOWNTIME-DEPLOY).
+
+    Kiro, Tessl, and CNCF production-readiness review require a blue-green, canary, or
+    rolling-update deployment strategy for any user-facing service. Direct in-place
+    replacement risks customer-visible downtime when the new version fails to start.
+
+    Distinct from PLAN-MISSING-ROLLBACK (recovery after failure) and
+    PLAN-MISSING-SMOKE-TEST (post-deploy verification).
+    """
+    p = catalog.get("PLAN-MISSING-ZERO-DOWNTIME-DEPLOY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(_DEPLOY_SECTION_RE.search(s.title) for s in art.sections)
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: first non-fenced non-heading line with production deploy vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if _PROD_DEPLOY_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: any zero-downtime deployment strategy vocabulary anywhere in the document.
+    if _ZERO_DOWNTIME_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-ZERO-DOWNTIME-DEPLOY: deployment plan describes releasing to "
+        "production but specifies no zero-downtime deployment strategy. Add a deployment "
+        "strategy section specifying blue-green, canary, or rolling update: which approach, "
+        "traffic-shift percentages or batch sizes, health-check gates, and automatic "
+        "rollback triggers on error-rate spikes "
+        "(Kiro production-readiness gate, Tessl deployment best practices, "
+        "CNCF production readiness review, AWS/GCP blue-green deployment guides).",
+        line=trigger_line,
+    )]
+
+
 # Non-normative modal verbs that weaken requirements (REQ-WEAK-DIRECTIVE).
 _WEAK_MODAL_RE = re.compile(r"\b(should|may|could|might)\b", re.IGNORECASE)
 # Normative modal verbs that override: if shall/must also present, it's a legitimate conditional.
@@ -7168,6 +7240,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_load_test(art, catalog))
     out.extend(_plan_missing_encryption_at_rest(art, catalog))
     out.extend(_plan_missing_smoke_test(art, catalog))
+    out.extend(_plan_missing_zero_downtime_deploy(art, catalog))
     out.extend(_plan_missing_dependency_vulnerability_scan(art, catalog))
     out.extend(_plan_no_tls_enforcement(art, catalog))
     out.extend(_plan_missing_circuit_breaker(art, catalog))
