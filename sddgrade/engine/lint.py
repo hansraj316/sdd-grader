@@ -7834,6 +7834,113 @@ def _data_model_missing_unique_constraint(
     ]
 
 
+_DATA_MODEL_TABLE_ROW_RE = re.compile(r"^\s*\|.+\|\s*$")
+
+_DATA_MODEL_TYPE_VOCAB_RE = re.compile(
+    r"""
+    \b(?:
+        varchar
+        | string
+        | text
+        | integer
+        | \bint\b
+        | bigint
+        | smallint
+        | float
+        | double
+        | decimal
+        | numeric
+        | boolean
+        | \bbool\b
+        | uuid
+        | date
+        | datetime
+        | timestamptz
+        | timestamp
+        | jsonb
+        | json
+        | bytes
+        | blob
+        | enum
+        | array
+        | bigserial
+        | serial
+    )\b
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+def _data_model_missing_field_types(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    p = catalog.get("DATA-MODEL-MISSING-FIELD-TYPES")
+    if p is None or art.type != ArtifactType.DATA_MODEL:
+        return []
+
+    entities = _entities(art)
+    if not entities:
+        return []
+
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    def _entity_table_rows(entity_name: str) -> list[str]:
+        """Collect non-fenced, non-separator table rows from the named entity body."""
+        rows: list[str] = []
+        entity_level = 0
+        in_entity = False
+        for i, line in enumerate(lines):
+            sec_match = re.match(r"^(#{1,6})\s+(.*)", line)
+            if sec_match:
+                level = len(sec_match.group(1))
+                title = sec_match.group(2).strip()
+                if not in_entity:
+                    if title == entity_name and level >= 3:
+                        in_entity = True
+                        entity_level = level
+                else:
+                    if level <= entity_level:
+                        break
+                continue
+            if not in_entity:
+                continue
+            if fenced[i]:
+                continue
+            stripped = line.strip()
+            if not (stripped.startswith("|") and stripped.endswith("|")):
+                continue
+            if _DATA_MODEL_TABLE_SEPARATOR_RE.match(stripped):
+                continue
+            cells = [c.strip() for c in stripped.split("|")[1:-1]]
+            if len(cells) < 2:
+                continue
+            rows.append(stripped)
+        return rows
+
+    missing: list[str] = []
+    for name in entities:
+        rows = _entity_table_rows(name)
+        if not rows:
+            continue
+        has_type = any(_DATA_MODEL_TYPE_VOCAB_RE.search(row) for row in rows)
+        if not has_type:
+            missing.append(name)
+
+    if not missing:
+        return []
+
+    examples = ", ".join(f"'{n}'" for n in missing[:3])
+    suffix = f" (and {len(missing) - 3} more)" if len(missing) > 3 else ""
+    return [
+        _from_pitfall(
+            p, art.path,
+            f"Data-model entity/entities with attribute tables but no data type annotations: "
+            f"{examples}{suffix}.",
+        )
+    ]
+
+
 def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out: list[Finding] = []
     out.extend(_data_model_entity_no_pk(art, catalog))
@@ -7844,6 +7951,7 @@ def _data_model_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findi
     out.extend(_data_model_no_fk_constraint(art, catalog))
     out.extend(_data_model_enum_no_values(art, catalog))
     out.extend(_data_model_missing_unique_constraint(art, catalog))
+    out.extend(_data_model_missing_field_types(art, catalog))
     return out
 
 
