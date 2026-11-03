@@ -1714,6 +1714,17 @@ detect = "Guard: spec artifact with ≥3 non-fenced FR-/NFR- lines. Trigger: any
 fix = "Add error response specifications for every API operation. For each endpoint, enumerate the relevant HTTP error status codes (e.g. 400 Bad Request for invalid input, 401 Unauthorized for missing authentication, 403 Forbidden for insufficient permissions, 404 Not Found for missing resources, 422 Unprocessable Entity for business-rule violations, 500 Internal Server Error for unexpected failures) and the conditions under which they are returned. Document these in an 'Error Responses' or 'Error Codes' subsection of each endpoint's requirements or in a dedicated 'API Errors' section. Reference: MAQA binary-verifiability; OpenAPI best practices; ISO/IEC 25010:2023 §4.2.4; IBM RQA completeness."
 
 [[pitfall]]
+id = "PLAN-NO-EVENT-SCHEMA"
+name = "Event-driven deployment plan with no event schema or contract strategy"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "high"
+method = "lint"
+why = "Event-driven systems fail at integration boundaries when producers and consumers share no schema contract. Without an AsyncAPI spec, CloudEvents definition, or schema registry entry, a field rename or type change silently breaks all downstream consumers. Kiro's production-readiness gate requires that service contracts (including event schemas) be versioned before deployment. Tessl's contract-first principle mandates that every outbound event have an agreed schema before implementation begins. AsyncAPI (asyncapi.com) and CloudEvents (cloudevents.io) provide open specifications for this; schema registries (Confluent Schema Registry, AWS Glue Schema Registry, Apicurio) enforce compatibility at publish time. A deployment plan that provisions a Kafka topic, SQS queue, SNS topic, or similar event channel without specifying the event schema is architecturally incomplete."
+detect = "Guard: plan must have deploy vocabulary (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE). Trigger: any non-fenced, non-heading line contains event-bus/messaging vocabulary — \\bkafka\\b, \\brabbitmq\\b, \\b(?:amazon\\s+)?sqs\\b, \\b(?:amazon\\s+)?sns\\b, \\bnats\\b, \\beventbridge\\b, \\bpub/?sub\\b, message[\\s_-]queue, event[\\s_-]bus, message[\\s_-]broker, event[\\s_-]stream, event[\\s_-]topic, \\bpubsub\\b, \\bactivemq\\b, \\bpulsar\\b, \\bazure[\\s_-]service[\\s_-]bus\\b. Silence: document contains event-schema vocabulary anywhere — asyncapi, cloudevents?, schema[\\s_-]registry, event[\\s_-]schema, event[\\s_-]contract, message[\\s_-]schema, payload[\\s_-]schema, message[\\s_-]format, \\bavro\\b, protobuf[\\s_-]schema, json[\\s_-]schema. One aggregate finding at first trigger line. Plan artifact only."
+fix = "Define an event schema or contract for every event type your service produces or consumes. Options include: (1) AsyncAPI specification document (asyncapi.com) describing channels, message schemas, and server bindings; (2) CloudEvents envelope (cloudevents.io) with a payload schema reference; (3) schema registry entry (Confluent, AWS Glue, Apicurio) with compatibility policy (BACKWARD/FORWARD/FULL). At minimum, document the event name, version, producer, consumer(s), payload fields with types, and the schema compatibility strategy. Reference: AsyncAPI specification; CloudEvents specification; Confluent Schema Registry; Kiro production-readiness service-contract gate."
+
+[[pitfall]]
 id = "DATA-MODEL-MISSING-FIELD-TYPES"
 name = "Data-model entity table lists fields but no data type annotations"
 dimension = "completeness"
