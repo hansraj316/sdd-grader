@@ -4030,6 +4030,98 @@ def _plan_missing_webhook_reliability(art: Artifact, catalog: dict[str, Pitfall]
 
 
 # ---------------------------------------------------------------------------
+# PLAN-NO-EVENT-SCHEMA: event-driven plan with no event schema/contract strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: any non-fenced plan line contains event-bus / messaging-system vocabulary.
+_EVENT_BUS_VOCAB_RE = re.compile(
+    r"\bkafka\b"
+    r"|\brabbitmq\b"
+    r"|\b(?:amazon\s+)?sqs\b"
+    r"|\b(?:amazon\s+)?sns\b"
+    r"|\bnats\b"
+    r"|\beventbridge\b"
+    r"|\bpub/?sub\b"
+    r"|\bpubsub\b"
+    r"|\bactivemq\b"
+    r"|\bpulsar\b"
+    r"|\bazure[\s_-]service[\s_-]bus\b"
+    r"|message[\s_-]queue"
+    r"|event[\s_-]bus\b"
+    r"|message[\s_-]broker"
+    r"|event[\s_-]stream\b"
+    r"|event[\s_-]topic\b",
+    re.IGNORECASE,
+)
+
+# Silence: any event-schema / contract vocabulary anywhere in the document.
+_EVENT_SCHEMA_SILENCE_RE = re.compile(
+    r"\basyncapi\b"
+    r"|\bcloudevents?\b"
+    r"|schema[\s_-]registry"
+    r"|event[\s_-]schema\b"
+    r"|event[\s_-]contract\b"
+    r"|message[\s_-]schema\b"
+    r"|payload[\s_-]schema\b"
+    r"|message[\s_-]format\b"
+    r"|\bavro\b"
+    r"|protobuf[\s_-]schema"
+    r"|json[\s_-]schema",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_event_schema(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Deployment plan uses event-driven messaging but no event schema/contract (PLAN-NO-EVENT-SCHEMA).
+
+    Event-driven systems break silently at integration boundaries when producers and
+    consumers share no schema contract.  Without an AsyncAPI spec, CloudEvents definition,
+    or schema registry entry, a field rename or type change breaks all downstream consumers
+    with no compile-time or deploy-time signal.
+
+    Sources: AsyncAPI specification (asyncapi.com); CloudEvents (cloudevents.io);
+    Confluent Schema Registry compatibility guide; Kiro production-readiness service-
+    contract gate; Tessl contract-first event design; ISO/IEC 25010:2023 Interoperability.
+    Distinct from PLAN-MISSING-WEBHOOK-RELIABILITY (HTTP callback delivery) and
+    PLAN-ASYNC-NO-DLQ (dead-letter queue for failed deliveries).
+    """
+    p = catalog.get("PLAN-NO-EVENT-SCHEMA")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced, non-heading line contains event-bus vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _EVENT_BUS_VOCAB_RE.search(line):
+            trigger_hit = i + 1
+            break
+    if trigger_hit is None:
+        return []
+    # Silence: event schema vocabulary anywhere in the document.
+    if _EVENT_SCHEMA_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan uses event-driven messaging (Kafka/SQS/RabbitMQ/…) but "
+        "has no event schema or contract strategy (AsyncAPI, CloudEvents, schema registry).",
+        line=trigger_hit,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-NO-GRACEFUL-SHUTDOWN: process stop/restart vocab with no graceful-shutdown strategy.
 # ---------------------------------------------------------------------------
 
@@ -7246,6 +7338,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_circuit_breaker(art, catalog))
     out.extend(_plan_missing_api_documentation(art, catalog))
     out.extend(_plan_missing_webhook_reliability(art, catalog))
+    out.extend(_plan_no_event_schema(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
