@@ -4122,6 +4122,85 @@ def _plan_no_event_schema(art: Artifact, catalog: dict[str, Pitfall]) -> list[Fi
 
 
 # ---------------------------------------------------------------------------
+# PLAN-NO-MULTI-TENANT-ISOLATION: multi-tenant plan with no tenant data isolation strategy.
+# ---------------------------------------------------------------------------
+
+# Trigger: any non-fenced, non-heading plan line contains multi-tenancy vocabulary.
+_MULTI_TENANT_VOCAB_RE = re.compile(
+    r"\bmulti[_\s-]?tenant(?:s|ed|ing)?\b"
+    r"|\bmulti[_\s-]?org(?:anization)?\b"
+    r"|\bsaas\s+platform\b"
+    r"|\bper[_\s-]tenant\b"
+    r"|\btenant[_\s]id\b"
+    r"|\btenant\s+id\b"
+    r"|\borganization[_\s]id\b"
+    r"|\bworkspace\s+isolation\b",
+    re.IGNORECASE,
+)
+
+# Silence: any tenant isolation strategy vocabulary anywhere in the document.
+_MULTI_TENANT_ISOLATION_SILENCE_RE = re.compile(
+    r"\brow[_\s-]?level[_\s-]?security\b"
+    r"|\brls\b"
+    r"|schema[_\s-]per[_\s-]tenant"
+    r"|database[_\s-]per[_\s-]tenant"
+    r"|tenant[_\s-]?isolation\b"
+    r"|data[_\s-]?segregation\b"
+    r"|tenant[_\s-]?namespace\b"
+    r"|tenant[_\s-]?scope\b"
+    r"|tenant[_\s-]?filter\b"
+    r"|cell[_\s-]?architecture\b"
+    r"|silo[_\s-]?architecture\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_multi_tenant_isolation(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Multi-tenant deployment plan with no tenant data isolation strategy (PLAN-NO-MULTI-TENANT-ISOLATION).
+
+    Multi-tenant SaaS systems risk cross-tenant data leakage when no isolation strategy
+    is documented.  The three canonical strategies are row-level security (RLS),
+    schema-per-tenant, and database-per-tenant.  AWS Well-Architected SaaS Lens and
+    OWASP Multi-Tenancy Cheat Sheet require explicit isolation boundaries; ISO 27001
+    A.9.4 mandates access restrictions on shared systems.
+    """
+    p = catalog.get("PLAN-NO-MULTI-TENANT-ISOLATION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary must be present.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Trigger: any non-fenced, non-heading line contains multi-tenancy vocabulary.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _MULTI_TENANT_VOCAB_RE.search(line):
+            trigger_hit = i + 1
+            break
+    if trigger_hit is None:
+        return []
+    # Silence: tenant isolation strategy vocabulary anywhere in the document.
+    if _MULTI_TENANT_ISOLATION_SILENCE_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan references multi-tenant/SaaS vocabulary but has no tenant data "
+        "isolation strategy (row-level security, schema-per-tenant, database-per-tenant).",
+        line=trigger_hit,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-NO-GRACEFUL-SHUTDOWN: process stop/restart vocab with no graceful-shutdown strategy.
 # ---------------------------------------------------------------------------
 
@@ -7339,6 +7418,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_api_documentation(art, catalog))
     out.extend(_plan_missing_webhook_reliability(art, catalog))
     out.extend(_plan_no_event_schema(art, catalog))
+    out.extend(_plan_no_multi_tenant_isolation(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
