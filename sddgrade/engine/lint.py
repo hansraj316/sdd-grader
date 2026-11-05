@@ -7167,6 +7167,88 @@ def _spec_missing_error_codes(art: Artifact, catalog: dict[str, Pitfall]) -> lis
     return []
 
 
+# SPEC-MISSING-I18N-STRATEGY: spec with i18n-relevant requirements but no
+# internationalization strategy.
+# Sources: ISO/IEC 25010 Portability/Adaptability; Canon Volere §9 Cultural and
+# Political Requirements; W3C Internationalization Activity best practices;
+# Kiro spec-first locale-aware requirements.
+_I18N_VOCAB_RE = re.compile(
+    r"(?:"
+    r"\blocale\b"
+    r"|\blanguage\s+support\b"
+    r"|\bcurrency\b"
+    r"|\btime\s*zone\b"
+    r"|\btimezone\b"
+    r"|\bmultilingual\b"
+    r"|\bmulti.?language\b"
+    r"|\btranslation\b"
+    r")",
+    re.IGNORECASE,
+)
+_I18N_STRATEGY_SILENCE_RE = re.compile(
+    r"(?:"
+    r"\bi18n\b"
+    r"|\bl10n\b"
+    r"|\bicu\b"
+    r"|\blocale\s+bundle\b"
+    r"|\bmessageformat\b"
+    r"|\breact.?intl\b"
+    r"|\bformatjs\b"
+    r"|\bgettext\b"
+    r"|\blocale\s+file\b"
+    r"|\btranslation\s+file\b"
+    r"|\blocale\s+pack\b"
+    r"|\blocalisa?tion\b"
+    r"|\blocalization\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_missing_i18n_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Spec with i18n-relevant requirements but no internationalization strategy.
+
+    Guard: spec artifact + ≥3 non-fenced FR-/NFR- lines.
+    Trigger: any non-fenced FR-/NFR- line matches i18n vocabulary.
+    Silence: any non-fenced line contains i18n/l10n strategy vocabulary.
+    One aggregate finding at first trigger line.
+    Sources: ISO/IEC 25010 Portability/Adaptability; Canon Volere §9;
+    W3C Internationalization Activity; Kiro spec-first.
+    """
+    p = catalog.get("SPEC-MISSING-I18N-STRATEGY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_lines = [
+        (i, ln) for i, ln in enumerate(lines)
+        if not fenced[i] and _REQ_ID_RE.search(ln)
+    ]
+    if len(req_lines) < 3:
+        return []
+    # Document-level silence: if any non-fenced line contains i18n strategy vocabulary, pass.
+    for in_fence, ln in zip(fenced, lines):
+        if not in_fence and _I18N_STRATEGY_SILENCE_RE.search(ln):
+            return []
+    # Trigger: any non-fenced FR-/NFR- line with i18n vocabulary.
+    for i, ln in req_lines:
+        if _I18N_VOCAB_RE.search(ln):
+            return [
+                _from_pitfall(
+                    p,
+                    art.path,
+                    "SPEC-MISSING-I18N-STRATEGY: spec contains i18n-relevant requirements "
+                    "(locale/currency/timezone/translation) but no internationalization "
+                    "strategy — add an i18n/l10n section documenting the approach "
+                    "(ICU MessageFormat, GNU gettext, react-intl/formatjs, locale files) "
+                    "(ISO/IEC 25010 Portability; Canon Volere §9 Cultural Requirements; "
+                    "W3C Internationalization Activity).",
+                    line=i + 1,
+                )
+            ]
+    return []
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -7341,6 +7423,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_tbd_placeholder(art, catalog))
     out.extend(_spec_nfr_concurrency_unquantified(art, catalog))
     out.extend(_spec_missing_error_codes(art, catalog))
+    out.extend(_spec_missing_i18n_strategy(art, catalog))
     return out
 
 
