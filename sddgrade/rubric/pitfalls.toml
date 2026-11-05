@@ -1736,6 +1736,17 @@ detect = "Guard: data-model artifact. For each entity (level-3+ heading not in s
 fix = "Add a Type column (or equivalent) to each entity table and annotate every field with its data type. Examples: '| id | UUID | Primary key |', '| name | VARCHAR(255) | Display name |', '| amount | DECIMAL(10,2) | In USD |', '| created_at | TIMESTAMP | Audit |'. For entities that are defined inline (not in table form), add a brief type annotation in parentheses after each field name. Reference: ISO/IEC 25010:2023 data quality; Kiro entity specification; Canon Volere data dictionary standard."
 
 [[pitfall]]
+id = "SPEC-MISSING-I18N-STRATEGY"
+name = "Spec with i18n-relevant requirements but no internationalization strategy"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "Internationalization requirements that appear in a spec without a corresponding i18n strategy create silent scope assumptions. Developers reading a requirement like 'FR-012: The system shall display prices in the user's currency' without an i18n strategy either hard-code a locale or invent their own approach, leading to inconsistent behavior across locales, broken right-to-left support, or number/date formatting errors. ISO/IEC 25010 includes internationalization as a quality sub-characteristic of portability. Canon Volere template §9 includes a 'Cultural and Political Requirements' section specifically for locale and language concerns."
+detect = "Guard: spec must have ≥3 FR-/NFR- lines. Trigger: any non-fenced FR-/NFR- line contains i18n vocabulary — locale, language support, currency, timezone, time zone, multilingual, multi-language, translate/translation. Silence: document-level scan for i18n/l10n strategy vocabulary — i18n, l10n, icu, locale bundle, messageformat, react-intl, formatjs, gettext, locale file, translation file, locale pack, localisation, localization. Fenced-block exclusion applied. One aggregate finding at first trigger line. Spec artifact only."
+fix = "Add an Internationalization or Localization section to your spec that documents the i18n strategy: which library or standard (ICU MessageFormat, GNU gettext, react-intl/formatjs), how locale is detected and stored, how locale bundles are structured and loaded, and how RTL languages are handled. Each FR-/NFR- line that references locale, currency, timezone, or language support should reference this strategy. Reference: ISO/IEC 25010 Portability/Adaptability; Canon Volere §9 Cultural and Political Requirements; W3C Internationalization Activity best practices."
+
+[[pitfall]]
 id = "PLAN-NO-MULTI-TENANT-ISOLATION"
 name = "Multi-tenant deployment plan with no tenant data isolation strategy"
 dimension = "completeness"
