@@ -1747,6 +1747,17 @@ detect = "Guard: spec must have ≥3 FR-/NFR- lines. Trigger: any non-fenced FR-
 fix = "Add an Internationalization or Localization section to your spec that documents the i18n strategy: which library or standard (ICU MessageFormat, GNU gettext, react-intl/formatjs), how locale is detected and stored, how locale bundles are structured and loaded, and how RTL languages are handled. Each FR-/NFR- line that references locale, currency, timezone, or language support should reference this strategy. Reference: ISO/IEC 25010 Portability/Adaptability; Canon Volere §9 Cultural and Political Requirements; W3C Internationalization Activity best practices."
 
 [[pitfall]]
+id = "PLAN-NO-CONTENT-SECURITY-POLICY"
+name = "Browser-facing deployment plan with no Content-Security-Policy strategy"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "high"
+method = "lint"
+why = "Content-Security-Policy (CSP) is a first-line defence against Cross-Site Scripting (XSS) and data-injection attacks for browser-facing applications. OWASP A03:2021 (Injection) and A05:2021 (Security Misconfiguration) both flag the absence of CSP as a critical vulnerability. A deployment plan that introduces a React/Vue/Angular/SPA/frontend application without a CSP strategy leaves the door open for inline-script injection, third-party script hijacking, and data exfiltration. Kiro's security hardening checklist requires a CSP entry for all browser-facing services. Tessl's deployment checklist flags browser apps with no security-header strategy."
+detect = "Guard: plan must have deploy vocabulary. Trigger: ≥1 non-fenced, non-heading line contains browser-facing application vocabulary — SPA, React, Vue, Angular, Next.js, Nuxt, frontend, web client, browser client, browser-based, fetch API, XMLHttpRequest. Silence: document-level scan for CSP / browser-security-header vocabulary — content-security-policy, CSP, helmet, x-frame-options, x-content-type, report-uri, nonce, strict-dynamic, unsafe-inline, unsafe-eval, default-src, script-src, security headers. One aggregate finding at first browser-vocab trigger line. Plan artifact only."
+fix = "Add a Content-Security-Policy section to your deployment plan. At a minimum document: (1) the delivery mechanism — HTTP response header via reverse-proxy (nginx/Caddy/CloudFront response policy) or middleware (Helmet for Node.js apps); (2) the policy directives — at a minimum default-src 'self', with explicit allowlists for script-src, style-src, img-src, and connect-src; (3) the nonce or hash strategy for any required inline scripts; (4) a report-uri or report-to endpoint for violation monitoring before switching to enforce mode. Example for a React SPA served via nginx: 'Content-Security-Policy: default-src self; script-src self nonce-{nonce}; style-src self nonce-{nonce}; img-src self data:; report-to /csp-report'. Reference: OWASP Content Security Policy Cheat Sheet; MDN CSP guide; Helmet documentation."
+
+[[pitfall]]
 id = "PLAN-NO-MULTI-TENANT-ISOLATION"
 name = "Multi-tenant deployment plan with no tenant data isolation strategy"
 dimension = "completeness"
