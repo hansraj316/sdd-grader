@@ -5575,6 +5575,83 @@ def _plan_missing_cors_policy(art: Artifact, catalog: dict[str, Pitfall]) -> lis
 
 
 # ---------------------------------------------------------------------------
+# PLAN-NO-CONTENT-SECURITY-POLICY
+# ---------------------------------------------------------------------------
+# Silence: CSP / related browser security-header vocabulary.
+_CSP_SILENCE_RE = re.compile(
+    r"\bcontent[\s_-]?security[\s_-]?policy\b"
+    r"|\bCSP\b"
+    r"|\bhelmet\b"
+    r"|\bx[\s_-]?frame[\s_-]?options\b"
+    r"|\bx[\s_-]?content[\s_-]?type\b"
+    r"|\breport[\s_-]?uri\b"
+    r"|\bnonce\b"
+    r"|\bstrict[\s_-]?dynamic\b"
+    r"|\bunsafe[\s_-]?inline\b"
+    r"|\bunsafe[\s_-]?eval\b"
+    r"|\bdefault[\s_-]?src\b"
+    r"|\bscript[\s_-]?src\b"
+    r"|\bsecurity[\s_-]?headers?\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_content_security_policy(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Browser-facing deployment plan with no CSP strategy (PLAN-NO-CONTENT-SECURITY-POLICY).
+
+    CSP (Content-Security-Policy) is a mandatory XSS/injection defence for browser
+    apps (OWASP A03:2021/A05:2021). A plan for a React/Vue/Angular/SPA/frontend app
+    should state the CSP strategy; omitting it is a production-readiness gap.
+
+    Reuses _BROWSER_API_VOCAB_RE as trigger.
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains browser-facing vocab.
+    Silence: any CSP / browser-security-header vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-NO-CONTENT-SECURITY-POLICY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: browser-facing vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _BROWSER_API_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: CSP / browser security-header vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _CSP_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-CONTENT-SECURITY-POLICY: deployment plan describes a browser-facing "
+        "application (SPA/React/Vue/Angular/Next.js/Nuxt/frontend) but has no "
+        "Content-Security-Policy (CSP) strategy. Without CSP, the application is "
+        "vulnerable to XSS and data injection attacks. Add a CSP section naming the "
+        "policy directives (default-src, script-src, style-src), delivery mechanism "
+        "(HTTP header, meta tag, or middleware such as Helmet), and nonce/hash strategy "
+        "for inline scripts. (OWASP A03:2021 Injection, A05:2021 Security "
+        "Misconfiguration, Kiro security hardening checklist, Tessl deployment checklist).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-DISTRIBUTED-TRACING
 # ---------------------------------------------------------------------------
 # Trigger: microservices / service-mesh / multi-service orchestration vocab.
@@ -7490,6 +7567,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_audit_log(art, catalog))
     out.extend(_plan_no_pagination(art, catalog))
     out.extend(_plan_missing_cors_policy(art, catalog))
+    out.extend(_plan_no_content_security_policy(art, catalog))
     out.extend(_plan_missing_distributed_tracing(art, catalog))
     out.extend(_plan_missing_load_test(art, catalog))
     out.extend(_plan_missing_encryption_at_rest(art, catalog))
