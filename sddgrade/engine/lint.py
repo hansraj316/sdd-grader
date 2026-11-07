@@ -7326,6 +7326,52 @@ def _spec_missing_i18n_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> l
     return []
 
 
+# SPEC-QVSCRIBE-NOMINALIZATION: verbose nominalization instead of a direct verb.
+_NOMINALIZATION_RE = re.compile(
+    r"""(?:
+        shall\s+provide\s+support\s+for
+        | shall\s+perform\s+validation\s+of
+        | shall\s+conduct\s+(?:a\s+)?review\s+of
+        | shall\s+make\s+provision\s+for
+        | shall\s+carry\s+out\s+(?:testing|processing|analysis|validation)\s+of
+        | shall\s+provide\s+(?:the\s+)?ability\s+to
+        | shall\s+perform\s+(?:the\s+)?function\s+of
+    )""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _spec_qvscribe_nominalization(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Normative requirement using verbose nominalization instead of a direct verb (SPEC-QVSCRIBE-NOMINALIZATION).
+
+    QVscribe Level-3 Clarity / IBM RQA 'action noun' anti-pattern.
+    Scoped to requirement-bearing lines via _requirement_mask() / _fence_mask().
+    One finding per offending line.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-NOMINALIZATION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, line in enumerate(lines):
+        if fenced[i] or not req_mask[i]:
+            continue
+        if _NOMINALIZATION_RE.search(line):
+            findings.append(
+                _from_pitfall(
+                    p,
+                    art.path,
+                    "SPEC-QVSCRIBE-NOMINALIZATION: replace verbose nominalization with a direct verb "
+                    "(e.g. 'shall provide support for X' → 'shall support X'; "
+                    "'shall perform validation of Y' → 'shall validate Y').",
+                    line=i + 1,
+                )
+            )
+    return findings
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -7501,6 +7547,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_nfr_concurrency_unquantified(art, catalog))
     out.extend(_spec_missing_error_codes(art, catalog))
     out.extend(_spec_missing_i18n_strategy(art, catalog))
+    out.extend(_spec_qvscribe_nominalization(art, catalog))
     return out
 
 
