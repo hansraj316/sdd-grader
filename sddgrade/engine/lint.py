@@ -7372,6 +7372,79 @@ def _spec_qvscribe_nominalization(art: Artifact, catalog: dict[str, Pitfall]) ->
     return findings
 
 
+# SPEC-GHERKIN-GIVEN-ACTIVE-ACTION: Given step containing a user-action verb.
+_GHERKIN_AND_BUT_LINE_RE = re.compile(r"^\s*[-*+]?\s*(?:and|but)\b", re.IGNORECASE)
+_GHERKIN_NON_AND_BUT_LINE_RE = re.compile(
+    r"^\s*[-*+]?\s*(?:given|when|then|background)\b", re.IGNORECASE
+)
+_GHERKIN_GIVEN_ACTIVE_ACTION_RE = re.compile(
+    r"\b(?:presses?|clicks?|submits?|enters?|types?|fills?|selects?|navigates?|uploads?|drags?)\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_gherkin_given_active_action(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Given step that contains a user-action verb (SPEC-GHERKIN-GIVEN-ACTIVE-ACTION).
+
+    Gherkin best practice: Given describes the initial precondition (system state), not
+    a user action. 'Given the user clicks Submit' is really a When step placed incorrectly.
+    When/And/But steps are tracked to detect And/But continuations of a Given line.
+
+    Guard: formal-Gherkin mode — at least one When AND one Then line-leader in doc.
+    One finding per offending line. Spec-only. Fenced blocks excluded.
+    """
+    p = catalog.get("SPEC-GHERKIN-GIVEN-ACTIVE-ACTION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Formal-Gherkin guard: When and Then must both exist somewhere in the doc.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    findings: list[Finding] = []
+    last_keyword = None  # last non-And/But Gherkin keyword seen ("given","when","then",…)
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        # Scenario/Background heading resets keyword context.
+        if _SCENARIO_HEADING_RE.match(line) or _BACKGROUND_HEADING_RE.match(line):
+            last_keyword = None
+            continue
+
+        if _GHERKIN_NON_AND_BUT_LINE_RE.match(line):
+            # Determine which keyword this is to update context.
+            kw = stripped.lstrip("-*+ ").split()[0].lower()
+            last_keyword = kw
+            is_given_context = kw == "given"
+        elif _GHERKIN_AND_BUT_LINE_RE.match(line):
+            # And/But inherit context from the last non-And/But keyword.
+            is_given_context = last_keyword == "given"
+        else:
+            continue
+
+        if is_given_context and _GHERKIN_GIVEN_ACTIVE_ACTION_RE.search(line):
+            findings.append(
+                _from_pitfall(
+                    p,
+                    art.path,
+                    "SPEC-GHERKIN-GIVEN-ACTIVE-ACTION: Given step describes an action "
+                    "(e.g. 'Given the user clicks Submit') instead of a precondition state; "
+                    "move user-action steps to a When clause.",
+                    line=i + 1,
+                )
+            )
+    return findings
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -7548,6 +7621,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_error_codes(art, catalog))
     out.extend(_spec_missing_i18n_strategy(art, catalog))
     out.extend(_spec_qvscribe_nominalization(art, catalog))
+    out.extend(_spec_gherkin_given_active_action(art, catalog))
     return out
 
 
