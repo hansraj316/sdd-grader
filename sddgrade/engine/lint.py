@@ -7470,6 +7470,109 @@ def _spec_qvscribe_nominalization(art: Artifact, catalog: dict[str, Pitfall]) ->
     return findings
 
 
+# SPEC-GHERKIN-THEN-MULTIPLE-ASSERTIONS: Gherkin scenario with 3+ Then/And assertion lines.
+def _spec_gherkin_then_multiple_assertions(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Gherkin scenario block with 3+ assertion lines (SPEC-GHERKIN-THEN-MULTIPLE-ASSERTIONS).
+
+    MAQA single-assertion principle: each scenario should verify one observable outcome.
+    A Then step plus any And/But continuations (while in Then-context) each count as an
+    assertion. When a scenario block accumulates ≥ 3 assertion lines, fire one finding
+    anchored at the third assertion line.
+
+    Block boundaries: Scenario:/Scenario Outline:/Scenario Template: heading, or 2+
+    consecutive blank lines.
+
+    Guard: formal-Gherkin mode — at least one When AND one Then line-leader in doc.
+    Fenced blocks excluded. Spec-only.
+    """
+    p = catalog.get("SPEC-GHERKIN-THEN-MULTIPLE-ASSERTIONS")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Formal-Gherkin guard.
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    findings: list[Finding] = []
+    then_count_in_block = 0
+    blank_streak = 0
+    fired_this_block = False
+    last_keyword = None  # last non-And/But Gherkin keyword seen
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            blank_streak = 0
+            continue
+        stripped = line.strip()
+
+        if not stripped:
+            blank_streak += 1
+            if blank_streak >= 2:
+                then_count_in_block = 0
+                fired_this_block = False
+                last_keyword = None
+            continue
+        blank_streak = 0
+
+        # Scenario:/Scenario Outline: heading resets the block.
+        if _SCENARIO_HEADING_RE.match(line):
+            then_count_in_block = 0
+            fired_this_block = False
+            last_keyword = None
+            continue
+
+        # Non-And/But keyword: update context; reset assertion counter on non-Then steps.
+        m_nonab = _GHERKIN_NON_AND_BUT_LINE_RE.match(line)
+        if m_nonab:
+            kw = stripped.lstrip("-*+ ").split()[0].lower()
+            if kw == "then":
+                last_keyword = "then"
+                then_count_in_block += 1
+            elif kw in ("given", "when"):
+                last_keyword = kw
+            else:
+                last_keyword = kw
+            if then_count_in_block >= 3 and not fired_this_block and kw == "then":
+                # This "then" is the 3rd+ assertion start line.
+                findings.append(
+                    _from_pitfall(
+                        p,
+                        art.path,
+                        "SPEC-GHERKIN-THEN-MULTIPLE-ASSERTIONS: scenario block has 3+ "
+                        "Then assertion lines; each scenario should verify one observable "
+                        "outcome (MAQA single-assertion principle). Split into separate "
+                        "focused scenarios.",
+                        line=i + 1,
+                    )
+                )
+                fired_this_block = True
+            continue
+
+        # And/But continuation inherits last_keyword context.
+        if _GHERKIN_AND_BUT_LINE_RE.match(line):
+            if last_keyword == "then":
+                then_count_in_block += 1
+                if then_count_in_block >= 3 and not fired_this_block:
+                    findings.append(
+                        _from_pitfall(
+                            p,
+                            art.path,
+                            "SPEC-GHERKIN-THEN-MULTIPLE-ASSERTIONS: scenario block has 3+ "
+                            "Then assertion lines; each scenario should verify one observable "
+                            "outcome (MAQA single-assertion principle). Split into separate "
+                            "focused scenarios.",
+                            line=i + 1,
+                        )
+                    )
+                    fired_this_block = True
+
+    return findings
+
+
 # SPEC-GHERKIN-GIVEN-ACTIVE-ACTION: Given step containing a user-action verb.
 _GHERKIN_AND_BUT_LINE_RE = re.compile(r"^\s*[-*+]?\s*(?:and|but)\b", re.IGNORECASE)
 _GHERKIN_NON_AND_BUT_LINE_RE = re.compile(
@@ -7721,6 +7824,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_missing_i18n_strategy(art, catalog))
     out.extend(_spec_qvscribe_nominalization(art, catalog))
     out.extend(_spec_gherkin_given_active_action(art, catalog))
+    out.extend(_spec_gherkin_then_multiple_assertions(art, catalog))
     return out
 
 
