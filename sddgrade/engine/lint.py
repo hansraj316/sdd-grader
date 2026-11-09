@@ -7158,6 +7158,104 @@ def _spec_nfr_concurrency_unquantified(
     return findings
 
 
+# SPEC-NFR-SECURITY-NO-MECHANISM: NFR line with bare security adjective but no
+# concrete security mechanism.  Fires once per offending line.  Spec-only.
+# Sources: ISO/IEC/IEEE 29148:2018 §5.2.5(a)(i); QVscribe Level-1 Clarity;
+# Canon Volere §16; IBM RQA precision dimension.
+_NFR_LINE_ID_RE = re.compile(r"\bNFR-\d+\b", re.IGNORECASE)
+_NFR_SECURITY_ADJ_RE = re.compile(
+    r"(?:"
+    r"\bsecure\b"
+    r"|\bsafe(?:ly)?\b"
+    r"|\bprotected\b"
+    r"|\bconfidential\b"
+    r"|\bprivate\b"
+    r"|\btamper[- ]?proof\b"
+    r"|\bhack[- ]?proof\b"
+    r")",
+    re.IGNORECASE,
+)
+_NFR_SECURITY_MECHANISM_RE = re.compile(
+    r"(?:"
+    r"\btls\b"
+    r"|\bhttps\b"
+    r"|\bssl\b"
+    r"|\bencrypt"
+    r"|\brbac\b"
+    r"|\bmfa\b"
+    r"|\bauthenticat"
+    r"|\bauthoriz"
+    r"|\bcipher\b"
+    r"|\bcertif"
+    r"|\btoken\b"
+    r"|\bjwt\b"
+    r"|\boauth\b"
+    r"|\bsaml\b"
+    r"|\bhash\b"
+    r"|\bhmac\b"
+    r"|\bkms\b"
+    r"|\bvault\b"
+    r"|\bbcrypt\b"
+    r"|\bargon\b"
+    r"|\bpbkdf\b"
+    r"|\bscrypt\b"
+    r"|\baes\b"
+    r"|\brsa\b"
+    r"|\becdsa\b"
+    r"|\bfirewall\b"
+    r"|\bwaf\b"
+    r"|\biam\b"
+    r"|\bacl\b"
+    r"|\brole[- ]based\b"
+    r"|\battribute[- ]based\b"
+    r"|\bzero[- ]trust\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_security_no_mechanism(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """NFR line with bare security adjective but no concrete mechanism named.
+
+    ISO 29148 §5.2.5(a) requires requirements to be unambiguous; §5.2.5(i)
+    requires verifiability.  'NFR-005: data shall be secure' has no acceptance
+    criterion without naming a mechanism (TLS, RBAC, encryption, etc.).
+    QVscribe Level-1 Clarity flags this as imprecise.  Fires once per
+    offending line.  Spec-only.
+    """
+    p = catalog.get("SPEC-NFR-SECURITY-NO-MECHANISM")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _NFR_LINE_ID_RE.search(line):
+            continue
+        if not _NFR_SECURITY_ADJ_RE.search(line):
+            continue
+        if _NFR_SECURITY_MECHANISM_RE.search(line):
+            continue
+        findings.append(
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-SECURITY-NO-MECHANISM: NFR line uses a bare security "
+                "adjective (secure/safe/protected/confidential/private) with no "
+                "concrete mechanism — the requirement cannot be verified "
+                "(ISO 29148 §5.2.5(a)(i); QVscribe Level-1 Clarity; Canon Volere §16; "
+                "IBM RQA precision). Name a mechanism: e.g. 'shall be encrypted with "
+                "AES-256', 'shall require MFA', 'shall enforce RBAC'.",
+                line=i,
+            )
+        )
+    return findings
+
+
 # SPEC-MISSING-ERROR-CODES: spec defines API/HTTP operations but no error response or
 # HTTP status code specification.
 # Sources: MAQA binary-verifiability; OpenAPI best practices (every operation needs ≥1
@@ -7618,6 +7716,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ui_missing_accessibility(art, catalog))
     out.extend(_spec_tbd_placeholder(art, catalog))
     out.extend(_spec_nfr_concurrency_unquantified(art, catalog))
+    out.extend(_spec_nfr_security_no_mechanism(art, catalog))
     out.extend(_spec_missing_error_codes(art, catalog))
     out.extend(_spec_missing_i18n_strategy(art, catalog))
     out.extend(_spec_qvscribe_nominalization(art, catalog))
