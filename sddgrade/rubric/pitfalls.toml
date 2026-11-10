@@ -1803,6 +1803,17 @@ detect = "On non-fenced requirement-bearing lines that contain an NFR-\\d+ ident
 fix = "Replace vague security adjectives with a named mechanism. Examples: 'NFR-005: User data shall be secure' → 'NFR-005: User data at rest shall be encrypted with AES-256-GCM and in transit shall use TLS 1.3'; 'NFR-007: The API shall be safe' → 'NFR-007: The API shall enforce OAuth 2.0 Bearer token authentication on every endpoint'; 'NFR-010: User sessions shall be protected' → 'NFR-010: User sessions shall use HMAC-signed JWT tokens with a 24-hour expiry and mandatory refresh-token rotation'. Each security NFR should name: the data or asset protected, the threat it mitigates, and the specific mechanism or standard. Reference: ISO/IEC/IEEE 29148:2018 §5.2.5(a)(i); QVscribe Level-1 Clarity; Canon Volere §16; IBM RQA precision dimension."
 
 [[pitfall]]
+id = "PLAN-MISSING-CDN"
+name = "Browser-facing deployment plan with no CDN or edge-caching strategy"
+dimension = "completeness"
+artifacts = ["plan"]
+severity = "medium"
+method = "lint"
+why = "Serving static assets (HTML, CSS, JS, images, fonts) directly from an application origin without a CDN increases latency for geographically distributed users, wastes origin bandwidth, and misses browser-cache-control opportunities. The Tessl Production Deployment Checklist and AWS Well-Architected Framework Performance Efficiency Pillar (PE-11, Static content delivery) both require a CDN or edge-distribution strategy for any browser-facing deployment. Google Core Web Vitals research shows that CDN delivery is the single highest-impact change for Largest Contentful Paint (LCP) improvement. A deployment plan that describes a React/Vue/Angular/SPA/frontend application or explicitly serves static assets without documenting a CDN provider, cache-control headers strategy, and cache-invalidation approach on deployments leaves a significant performance and scalability gap that is difficult to retrofit after launch."
+detect = "Guard: plan must have deploy vocabulary (_DEPLOY_VOCAB_RE/_DEPLOY_SECTION_RE). Trigger: ≥1 non-fenced, non-heading line contains browser-facing or static-serving vocabulary: SPA, React, Vue, Angular, Next.js, Nuxt, Svelte, frontend, web client, static assets, static files, images and CSS, CSS and JS. Silence: document-level scan for CDN/edge-caching vocabulary — CDN, CloudFront, Cloudflare, Fastly, Akamai, edge cache, edge network, Edgecast, BunnyCDN, GCore, Azure CDN, Google Cloud CDN, cloud storage+cdn, cdn+s3, cache-control, cache headers, static hosting, content delivery. One aggregate finding at first trigger line. Plan artifact only."
+fix = "Add a CDN and static asset delivery section to your deployment plan. Document: (1) the CDN provider — AWS CloudFront, Cloudflare, Fastly, Akamai, Azure CDN, or Google Cloud CDN — and how the origin is connected; (2) the cache-control headers strategy for each asset type (immutable hashing for JS/CSS bundles, short TTL for HTML, long TTL for images); (3) the cache-invalidation approach on new deployments (CDN invalidation API call, versioned asset filenames, or deploy hook); (4) any edge-side logic required (geo-routing, A/B testing, authentication at edge). Reference: AWS Well-Architected Framework PE-11 (Static content delivery); Tessl Deployment Checklist; Google Core Web Vitals — LCP optimization; Cloudflare CDN documentation."
+
+[[pitfall]]
 id = "SPEC-GHERKIN-THEN-MULTIPLE-ASSERTIONS"
 name = "Gherkin scenario with 3+ Then/And assertion lines (over-specified outcome)"
 dimension = "clarity"

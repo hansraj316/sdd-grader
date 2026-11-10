@@ -5652,6 +5652,99 @@ def _plan_no_content_security_policy(art: Artifact, catalog: dict[str, Pitfall])
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-CDN
+# ---------------------------------------------------------------------------
+# Trigger: browser-facing / static-asset serving vocabulary.
+_CDN_TRIGGER_VOCAB_RE = re.compile(
+    r"\bSPA\b"
+    r"|\bReact\b"
+    r"|\bVue\b"
+    r"|\bAngular\b"
+    r"|\bNext\.?js\b"
+    r"|\bNuxt\b"
+    r"|\bSvelte\b"
+    r"|\bfrontend\b"
+    r"|\bweb[\s_-]?client\b"
+    r"|\bstatic[\s_-]?assets?\b"
+    r"|\bstatic[\s_-]?files?\b"
+    r"|\bimages?\s+and\s+css\b"
+    r"|\bcss\s+and\s+js\b",
+    re.IGNORECASE,
+)
+
+# Silence: any CDN / edge-caching vocabulary anywhere in non-fenced text.
+_CDN_SILENCE_RE = re.compile(
+    r"\bCDN\b"
+    r"|\bCloudFront\b"
+    r"|\bCloudflare\b"
+    r"|\bFastly\b"
+    r"|\bAkamai\b"
+    r"|\bedge[\s_-]?cache\b"
+    r"|\bedge[\s_-]?network\b"
+    r"|\bedgecast\b"
+    r"|\bbunnycdn\b"
+    r"|\bgcore\b"
+    r"|\bazure[\s_-]?cdn\b"
+    r"|\bgoogle[\s_-]?cloud[\s_-]?cdn\b"
+    r"|\bcloud[\s_-]?storage.{0,10}cdn\b"
+    r"|\bcdn.{0,10}s3\b"
+    r"|\bs3.{0,10}cdn\b"
+    r"|\bcache[\s_-]?control\b"
+    r"|\bcache_control\b"
+    r"|\bcache[\s_-]?headers?\b"
+    r"|\bstatic[\s_-]?hosting\b"
+    r"|\bcontent[\s_-]?delivery\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_cdn(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Browser-facing deployment plan with no CDN/edge-caching strategy (PLAN-MISSING-CDN).
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains browser/static-asset vocabulary.
+    Silence: any CDN or edge-caching vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-CDN")
+    if p is None or not p.applies_to(art.type):
+        return []
+    has_deploy_section = any(_DEPLOY_SECTION_RE.search(s.title) for s in art.sections)
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _CDN_TRIGGER_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _CDN_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-CDN: deployment plan describes a browser-facing application or "
+        "serves static assets (SPA/React/Vue/Angular/Next.js/Nuxt/Svelte/frontend/"
+        "static assets) but has no CDN or edge-caching strategy. Without a CDN, "
+        "static assets are served from the origin on every request, increasing latency "
+        "for globally distributed users and adding unnecessary load to the origin server. "
+        "Add a CDN section naming the provider (CloudFront/Cloudflare/Fastly/Akamai/"
+        "Azure CDN/Google Cloud CDN), the cache-control headers strategy, and the "
+        "cache-invalidation approach on deployments. "
+        "(Tessl deployment checklist; AWS Well-Architected PE-11; Google Core Web Vitals).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-DISTRIBUTED-TRACING
 # ---------------------------------------------------------------------------
 # Trigger: microservices / service-mesh / multi-service orchestration vocab.
@@ -7892,6 +7985,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_pagination(art, catalog))
     out.extend(_plan_missing_cors_policy(art, catalog))
     out.extend(_plan_no_content_security_policy(art, catalog))
+    out.extend(_plan_missing_cdn(art, catalog))
     out.extend(_plan_missing_distributed_tracing(art, catalog))
     out.extend(_plan_missing_load_test(art, catalog))
     out.extend(_plan_missing_encryption_at_rest(art, catalog))
