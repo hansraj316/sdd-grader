@@ -5745,6 +5745,84 @@ def _plan_missing_cdn(art: Artifact, catalog: dict[str, Pitfall]) -> list[Findin
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-CONTAINER-REGISTRY
+# ---------------------------------------------------------------------------
+# Trigger: reuses _CONTAINER_VOCAB_RE (docker/k8s/helm/pod/oci image).
+# Silence: any container registry vocabulary anywhere in non-fenced text.
+_CONTAINER_REGISTRY_SILENCE_RE = re.compile(
+    r"\bECR\b"
+    r"|\bGCR\b"
+    r"|\bgcr\.io\b"
+    r"|\bACR\b"
+    r"|\bghcr\.io\b"
+    r"|\bdocker\.io\b"
+    r"|\bdocker[\s_-]?hub\b"
+    r"|\bcontainer[\s_-]?registry\b"
+    r"|\bimage[\s_-]?registry\b"
+    r"|\bregistry\b"
+    r"|\bimage[\s_-]?pull[\s_-]?policy\b"
+    r"|\bimage[\s_-]?tag\b"
+    r"|\bdocker[\s_-]?tag\b"
+    r"|\bharbor\b"
+    r"|\bnexus\b"
+    r"|\bquay\.io\b"
+    r"|\bartifactory\b"
+    r"|\bcrane\b"
+    r"|\bskopeo\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_container_registry(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Container/Docker deployment plan with no image registry strategy (PLAN-MISSING-CONTAINER-REGISTRY).
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains container/orchestration vocab.
+    Silence: any container registry vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-CONTAINER-REGISTRY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    has_deploy_section = any(_DEPLOY_SECTION_RE.search(s.title) for s in art.sections)
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _CONTAINER_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _CONTAINER_REGISTRY_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-CONTAINER-REGISTRY: deployment plan uses container/Docker/Kubernetes "
+        "vocabulary but has no container image registry strategy. Without a defined registry, "
+        "teams do not know where images are stored, how they are versioned/tagged, or whether "
+        "they are scanned for vulnerabilities before deployment. Using public Docker Hub without "
+        "digest pinning is a supply chain risk (OWASP CICD-SEC-9). Add a registry section "
+        "naming the provider (ECR/GCR/ghcr.io/ACR/Harbor/Nexus), the image-tagging convention "
+        "(semver or SHA-based; avoid 'latest' in production), the image pull policy, and the "
+        "vulnerability scanning tool. "
+        "(Kiro production-readiness; Tessl Deployment Checklist; CNCF best practices; "
+        "OWASP CICD-SEC-9).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-DISTRIBUTED-TRACING
 # ---------------------------------------------------------------------------
 # Trigger: microservices / service-mesh / multi-service orchestration vocab.
@@ -7998,6 +8076,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_webhook_reliability(art, catalog))
     out.extend(_plan_no_event_schema(art, catalog))
     out.extend(_plan_no_multi_tenant_isolation(art, catalog))
+    out.extend(_plan_missing_container_registry(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
