@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-11T08:30:06.190278+00:00",
+  "timestamp": "2026-11-12T08:28:54.848071+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -45,7 +45,7 @@
       {
         "type": "spec",
         "overall": 0.0,
-        "findings": 23
+        "findings": 24
       },
       {
         "type": "plan",
@@ -84,6 +84,7 @@
       "SPEC-MISSING-REVISION-HISTORY",
       "SPEC-MISSING-SCOPE",
       "SPEC-MISSING-STAKEHOLDER",
+      "SPEC-NFR-SCALABILITY-NO-METRIC",
       "SPEC-NON-MEASURABLE-SUCCESS",
       "SPEC-PRONOUN-ANTECEDENT",
       "SPEC-SPECULATIVE-FEATURE",
@@ -94,7 +95,7 @@
       "TASKS-MALFORMED",
       "TASKS-TESTS-NOT-FIRST"
     ],
-    "finding_count": 33
+    "finding_count": 34
   },
   "extras": [],
   "corpus": {
@@ -299,7 +300,7 @@
         "quality": "medium",
         "adapter": "speckit",
         "artifact_count": 1,
-        "overall": 74.0,
+        "overall": 68.0,
         "score_band": [
           60,
           84
@@ -313,6 +314,7 @@
         "false_negatives": [],
         "accepted_extras_detected": [
           "SPEC-AMBIGUOUS-WORDING",
+          "SPEC-NFR-SCALABILITY-NO-METRIC",
           "SPEC-STORY-NO-BENEFIT"
         ],
         "known_misses_caught": [],
@@ -322,8 +324,8 @@
         "recall": 1.0,
         "recall_incl_known_misses": 1.0,
         "precision": 1.0,
-        "correct_detections": 4,
-        "total_detections": 4,
+        "correct_detections": 5,
+        "total_detections": 5,
         "note": "NFRs (latency/availability/scalability) with no thresholds; non-measurable success. The ambiguous-wording extra is genuine: 'highly scalable' in FR-002 is exactly the vague phrasing the rule exists for."
       },
       {
@@ -448,8 +450,8 @@
       "mean_recall": 1.0,
       "mean_recall_incl_known_misses": 0.92,
       "precision": 0.984,
-      "correct_detections": 60,
-      "total_detections": 61,
+      "correct_detections": 61,
+      "total_detections": 62,
       "band_failures": [],
       "unlabeled_unexpected": {},
       "known_false_positives": 1,

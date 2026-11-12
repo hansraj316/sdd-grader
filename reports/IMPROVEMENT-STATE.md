@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 145
-Last run: 2026-11-11
-Open loop PRs: 0
+Iteration: 146
+Last run: 2026-11-12
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -467,3 +467,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 91 (2026-09-21): Phase 1 no open PRs (0); Phase 2 found 0 open loop-candidate issues → Phase 3 research; created 3 new issues #225 (SPEC-US-NO-AC), #226 (PLAN-MISSING-SLO), #227 (DATA-MODEL-ENTITY-NO-PK); Phase 4 implemented #225 (SPEC-US-NO-AC — US-NNN section heading in spec.md with no AC-NNN acceptance-criteria lines in its span; Spec-Kit/INVEST Testable/ISO 29148 §5.2.3; guard=≥1 US-NNN heading; span computed same as _spec_fr_no_story; _AC_NNN_RE scan; fenced-block exclusion via _fence_mask; aggregate finding naming missing story titles; wired into _spec_checks() after _spec_us_no_ac(); 11 unit tests (5 fire, 6 silent)); Phase 5 gate: pytest 1427 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #228 (draft); issue #225 commented.
 - iter 91 merge (2026-09-21): CI green; squash-merged PR #228 (SPEC-US-NO-AC, issue #225 auto-closed); 0 open loop PRs.
 - iter 93 (2026-09-23): Phase 1 no open PRs (0); Phase 2 found 1 open loop-candidate issue (#227 DATA-MODEL-ENTITY-NO-PK); Phase 4 implemented #227: _DATA_MODEL_PK_VOCAB_RE (8-alternative VERBOSE, case-insensitive: id/ID/PK/uuid/UUID/primary key/primary_key/surrogate key/unique identifier) + _data_model_entity_no_pk() helper (guards DATA_MODEL type + ≥1 entity; scans Section.body per entity; aggregate finding naming offenders) + _data_model_checks() + _STRUCTURAL_CHECKS[DATA_MODEL] entry + DATA-MODEL-ENTITY-NO-PK pitfalls.toml entry (dimension=completeness, artifacts=[data-model]); 14 unit tests (5 fire, 9 silent); Phase 5 gate: pytest 1456 green, benchmark good=100.0 bad<70 precision=0.981 PASS; Phase 6 opened PR #230; CI green (test+package both success); squash-merged PR #230 (issue #227 closed), 0 open loop PRs.
+- iter 146 (2026-11-12): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#339 SPEC-NFR-SCALABILITY-NO-METRIC, #337 SPEC-US-VAGUE-BENEFIT). Phase 4 picked #339 (SPEC-NFR-SCALABILITY-NO-METRIC — normative spec requirement asserts scalability keyword without a numeric scale target; ISO/IEC 25010 §6.2.2; QVscribe QV-104 Imprecise Measurement; Canon Volere Scale/Meter/Must; ISO 29148 §5.2.5(i); _NFR_SCALABILITY_RE 11-alternative VERBOSE + _NFR_SCALABILITY_NUMERIC_RE smart-silence regex handling comma-formatted numbers and 'scalable to N' idiom + _spec_nfr_scalability_no_metric() scoped via _requirement_mask()/_fence_mask(); wired after _spec_nfr_concurrency_unquantified; corpus/cases/nfr-unquantified/expected.json updated to accept new finding (note already flagged 'highly scalable' as the target phrasing); 17 unit tests (8 fire, 9 silent); pytest 2230 green; benchmark good=100.0 bad=50.8 precision=0.984 PASS); PR #341 opened (draft); issue #339 commented. Awaiting CI.
