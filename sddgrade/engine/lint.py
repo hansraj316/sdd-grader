@@ -7329,6 +7329,79 @@ def _spec_nfr_concurrency_unquantified(
     return findings
 
 
+# SPEC-NFR-SCALABILITY-NO-METRIC: scalability claim NFR with no numeric scale
+# target.  Fires once per offending normative line.  Spec-only.
+# Sources: ISO/IEC 25010 §6.2.2; QVscribe QV-104; Canon Volere Scale/Meter/Must;
+# ISO/IEC/IEEE 29148:2018 §5.2.5(i).
+_NFR_SCALABILITY_RE = re.compile(
+    r"(?:"
+    r"\bhorizontally\s+scalable\b"
+    r"|\bvertically\s+scalable\b"
+    r"|\belastically\s+scalable\b"
+    r"|\bscal(?:es?\s+elastically|ing\s+elastically)\b"
+    r"|\bscal(?:es?\s+(?:out|up|down)|ing\s+(?:out|up|down))\b"
+    r"|\bscal(?:e|es|able)\s+to\s+meet\s+demand\b"
+    r"|\bcan\s+scale\b"
+    r"|\bhorizontally\s+scal(?:e|es|ing|able)\b"
+    r"|\bvertically\s+scal(?:e|es|ing|able)\b"
+    r"|\belastic\s+scal(?:ing|e|es|able)\b"
+    r"|\bscalable\b"
+    r")",
+    re.IGNORECASE,
+)
+_NFR_SCALABILITY_NUMERIC_RE = re.compile(
+    r"(?:"
+    r"\d[\d,]*\s*(?:users?|requests?|nodes?|instances?|replicas?|tenants?|clients?|connections?|sessions?|pods?|workers?|cores?|vcpus?|threads?|servers?|rows?|records?|messages?|events?|transactions?|operations?)"
+    r"|\d[\d,]*\s*(?:GB|MB|TB|KB|GiB|MiB|TiB|bytes?)\b"
+    r"|\d[\d,]*\s*(?:rps|rpm|tps|qps)\b"
+    r"|\d[\d,]*\s*(?:per\s+second|per\s+minute|per\s+hour|per\s+day)\b"
+    r"|\d[\d,]*\s*x\b"
+    r"|\d[\d,]*\s*%"
+    r"|\bscal\w*\s+to\s+\d"
+    r"|(?:up\s+to|at\s+least|minimum|maximum|min|max)[\s\w]{0,15}\d"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_scalability_no_metric(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Normative req with scalability claim but no numeric scale target (SPEC-NFR-SCALABILITY-NO-METRIC).
+
+    ISO/IEC 25010 §6.2.2 (Scalability) and QVscribe QV-104 require every
+    scalability requirement to be verifiable.  'The system shall be scalable'
+    has no acceptance criterion without a numeric target.  Fires once per
+    offending normative line.  Spec-only.
+    """
+    p = catalog.get("SPEC-NFR-SCALABILITY-NO-METRIC")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _NFR_SCALABILITY_RE.search(line):
+            continue
+        if _NFR_SCALABILITY_NUMERIC_RE.search(line):
+            continue
+        findings.append(
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-SCALABILITY-NO-METRIC: normative requirement asserts "
+                "scalability without a numeric target — the requirement cannot be "
+                "verified (ISO/IEC 25010 §6.2.2; QVscribe QV-104 Imprecise "
+                "Measurement; Canon Volere Scale/Meter/Must). Add a concrete scale "
+                "target, e.g. 'shall scale to 10,000 concurrent users'.",
+                line=i,
+            )
+        )
+    return findings
+
+
 # SPEC-NFR-SECURITY-NO-MECHANISM: NFR line with bare security adjective but no
 # concrete security mechanism.  Fires once per offending line.  Spec-only.
 # Sources: ISO/IEC/IEEE 29148:2018 §5.2.5(a)(i); QVscribe Level-1 Clarity;
@@ -7990,6 +8063,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_ui_missing_accessibility(art, catalog))
     out.extend(_spec_tbd_placeholder(art, catalog))
     out.extend(_spec_nfr_concurrency_unquantified(art, catalog))
+    out.extend(_spec_nfr_scalability_no_metric(art, catalog))
     out.extend(_spec_nfr_security_no_mechanism(art, catalog))
     out.extend(_spec_missing_error_codes(art, catalog))
     out.extend(_spec_missing_i18n_strategy(art, catalog))
