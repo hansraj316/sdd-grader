@@ -250,6 +250,16 @@ _VAGUE_ACTOR_RE = re.compile(
     re.IGNORECASE,
 )
 
+# SPEC-US-VAGUE-BENEFIT: "so that" clause with unmeasurable benefit words.
+_US_VAGUE_BENEFIT_RE = re.compile(
+    r"\bso\s+that\b.{0,120}"
+    r"\b(?:more\s+efficiently|more\s+easily|better|seamlessly|conveniently"
+    r"|improve|enhance|easier|faster\s+way|more\s+effective|more\s+productive"
+    r"|more\s+streamlined)\b",
+    re.IGNORECASE,
+)
+_US_BENEFIT_METRIC_RE = re.compile(r"[\d%]")
+
 # Vague outcome adverbs in Gherkin Then clauses (SPEC-AC-VAGUE-OUTCOME).
 _VAGUE_OUTCOME_RE = re.compile(
     r"\b(?:correctly|properly|appropriately|as\s+expected|as\s+intended)\b",
@@ -6764,6 +6774,61 @@ def _spec_story_vague_actor(art: Artifact, catalog: dict[str, Pitfall]) -> list[
     ]
 
 
+def _spec_us_vague_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """User story 'so that' clause with unmeasurable vague benefit words (SPEC-US-VAGUE-BENEFIT).
+
+    Guard: spec must contain at least one Connextra story opener.
+    Trigger: a non-fenced story line (or its next line) contains 'so that' followed by
+    a vague benefit token without any digit or '%' on the same clause.
+    """
+    p = catalog.get("SPEC-US-VAGUE-BENEFIT")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fence = _fence_mask(lines)
+    has_stories = any(
+        _STORY_OPENER_RE.match(line) and _I_WANT_RE.search(line) for line in lines
+    )
+    if not has_stories:
+        return []
+    offending: list[int] = []
+    for i, line in enumerate(lines):
+        if fence[i]:
+            continue
+        if not (_STORY_OPENER_RE.match(line) and _I_WANT_RE.search(line)):
+            continue
+        # Look for "so that" on same line or the immediately following non-blank line.
+        candidate = line
+        if not _SO_THAT_RE.search(line):
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            if j < len(lines) and _SO_THAT_RE.search(lines[j]):
+                candidate = line + " " + lines[j]
+            else:
+                continue
+        # Extract from "so that" onward and check for vague tokens without a metric.
+        m = _SO_THAT_RE.search(candidate)
+        if m is None:
+            continue
+        clause = candidate[m.start():]
+        if _US_VAGUE_BENEFIT_RE.search(clause) and not _US_BENEFIT_METRIC_RE.search(clause):
+            offending.append(i + 1)
+    if not offending:
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"SPEC-US-VAGUE-BENEFIT: {len(offending)} user story(ies) have a 'so that'"
+            " clause with vague, unmeasurable benefit language (e.g., 'more efficiently',"
+            " 'better', 'seamlessly'); replace with a concrete metric or threshold"
+            " (INVEST Valuable / Canon Volere Fit Criterion / ISO 29148 §5.2.5(a)).",
+            line=offending[0],
+        )
+    ]
+
+
 def _spec_ac_vague_outcome(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """Then clause with vague non-observable outcome word (SPEC-AC-VAGUE-OUTCOME).
 
@@ -8007,6 +8072,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_story_no_benefit(art, catalog))
     out.extend(_spec_story_compound(art, catalog))
     out.extend(_spec_story_vague_actor(art, catalog))
+    out.extend(_spec_us_vague_benefit(art, catalog))
     out.extend(_unbounded_scope(art, catalog))
     out.extend(_req_duplicate_id(art, catalog))
     out.extend(_weak_directive(art, catalog))
