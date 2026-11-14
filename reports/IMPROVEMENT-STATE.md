@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 148
 Last run: 2026-11-14
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -471,3 +471,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 146 (2026-11-12): Phase 1 no open loop/* PRs (0). Phase 2 found 2 open loop-candidate issues (#339 SPEC-NFR-SCALABILITY-NO-METRIC, #337 SPEC-US-VAGUE-BENEFIT). Phase 4 picked #339 (SPEC-NFR-SCALABILITY-NO-METRIC — normative spec requirement asserts scalability keyword without a numeric scale target; ISO/IEC 25010 §6.2.2; QVscribe QV-104 Imprecise Measurement; Canon Volere Scale/Meter/Must; ISO 29148 §5.2.5(i); _NFR_SCALABILITY_RE 11-alternative VERBOSE + _NFR_SCALABILITY_NUMERIC_RE smart-silence regex handling comma-formatted numbers and 'scalable to N' idiom + _spec_nfr_scalability_no_metric() scoped via _requirement_mask()/_fence_mask(); wired after _spec_nfr_concurrency_unquantified; corpus/cases/nfr-unquantified/expected.json updated to accept new finding (note already flagged 'highly scalable' as the target phrasing); 17 unit tests (8 fire, 9 silent); pytest 2230 green; benchmark good=100.0 bad=50.8 precision=0.984 PASS); PR #341 opened (draft); issue #339 commented. Awaiting CI.
 - iter 146 merge (2026-11-12): CI green (test+package both success); squash-merged PR #341 (SPEC-NFR-SCALABILITY-NO-METRIC, issue #339 auto-closed); 0 open loop PRs.
 - iter 148 (2026-11-14): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3 research; filed issue #343 (SPEC-NFR-RELIABILITY-UNMEASURED — normative NFR asserts reliability/fault-tolerance/resilience keyword without measurable metric; ISO/IEC 25010:2023 §4.2 (Reliability characteristic distinct from Availability); Volere Canon RF; QVscribe QV-104; ISO 29148 §5.2.5(i); _NFR_RELIABILITY_RE 9-alternative regex + _NFR_RELIABILITY_NUMERIC_RE smart-silence (time units, %, MTBF/MTTR comparisons, error/failure rate + digit, 'less than/at most/under N') + _spec_nfr_reliability_unmeasured() scoped via _requirement_mask()/_fence_mask(); wired after _spec_nfr_scalability_no_metric(); 17 unit tests (8 fire, 9 silent); pytest 2261 green; benchmark good=100.0 bad=50.8 precision=0.984 PASS); PR #344 opened (draft); issue #343 commented. Awaiting CI.
+- iter 148 merge (2026-11-14): CI green (test+package both success); squash-merged PR #344 (SPEC-NFR-RELIABILITY-UNMEASURED, issue #343 auto-closed); 0 open loop PRs.
