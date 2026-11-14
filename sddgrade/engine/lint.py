@@ -7467,6 +7467,82 @@ def _spec_nfr_scalability_no_metric(
     return findings
 
 
+# SPEC-NFR-RELIABILITY-UNMEASURED: normative requirement asserts reliability,
+# fault-tolerance, or resilience quality without a measurable metric.
+# Fires once per offending normative line.  Spec-only.
+# Sources: ISO/IEC 25010:2023 §4.2 (Reliability characteristic);
+# Volere Canon RF (Reliability & Fault Tolerance); QVscribe QV-104;
+# ISO/IEC/IEEE 29148:2018 §5.2.5(i).
+_NFR_RELIABILITY_RE = re.compile(
+    r"(?:"
+    r"\breliable\b"
+    r"|\breliability\b"
+    r"|\bfault[- ]toleran(?:t|ce)\b"
+    r"|\bresilient\b"
+    r"|\bresilience\b"
+    r"|\bfaultless\b"
+    r"|\bMTBF\b"
+    r"|\bMTTR\b"
+    r"|\bmean\s+time\s+(?:between|to)\b"
+    r")",
+    re.IGNORECASE,
+)
+_NFR_RELIABILITY_NUMERIC_RE = re.compile(
+    r"(?:"
+    r"\d[\d,]*\s*%"
+    r"|\d[\d,]*\s*(?:hours?|hrs?|minutes?|mins?|seconds?|secs?|days?)\b"
+    r"|\bMTBF\s*[><=]\s*\d"
+    r"|\bMTTR\s*[<>=]\s*\d"
+    r"|(?:error|failure|fault)\s+rate.*\d"
+    r"|\d.*(?:error|failure|fault)\s+rate"
+    r"|\d[\d,]*\s*(?:errors?|failures?|faults?)\s+per\b"
+    r"|(?:less\s+than|fewer\s+than|at\s+most|below|under|no\s+more\s+than)\s+\d"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_reliability_unmeasured(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Normative req asserting reliability/fault-tolerance without a metric (SPEC-NFR-RELIABILITY-UNMEASURED).
+
+    ISO/IEC 25010:2023 §4.2 defines Reliability as a distinct quality characteristic
+    separate from Availability, with sub-characteristics Faultlessness, Fault Tolerance
+    and Recoverability.  Volere Canon requires a Scale and Meter for every NFR.
+    ISO 29148 §5.2.5(i) demands verifiability.  'The system shall be fault-tolerant'
+    has no acceptance criterion without a numeric metric (MTBF, MTTR, error rate, etc.).
+    Fires once per offending normative line.  Spec-only.
+    """
+    p = catalog.get("SPEC-NFR-RELIABILITY-UNMEASURED")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _NFR_RELIABILITY_RE.search(line):
+            continue
+        if _NFR_RELIABILITY_NUMERIC_RE.search(line):
+            continue
+        findings.append(
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-RELIABILITY-UNMEASURED: normative requirement asserts "
+                "reliability/fault-tolerance/resilience without a measurable metric — "
+                "the requirement cannot be verified (ISO/IEC 25010:2023 §4.2; "
+                "QVscribe QV-104 Imprecise Measurement; Canon Volere Scale/Meter/Must; "
+                "ISO 29148 §5.2.5(i)). Add a concrete metric, e.g. 'MTBF > 100 hours', "
+                "'MTTR < 4 hours', or 'error rate < 0.1%'.",
+                line=i,
+            )
+        )
+    return findings
+
+
 # SPEC-NFR-SECURITY-NO-MECHANISM: NFR line with bare security adjective but no
 # concrete security mechanism.  Fires once per offending line.  Spec-only.
 # Sources: ISO/IEC/IEEE 29148:2018 §5.2.5(a)(i); QVscribe Level-1 Clarity;
@@ -8130,6 +8206,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_tbd_placeholder(art, catalog))
     out.extend(_spec_nfr_concurrency_unquantified(art, catalog))
     out.extend(_spec_nfr_scalability_no_metric(art, catalog))
+    out.extend(_spec_nfr_reliability_unmeasured(art, catalog))
     out.extend(_spec_nfr_security_no_mechanism(art, catalog))
     out.extend(_spec_missing_error_codes(art, catalog))
     out.extend(_spec_missing_i18n_strategy(art, catalog))
