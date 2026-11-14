@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-13T08:27:12.263693+00:00",
+  "timestamp": "2026-11-14T08:29:23.093228+00:00",
   "good": {
     "path": "/home/user/sddreview/tests/fixtures/speckit_good",
     "overall": 100.0,
@@ -45,7 +45,7 @@
       {
         "type": "spec",
         "overall": 0.0,
-        "findings": 24
+        "findings": 25
       },
       {
         "type": "plan",
@@ -84,6 +84,7 @@
       "SPEC-MISSING-REVISION-HISTORY",
       "SPEC-MISSING-SCOPE",
       "SPEC-MISSING-STAKEHOLDER",
+      "SPEC-NFR-RELIABILITY-UNMEASURED",
       "SPEC-NFR-SCALABILITY-NO-METRIC",
       "SPEC-NON-MEASURABLE-SUCCESS",
       "SPEC-PRONOUN-ANTECEDENT",
@@ -95,7 +96,7 @@
       "TASKS-MALFORMED",
       "TASKS-TESTS-NOT-FIRST"
     ],
-    "finding_count": 34
+    "finding_count": 35
   },
   "extras": [],
   "corpus": {
