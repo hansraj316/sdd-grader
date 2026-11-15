@@ -6659,6 +6659,40 @@ def _tasks_no_phase_dependency(art: Artifact, catalog: dict[str, Pitfall]) -> li
     ]
 
 
+_TASKS_TESTING_VOCAB_RE = re.compile(
+    r"\b(?:tests?|testing|unit[ _]tests?|integration[ _]tests?|e2e[ _]tests?"
+    r"|verif(?:y|ies|ied|ication)|validat(?:e|es|ing|ion)|quality[ _]assurance)\b",
+    re.IGNORECASE,
+)
+
+
+def _tasks_missing_testing_task(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Task file with 5+ T## tasks but no testing task (TASKS-MISSING-TESTING-TASK)."""
+    p = catalog.get("TASKS-MISSING-TESTING-TASK")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    task_lines = [
+        (i + 1, ln)
+        for i, ln in enumerate(lines)
+        if not fenced[i] and _TASK_LINE_RE.match(ln) and _TASK_ID_RE.search(ln)
+    ]
+    if len(task_lines) < 5:
+        return []
+    if any(_TASKS_TESTING_VOCAB_RE.search(ln) for _, ln in task_lines):
+        return []
+    return [
+        _from_pitfall(
+            p,
+            art.path,
+            f"{len(task_lines)} T## task(s) found but no testing task"
+            " (no test/verify/validate/e2e task).",
+            line=1,
+        )
+    ]
+
+
 def _story_no_benefit(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     """User stories missing the 'so that [benefit]' clause (Connextra format / INVEST Valuable)."""
     p = catalog.get("SPEC-STORY-NO-BENEFIT")
@@ -8330,6 +8364,7 @@ def _tasks_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_tasks_untraced_task(art, catalog))
     out.extend(_tasks_no_estimate(art, catalog))
     out.extend(_tasks_no_phase_dependency(art, catalog))
+    out.extend(_tasks_missing_testing_task(art, catalog))
     return out
 
 
