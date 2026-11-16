@@ -7577,6 +7577,72 @@ def _spec_nfr_reliability_unmeasured(
     return findings
 
 
+# SPEC-NFR-MAINTAINABILITY-NO-METRIC: NFR line asserting maintainability without
+# a measurable metric.  Fires once per offending line.  Spec-only.
+# Sources: ISO/IEC 25010:2023 Maintainability; ISO 29148 §5.2.5(i); Volere Canon; MAQA.
+_NFR_MAINTAINABILITY_RE = re.compile(
+    r"(?:"
+    r"\bmaintainable\b"
+    r"|\bmaintainability\b"
+    r"|\bcode\s+quality\b"
+    r"|\btechnical\s+debt\b"
+    r"|\bcodebase\s+quality\b"
+    r")",
+    re.IGNORECASE,
+)
+_NFR_MAINTAINABILITY_METRIC_RE = re.compile(
+    r"(?:"
+    r"\bcoverage\b"
+    r"|\bcyclomatic\b"
+    r"|\bcomplexity\b"
+    r"|\d+\s*%"
+    r"|\btest\s+coverage\b"
+    r"|\bdefect\s+density\b"
+    r"|\bcode\s+churn\b"
+    r"|\bdebt\s+ratio\b"
+    r"|\bcoupling\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_maintainability_no_metric(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Normative req asserting maintainability without a measurable metric (SPEC-NFR-MAINTAINABILITY-NO-METRIC).
+
+    ISO/IEC 25010:2023 Maintainability has measurable sub-characteristics.
+    ISO 29148 §5.2.5(i) requires verifiability.  Fires once per offending line.  Spec-only.
+    """
+    p = catalog.get("SPEC-NFR-MAINTAINABILITY-NO-METRIC")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _NFR_MAINTAINABILITY_RE.search(line):
+            continue
+        if _NFR_MAINTAINABILITY_METRIC_RE.search(line):
+            continue
+        findings.append(
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-MAINTAINABILITY-NO-METRIC: normative requirement asserts "
+                "maintainability/code quality/technical debt without a measurable metric — "
+                "the requirement cannot be verified (ISO/IEC 25010:2023 Maintainability; "
+                "ISO 29148 §5.2.5(i); Volere Canon Scale/Meter/Must; MAQA completeness). "
+                "Add a concrete metric, e.g. 'test coverage ≥ 80%', "
+                "'cyclomatic complexity ≤ 10', or 'technical debt ratio < 5%'.",
+                line=i,
+            )
+        )
+    return findings
+
+
 # SPEC-NFR-SECURITY-NO-MECHANISM: NFR line with bare security adjective but no
 # concrete security mechanism.  Fires once per offending line.  Spec-only.
 # Sources: ISO/IEC/IEEE 29148:2018 §5.2.5(a)(i); QVscribe Level-1 Clarity;
@@ -8241,6 +8307,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_nfr_concurrency_unquantified(art, catalog))
     out.extend(_spec_nfr_scalability_no_metric(art, catalog))
     out.extend(_spec_nfr_reliability_unmeasured(art, catalog))
+    out.extend(_spec_nfr_maintainability_no_metric(art, catalog))
     out.extend(_spec_nfr_security_no_mechanism(art, catalog))
     out.extend(_spec_missing_error_codes(art, catalog))
     out.extend(_spec_missing_i18n_strategy(art, catalog))
