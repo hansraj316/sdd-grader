@@ -7643,6 +7643,68 @@ def _spec_nfr_maintainability_no_metric(
     return findings
 
 
+# SPEC-QVSCRIBE-OPTIONAL-FEATURE: normative requirement (SHALL/MUST) weakened by
+# optional-feature language.  Fires once per offending line.  Spec-only.
+# Sources: QVscribe Level-1 Clarity (optional-feature phrasing);
+#          ISO/IEC/IEEE 29148:2018 §5.2.5(c) (necessity).
+_OPTIONAL_FEATURE_RE = re.compile(
+    r"\b(?:"
+    r"if\s+desired"
+    r"|if\s+necessary"
+    r"|if\s+required"
+    r"|as\s+needed"
+    r"|where\s+appropriate"
+    r"|optionally"
+    r"|if\s+applicable"
+    r"|if\s+feasible"
+    r"|if\s+possible"
+    r"|when\s+requested"
+    r"|if\s+the\s+user\s+wishes"
+    r"|at\s+the\s+user(?:'s|s)\s+discretion"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _spec_qvscribe_optional_feature(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Normative requirement weakened by optional-feature language (SPEC-QVSCRIBE-OPTIONAL-FEATURE).
+
+    ISO 29148 §5.2.5(c): requirements shall be necessary.  A SHALL/MUST statement
+    qualified with 'if desired', 'optionally', 'if feasible', etc. is effectively
+    optional and therefore not a true requirement.  QVscribe Level-1 Clarity flags
+    these phrases as making normative statements non-mandatory.
+    Scoped via _requirement_mask() / _fence_mask(); fires once per offending line.
+    Spec-only.
+    """
+    p = catalog.get("SPEC-QVSCRIBE-OPTIONAL-FEATURE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _MANDATORY_MODAL_RE.search(line):
+            continue
+        if _OPTIONAL_FEATURE_RE.search(line):
+            findings.append(
+                _from_pitfall(
+                    p, art.path,
+                    "SPEC-QVSCRIBE-OPTIONAL-FEATURE: normative requirement (SHALL/MUST) contains "
+                    "optional-feature language that makes it non-mandatory — a true requirement "
+                    "must be necessary (ISO 29148 §5.2.5(c); QVscribe Level-1 Clarity). "
+                    "Remove the optional qualifier or move the conditional behaviour to a "
+                    "separate optional requirement.",
+                    line=i,
+                )
+            )
+    return findings
+
+
 # SPEC-NFR-SECURITY-NO-MECHANISM: NFR line with bare security adjective but no
 # concrete security mechanism.  Fires once per offending line.  Spec-only.
 # Sources: ISO/IEC/IEEE 29148:2018 §5.2.5(a)(i); QVscribe Level-1 Clarity;
@@ -8314,6 +8376,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_nominalization(art, catalog))
     out.extend(_spec_gherkin_given_active_action(art, catalog))
     out.extend(_spec_gherkin_then_multiple_assertions(art, catalog))
+    out.extend(_spec_qvscribe_optional_feature(art, catalog))
     return out
 
 
