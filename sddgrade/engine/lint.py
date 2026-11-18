@@ -5662,6 +5662,83 @@ def _plan_no_content_security_policy(art: Artifact, catalog: dict[str, Pitfall])
 
 
 # ---------------------------------------------------------------------------
+# PLAN-NO-CSRF-PROTECTION
+# ---------------------------------------------------------------------------
+# Silence: any CSRF / anti-forgery vocabulary anywhere in non-fenced text.
+_CSRF_SILENCE_RE = re.compile(
+    r"\bcsrf\b"
+    r"|\bcross[\s_-]?site[\s_-]?request[\s_-]?forgery\b"
+    r"|\bsamesite\b"
+    r"|\banti[\s_-]?forgery\b"
+    r"|\bsynchronizer[\s_-]?token\b"
+    r"|\bdouble[\s_-]?submit\b"
+    r"|\bcsrf[\s_-]?token\b"
+    r"|\bcsurf\b"
+    r"|\bcsrf[\s_-]?protection\b"
+    r"|\bcsrf[\s_-]?middleware\b"
+    r"|\bcsrf[\s_-]?header\b"
+    r"|\bx[\s_-]?csrf[\s_-]?token\b"
+    r"|\bcsrf[\s_-]?cookie\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_csrf_protection(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Browser-facing deployment plan with no CSRF protection (PLAN-NO-CSRF-PROTECTION).
+
+    CSRF (Cross-Site Request Forgery) is OWASP A01/A05 and exploits the browser's
+    automatic attachment of session cookies.  A plan for a React/Vue/Angular/SPA/frontend
+    app that uses cookie-based auth must document CSRF mitigation.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains browser-facing API vocabulary.
+    Silence: any CSRF / anti-forgery vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-NO-CSRF-PROTECTION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: browser-facing vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _BROWSER_API_VOCAB_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: CSRF / anti-forgery vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _CSRF_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-CSRF-PROTECTION: deployment plan describes a browser-facing application "
+        "(SPA/React/Vue/Angular/Next.js/Nuxt/frontend) but has no Cross-Site Request "
+        "Forgery (CSRF) protection strategy. Without CSRF mitigation, malicious sites can "
+        "forge authenticated requests on behalf of logged-in users by exploiting the "
+        "browser's automatic cookie attachment. Add a CSRF strategy section documenting: "
+        "SameSite=Strict/Lax cookie attribute, CSRF token (synchronizer or double-submit "
+        "pattern), or custom request header validation. "
+        "(OWASP CSRF Prevention Cheat Sheet, OWASP A01:2021, Kiro security checklist, "
+        "Tessl deployment checklist).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-CDN
 # ---------------------------------------------------------------------------
 # Trigger: browser-facing / static-asset serving vocabulary.
@@ -8444,6 +8521,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_pagination(art, catalog))
     out.extend(_plan_missing_cors_policy(art, catalog))
     out.extend(_plan_no_content_security_policy(art, catalog))
+    out.extend(_plan_no_csrf_protection(art, catalog))
     out.extend(_plan_missing_cdn(art, catalog))
     out.extend(_plan_missing_distributed_tracing(art, catalog))
     out.extend(_plan_missing_load_test(art, catalog))
