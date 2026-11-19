@@ -3,7 +3,7 @@
 STATUS: ACTIVE
 Iteration: 153
 Last run: 2026-11-19
-Open loop PRs: 1
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -288,7 +288,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Run log
 
-- iter 153 (2026-11-19): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#352 SPEC-GHERKIN-THEN-IMPERATIVE, #351 PLAN-MISSING-DR-STRATEGY); Phase 4 implemented #352: _GHERKIN_THEN_IMPERATIVE_RE + _GHERKIN_STEP_BODY_RE + _spec_gherkin_then_imperative() + 16 unit tests (8 fire, 8 silent); Phase 5 gate: pytest 2333 green, benchmark good=100.0 bad=50.8 PASS; Phase 6 opened PR #355; awaiting CI.
+- iter 153 (2026-11-19): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#352 SPEC-GHERKIN-THEN-IMPERATIVE, #351 PLAN-MISSING-DR-STRATEGY); Phase 4 implemented #352: _GHERKIN_THEN_IMPERATIVE_RE + _GHERKIN_STEP_BODY_RE + _spec_gherkin_then_imperative() + 16 unit tests (8 fire, 8 silent); Phase 5 gate: pytest 2333 green, benchmark good=100.0 bad=50.8 PASS; Phase 6 opened PR #355; CI both green; squash-merged PR #355 (issue #352 closed), 0 open loop PRs.
 - iter 92 (2026-09-22): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#226 PLAN-MISSING-SLO, #227 DATA-MODEL-ENTITY-NO-PK); Phase 4 implemented #226: _SLO_USER_SIGNAL_RE + _SLO_SERVICE_SIGNAL_RE + _SLO_VOCAB_RE (15-token silence) + _plan_missing_slo() + 15 unit tests (5 fire, 10 silent); Phase 5 gate: pytest 1442 green, benchmark good=100.0 bad<70 precision=0.981 PASS; Phase 6 opened PR #229; CI green (test+package both success); squash-merged PR #229 (issue #226 closed), 0 open loop PRs.
 - iter 90 (2026-09-20): Phase 1 no open PRs; Phase 2 found 1 open loop-candidate issue (#221 PLAN-MISSING-API-VERSIONING); Phase 4 implemented #221: _API_CHANGE_VOCAB_RE (5-pattern) + _API_VERSION_RE (11-token silence) + _plan_missing_api_versioning() + 17 unit tests (6 fire, 11 silent); Phase 5 gate: pytest 1416 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #224; CI green (test+package both success); squash-merged PR #224 (issue #221 closed), 0 open loop PRs.
 - iter 89 (2026-09-19): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#220 SPEC-MISSING-ACCEPTANCE-SECTION, #221 PLAN-MISSING-API-VERSIONING); Phase 4 implemented #220: _ACCEPTANCE_HEADING_RE (8-alternative) + _spec_missing_acceptance_section() + 15 unit tests (4 fire, 11 silent); speckit_good + benign-lookalike fixtures updated with Acceptance Criteria section; paraphrased-defects + realworld-mcp-proxy accepted_extras labeled, score bands adjusted; Phase 5 gate: pytest 1399 green, benchmark good=100.0 bad=50.8 precision=0.981 PASS; Phase 6 opened PR #223; CI green (test+package both success); squash-merged PR #223 (issue #220 closed), 0 open loop PRs.
