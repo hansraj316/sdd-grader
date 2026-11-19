@@ -1792,6 +1792,17 @@ detect = "Guard: formal-Gherkin mode — at least one When AND one Then line-lea
 fix = "Move the action verb from the Given step into a When step. Example: 'Given the user clicks Submit' → split into 'Given the user is on the checkout page' (precondition state) and 'When the user clicks Submit' (action). The Given should describe what is already true about the system before the action starts — a page loaded, a user logged in, a database record present. Reference: Cucumber Gherkin Reference (Step keywords); MAQA binary-verifiable acceptance-criteria rules; SpecFlow documentation on step types."
 
 [[pitfall]]
+id = "SPEC-GHERKIN-THEN-IMPERATIVE"
+name = "Gherkin Then clause starts with an imperative action verb instead of asserting an observable outcome"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "medium"
+method = "lint"
+why = "The Gherkin convention is: Given sets precondition context, When triggers an action, Then asserts an observable outcome ('the system should…', 'the page should show…', 'an email should be sent…'). A Then clause that begins with an imperative verb (e.g. 'Then click the Save button') is describing another action, not verifying a result. This violates the BDD principle of binary-verifiable acceptance criteria and makes the scenario non-testable as written. Sources: Cucumber/Gherkin documentation ('Then steps describe an observable outcome of the action'); MAQA binary-verifiable AC rule; ISO/IEC/IEEE 29148:2018 §5.2.5(c) — verifiable requirement. Distinct from SPEC-GHERKIN-GIVEN-ACTIVE-ACTION (checks Given clauses for action verbs), SPEC-MAQA-AC-CONDITIONAL (conditional language in Then clauses), and SPEC-GHERKIN-THEN-MULTIPLE-ASSERTIONS (too many Then assertions)."
+detect = "Guard: formal-Gherkin mode — at least one When AND one Then line-leader present in the document. Trigger: a non-fenced Then step — or And/But in Then-context (last non-And/But Gherkin keyword seen was 'then') — whose stripped content after the keyword starts with one of these imperative action verbs (case-insensitive): click(s), navigate(s), press(es), fill(s), submit(s), type(s), select(s), upload(s), drag(s), choose(s)/chose, open(s), close(s), tap(s), swipe(s), scroll(s), enter(s), check(s), uncheck(s). One finding per offending Then line. Spec-only artifact. Fenced-block lines excluded."
+fix = "Replace the imperative Then clause with an observable outcome assertion. Examples: 'Then click the Save button' → split into 'When the user clicks Save' (action) and 'Then the record is saved successfully' (observable outcome); 'Then navigate to the dashboard' → 'Then the dashboard page is displayed'; 'Then submit the form' → 'Then the form submission is accepted and a confirmation is shown'. The Then step should describe what the system does in response — a visible state change, a data mutation, an email sent, an HTTP status code — not what the user does next. Reference: Cucumber Gherkin Reference (Then steps describe an observable outcome); MAQA binary-verifiable acceptance-criteria rules; ISO/IEC/IEEE 29148:2018 §5.2.5(c)."
+
+[[pitfall]]
 id = "SPEC-NFR-SECURITY-NO-MECHANISM"
 name = "Security/safety/confidentiality NFR line with no concrete mechanism named"
 dimension = "clarity"

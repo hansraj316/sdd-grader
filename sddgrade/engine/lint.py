@@ -8270,6 +8270,79 @@ def _spec_gherkin_given_active_action(
     return findings
 
 
+# SPEC-GHERKIN-THEN-IMPERATIVE: Then step that starts with an imperative action verb.
+_GHERKIN_THEN_IMPERATIVE_RE = re.compile(
+    r"^(?:clicks?|navigates?|presses?|fills?|submits?|types?|selects?|uploads?|drags?"
+    r"|chooses?|chose|opens?|closes?|taps?|swipes?|scrolls?|enters?|checks?|unchecks?)\b",
+    re.IGNORECASE,
+)
+_GHERKIN_STEP_BODY_RE = re.compile(
+    r"^\s*[-*+]?\s*(?:given|when|then|and|but)\s+", re.IGNORECASE
+)
+
+
+def _spec_gherkin_then_imperative(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Then step that opens with an imperative user-action verb (SPEC-GHERKIN-THEN-IMPERATIVE).
+
+    Guard: formal-Gherkin mode — both When and Then must exist in the doc.
+    Trigger: a Then step (or And/But continuing a Then) whose body — text after the
+    step keyword — starts with an imperative action verb.  One finding per line.
+    Spec-only. Fenced blocks excluded.
+    """
+    p = catalog.get("SPEC-GHERKIN-THEN-IMPERATIVE")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    if not (_GHERKIN_WHEN_RE.search(raw) and _GHERKIN_THEN_RE.search(raw)):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    findings: list[Finding] = []
+    last_keyword: str | None = None
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        if _SCENARIO_HEADING_RE.match(line) or _BACKGROUND_HEADING_RE.match(line):
+            last_keyword = None
+            continue
+
+        if _GHERKIN_NON_AND_BUT_LINE_RE.match(line):
+            kw = stripped.lstrip("-*+ ").split()[0].lower()
+            last_keyword = kw
+            is_then_context = kw == "then"
+        elif _GHERKIN_AND_BUT_LINE_RE.match(line):
+            is_then_context = last_keyword == "then"
+        else:
+            continue
+
+        if not is_then_context:
+            continue
+
+        # Extract the body after the keyword.
+        body = _GHERKIN_STEP_BODY_RE.sub("", line, count=1).strip()
+        if _GHERKIN_THEN_IMPERATIVE_RE.match(body):
+            findings.append(
+                _from_pitfall(
+                    p,
+                    art.path,
+                    "SPEC-GHERKIN-THEN-IMPERATIVE: Then clause starts with an imperative "
+                    "action verb instead of asserting an observable outcome; rewrite as a "
+                    "system-state assertion (e.g. 'Then the record is saved' rather than "
+                    "'Then click Save').",
+                    line=i + 1,
+                )
+            )
+    return findings
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -8453,6 +8526,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_qvscribe_nominalization(art, catalog))
     out.extend(_spec_gherkin_given_active_action(art, catalog))
     out.extend(_spec_gherkin_then_multiple_assertions(art, catalog))
+    out.extend(_spec_gherkin_then_imperative(art, catalog))
     out.extend(_spec_qvscribe_optional_feature(art, catalog))
     return out
 
