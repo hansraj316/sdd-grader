@@ -4495,6 +4495,104 @@ def _plan_no_data_retention(art: Artifact, catalog: dict[str, Pitfall]) -> list[
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-DR-STRATEGY: production database deployment plan with no
+# disaster-recovery strategy (RPO/RTO/failover/multi-AZ).
+# ---------------------------------------------------------------------------
+
+# Trigger: relational-DB vocabulary on a non-fenced, non-heading plan line.
+_RELATIONAL_DB_RE = re.compile(
+    r"\bpostgres(?:ql)?\b"
+    r"|\bmysql\b"
+    r"|\bmariadb\b"
+    r"|\baurora\b"
+    r"|\brds\b"
+    r"|\bsql\s+server\b"
+    r"|\bcockroachdb\b"
+    r"|\btidb\b"
+    r"|\bdatabase\b"
+    r"|\b(?<!\w)db(?!\w)",
+    re.IGNORECASE,
+)
+
+# Trigger: production-deploy indicator anywhere in the document.
+# Named _DR_PROD_INDICATOR_RE to avoid conflict with _PROD_DEPLOY_RE at line ~6505.
+_DR_PROD_INDICATOR_RE = re.compile(
+    r"\bproduction\b"
+    r"|\bprod\s+deploy\b"
+    r"|\bgo[- ]live\b",
+    re.IGNORECASE,
+)
+
+# Silence: DR vocabulary anywhere in the document.
+_DR_VOCAB_RE = re.compile(
+    r"\b(?:dr)\b"
+    r"|\bdisaster[- ]?recovery\b"
+    r"|\brpo\b"
+    r"|\brto\b"
+    r"|\bfailover\b"
+    r"|\bmulti[- ]az\b"
+    r"|\bmulti[- ]region\b"
+    r"|\bsecondary\s+region\b"
+    r"|\bstandby\b"
+    r"|\bgeo[- ]redundan\w*"
+    r"|\breplica(?:\s+across|\s+in)\b"
+    r"|\brecovery\s+point\b"
+    r"|\brecovery\s+time\b"
+    r"|\bdr\s+plan\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_dr_strategy(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
+    """Production database deployment plan with no disaster-recovery strategy
+    (PLAN-MISSING-DR-STRATEGY).
+
+    Kiro production-readiness gates require an explicit DR strategy; ISO/IEC 25010:2023
+    Availability sub-characteristic mandates mean-time-to-recover planning; AWS
+    Well-Architected REL09 requires defined RTO/RPO for each workload. Distinct from
+    PLAN-MISSING-ROLLBACK (deploy pipeline failures), PLAN-NO-BACKUP-STRATEGY (data
+    preservation), and PLAN-MISSING-HEALTH-CHECK (instance failure detection).
+    """
+    p = catalog.get("PLAN-MISSING-DR-STRATEGY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Guard: deployment vocabulary.
+    has_deploy_section = any(_DEPLOY_SECTION_RE.search(s.title) for s in art.sections)
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    # Guard: production-deploy indicator anywhere in the doc.
+    if not _DR_PROD_INDICATOR_RE.search(art.raw):
+        return []
+    # Trigger: first non-fenced, non-heading relational-DB line.
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    db_hit: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _RELATIONAL_DB_RE.search(line):
+            db_hit = i + 1
+            break
+    if db_hit is None:
+        return []
+    # Silence: DR vocabulary present anywhere in the doc.
+    if _DR_VOCAB_RE.search(art.raw):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "Deployment plan provisions a production relational database but has no "
+        "disaster-recovery strategy — no RPO, RTO, failover, multi-AZ, multi-region, "
+        "standby, or geo-redundancy mention. Add a DR Strategy section with RTO, RPO, "
+        "and failover mechanism.",
+        line=db_hit,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-AUTH-WITHOUT-AUTHZ: deployment plan has authentication vocabulary but no
 # authorization vocabulary (OWASP API1:2023 Broken Object Level Authorization).
 # ---------------------------------------------------------------------------
@@ -8582,6 +8680,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_graceful_shutdown(art, catalog))
     out.extend(_plan_no_backup_strategy(art, catalog))
     out.extend(_plan_no_data_retention(art, catalog))
+    out.extend(_plan_missing_dr_strategy(art, catalog))
     out.extend(_plan_auth_without_authz(art, catalog))
     out.extend(_plan_no_caching_strategy(art, catalog))
     out.extend(_plan_missing_api_versioning(art, catalog))
