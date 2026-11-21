@@ -5837,6 +5837,99 @@ def _plan_no_csrf_protection(art: Artifact, catalog: dict[str, Pitfall]) -> list
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-FILE-UPLOAD-LIMITS
+# ---------------------------------------------------------------------------
+# Trigger: file-upload vocabulary on a plan line.
+_FILE_UPLOAD_TRIGGER_RE = re.compile(
+    r"\bfile[\s_-]?upload\b"
+    r"|\bupload[\s_-]?file\b"
+    r"|\bmultipart/form-data\b"
+    r"|\battachment[\s_-]?upload\b"
+    r"|\bimage[\s_-]?upload\b"
+    r"|\bdocument[\s_-]?upload\b"
+    r"|\bupload[\s_-]?endpoint\b"
+    r"|\bupload[\s_-]?API\b"
+    r"|\baccepts?[\s_-]?uploads?\b"
+    r"|\bstores?[\s_-]?uploads?\b",
+    re.IGNORECASE,
+)
+
+# Silence: any upload-constraints vocabulary anywhere in non-fenced text.
+_FILE_UPLOAD_LIMITS_SILENCE_RE = re.compile(
+    r"\bfile[\s_-]?size[\s_-]?limit\b"
+    r"|\bmax[\s_-]?(file[\s_-]?)?size\b"
+    r"|\bsize[\s_-]?limit\b"
+    r"|\ballowed[\s_-]?(file[\s_-]?)?types?\b"
+    r"|\bmime[\s_-]?type\b"
+    r"|\bcontent.type[\s_-]?validat\w*\b"
+    r"|\bvirus[\s_-]?scan\b"
+    r"|\bmalware[\s_-]?scan\b"
+    r"|\bantivirus\b"
+    r"|\bclamav\b"
+    r"|\bfile[\s_-]?type[\s_-]?restrict\b"
+    r"|\bupload[\s_-]?restrict\b"
+    r"|\bmagic[\s_-]?byte\b"
+    r"|\bextension[\s_-]?allow\w*\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_file_upload_limits(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """File-upload plan with no size/type constraints or virus-scanning strategy.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains file-upload vocabulary.
+    Silence: any upload-constraints vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-FILE-UPLOAD-LIMITS")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: file-upload vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _FILE_UPLOAD_TRIGGER_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: upload-constraints vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _FILE_UPLOAD_LIMITS_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-FILE-UPLOAD-LIMITS: deployment plan describes file-upload "
+        "functionality but has no constraints on file size, accepted MIME types, "
+        "or virus/malware scanning strategy. Unrestricted uploads can be exploited "
+        "for denial-of-service (large files), stored XSS (HTML/JS uploads), or "
+        "malware distribution (executables uploaded and served to other users). "
+        "Add an upload constraints section documenting: maximum file size (enforced "
+        "at gateway), an explicit allowlist of accepted MIME types (validated via "
+        "magic-byte inspection), file extension restrictions, and an antivirus/malware "
+        "scanning strategy (e.g. ClamAV, AWS Security Hub malware scan, or VirusTotal). "
+        "(OWASP Unrestricted File Upload OTG-BUSLOGIC-008; OWASP A04:2021 Insecure "
+        "Design; Kiro production-readiness security checklist).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-CDN
 # ---------------------------------------------------------------------------
 # Trigger: browser-facing / static-asset serving vocabulary.
@@ -8695,6 +8788,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_cors_policy(art, catalog))
     out.extend(_plan_no_content_security_policy(art, catalog))
     out.extend(_plan_no_csrf_protection(art, catalog))
+    out.extend(_plan_missing_file_upload_limits(art, catalog))
     out.extend(_plan_missing_cdn(art, catalog))
     out.extend(_plan_missing_distributed_tracing(art, catalog))
     out.extend(_plan_missing_load_test(art, catalog))
