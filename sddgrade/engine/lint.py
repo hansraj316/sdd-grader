@@ -5930,6 +5930,108 @@ def _plan_missing_file_upload_limits(
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-SEARCH-INDEX-STRATEGY
+# ---------------------------------------------------------------------------
+# Trigger: search-endpoint vocabulary on a non-fenced, non-heading plan line.
+_SEARCH_ENDPOINT_TRIGGER_RE = re.compile(
+    r"\bfull[\s_-]?text[\s_-]?search\b"
+    r"|\bsearch[\s_-]?endpoint\b"
+    r"|\bsearch[\s_-]?API\b"
+    r"|\bsearch[\s_-]?results?\b"
+    r"|\bsearch[\s_-]?functionality\b"
+    r"|\bsearch[\s_-]?feature\b"
+    r"|\bGET\s+/search\b"
+    r"|\bsearch[\s_-]?query\b"
+    r"|\bkeyword[\s_-]?search\b"
+    r"|\bproduct[\s_-]?search\b"
+    r"|\buser[\s_-]?search\b"
+    r"|\bdocument[\s_-]?search\b"
+    r"|\bsearch[\s_-]?bar\b"
+    r"|\bsearch[\s_-]?box\b",
+    re.IGNORECASE,
+)
+
+# Silence: any search-index technology or strategy anywhere in non-fenced text.
+_SEARCH_INDEX_SILENCE_RE = re.compile(
+    r"\belasticsearch\b"
+    r"|\bopensearch\b"
+    r"|\bsolr\b"
+    r"|\balgolia\b"
+    r"|\btypesense\b"
+    r"|\bmeilisearch\b"
+    r"|\bsphinx[\s_-]?search\b"
+    r"|\bfull[\s_-]?text[\s_-]?index\b"
+    r"|\btsvector\b"
+    r"|\bto_tsvector\b"
+    r"|\bpg[\s_-]?search\b"
+    r"|\bsearch[\s_-]?index\b"
+    r"|\binverted[\s_-]?index\b"
+    r"|\bsearch[\s_-]?cluster\b"
+    r"|\bsearch[\s_-]?engine\b"
+    r"|\bazure[\s_-]?cognitive[\s_-]?search\b"
+    r"|\bgoogle[\s_-]?cloud[\s_-]?search\b"
+    r"|\bvector[\s_-]?search\b"
+    r"|\bsemantic[\s_-]?search\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_search_index_strategy(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Plan with search endpoints but no search-index or full-text strategy.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains search-endpoint vocabulary.
+    Silence: any search-index technology vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-SEARCH-INDEX-STRATEGY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: search-endpoint vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _SEARCH_ENDPOINT_TRIGGER_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: search-index technology vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _SEARCH_INDEX_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-SEARCH-INDEX-STRATEGY: deployment plan exposes a search "
+        "endpoint or describes search functionality but names no search-index or "
+        "full-text search strategy. Raw SQL LIKE/ILIKE queries have O(n) table-scan "
+        "complexity that causes query timeouts and page-level locks at production "
+        "data volumes, with no support for relevance ranking or faceted filtering. "
+        "Add a 'Search Strategy' section naming the indexing technology (e.g. "
+        "Elasticsearch/OpenSearch, Postgres tsvector GIN index, Algolia, Typesense, "
+        "Meilisearch) and its operational details: index build/sync mechanism, "
+        "query API, and re-index fallback strategy. "
+        "(ISO/IEC 25010:2023 §8.4 Performance Efficiency; Tessl scale-readiness; "
+        "Kiro production-readiness query-performance gate).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-CDN
 # ---------------------------------------------------------------------------
 # Trigger: browser-facing / static-asset serving vocabulary.
@@ -8789,6 +8891,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_content_security_policy(art, catalog))
     out.extend(_plan_no_csrf_protection(art, catalog))
     out.extend(_plan_missing_file_upload_limits(art, catalog))
+    out.extend(_plan_missing_search_index_strategy(art, catalog))
     out.extend(_plan_missing_cdn(art, catalog))
     out.extend(_plan_missing_distributed_tracing(art, catalog))
     out.extend(_plan_missing_load_test(art, catalog))
