@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 156
-Last run: 2026-11-22
-Open loop PRs: 0
+Iteration: 157
+Last run: 2026-11-23
+Open loop PRs: 1
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -290,6 +290,7 @@ Tessl, and Spec-Kit extensions/presets.)
 
 ## Run log
 
+- iter 157 (2026-11-23): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#358 PLAN-MISSING-EMAIL-DELIVERY-STRATEGY); Phase 4 implemented _EMAIL_SENDING_TRIGGER_RE (11-alternative) + _EMAIL_DELIVERY_SILENCE_RE (21-token: SES/SendGrid/Postmark/Mailgun/SparkPost/Mandrill/Resend/Mailjet/SMTP2Go/email-deliverability/bounce-handling/unsubscribe/DKIM/SPF/DMARC/email-provider/email-vendor/MX-record/ESP) + _plan_missing_email_delivery_strategy(); 19 unit tests (6 fire, 13 silent); Phase 5 gate: pytest 2407 green, benchmark good=100.0 bad<70 precision=0.984 PASS; Phase 6 opened PR #362 (Closes #358); awaiting CI.
 - iter 154 (2026-11-20): Phase 1 no open loop/* PRs; Phase 2 found 1 open loop-candidate issue (#351 PLAN-MISSING-DR-STRATEGY); Phase 4 implemented _RELATIONAL_DB_RE (10-alternative) + _DR_PROD_INDICATOR_RE (production/prod-deploy/go-live) + _DR_VOCAB_RE (15-token silence: DR/disaster-recovery/RPO/RTO/failover/multi-AZ/multi-region/standby/geo-redundancy/replica-across/recovery-point/recovery-time) + _plan_missing_dr_strategy(); 19 unit tests (7 fire, 12 silent); Phase 5 gate: pytest 2352 green, benchmark good=100.0 bad=31<70 precision=0.984 PASS; Phase 6 opened PR #356; CI both green (test+package success); squash-merged PR #356 (issue #351 PLAN-MISSING-DR-STRATEGY closed), 0 open loop PRs.
 - iter 153 (2026-11-19): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#352 SPEC-GHERKIN-THEN-IMPERATIVE, #351 PLAN-MISSING-DR-STRATEGY); Phase 4 implemented #352: _GHERKIN_THEN_IMPERATIVE_RE + _GHERKIN_STEP_BODY_RE + _spec_gherkin_then_imperative() + 16 unit tests (8 fire, 8 silent); Phase 5 gate: pytest 2333 green, benchmark good=100.0 bad=50.8 PASS; Phase 6 opened PR #355; CI both green; squash-merged PR #355 (issue #352 closed), 0 open loop PRs.
 - iter 92 (2026-09-22): Phase 1 no open PRs; Phase 2 found 2 open loop-candidate issues (#226 PLAN-MISSING-SLO, #227 DATA-MODEL-ENTITY-NO-PK); Phase 4 implemented #226: _SLO_USER_SIGNAL_RE + _SLO_SERVICE_SIGNAL_RE + _SLO_VOCAB_RE (15-token silence) + _plan_missing_slo() + 15 unit tests (5 fire, 10 silent); Phase 5 gate: pytest 1442 green, benchmark good=100.0 bad<70 precision=0.981 PASS; Phase 6 opened PR #229; CI green (test+package both success); squash-merged PR #229 (issue #226 closed), 0 open loop PRs.
