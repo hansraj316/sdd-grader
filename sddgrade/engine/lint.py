@@ -6032,6 +6032,106 @@ def _plan_missing_search_index_strategy(
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-EMAIL-DELIVERY-STRATEGY
+# ---------------------------------------------------------------------------
+# Trigger: email-sending vocabulary on a non-fenced, non-heading plan line.
+_EMAIL_SENDING_TRIGGER_RE = re.compile(
+    r"\bsend(?:s|ing)?\s+email\b"
+    r"|\bemail\s+notification\b"
+    r"|\bemail\s+confirmation\b"
+    r"|\bwelcome\s+email\b"
+    r"|\bpassword[\s_-]?reset\s+email\b"
+    r"|\btransactional\s+email\b"
+    r"|\bSMTP\b"
+    r"|\bnotification\s+email\b"
+    r"|\bemails?\s+are\s+sent\b"
+    r"|\bemail\s+alert\b"
+    r"|\bemail\s+service\b",
+    re.IGNORECASE,
+)
+
+# Silence: any email-delivery-infrastructure vocabulary anywhere in non-fenced text.
+_EMAIL_DELIVERY_SILENCE_RE = re.compile(
+    r"\bSES\b"
+    r"|\bsendgrid\b"
+    r"|\bpostmark\b"
+    r"|\bmailgun\b"
+    r"|\bsparkpost\b"
+    r"|\bmandrill\b"
+    r"|\bresend\b"
+    r"|\bmailjet\b"
+    r"|\bsmtp2go\b"
+    r"|\bemail[\s_-]?deliverability\b"
+    r"|\bbounce[\s_-]?handl(?:ing|ed|er|s)?\b"
+    r"|\bunsubscribe\b"
+    r"|\bDKIM\b"
+    r"|\bSPF[\s_-]?record\b"
+    r"|\bDMARC\b"
+    r"|\bemail[\s_-]?provider\b"
+    r"|\bemail[\s_-]?vendor\b"
+    r"|\bMX[\s_-]?record\b"
+    r"|\bemail[\s_-]?service[\s_-]?provider\b"
+    r"|\b(?<!\w)ESP\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_email_delivery_strategy(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Plan mentions sending email but names no delivery service or bounce-handling.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains email-sending vocabulary.
+    Silence: any email delivery infrastructure vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-EMAIL-DELIVERY-STRATEGY")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: email-sending vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _EMAIL_SENDING_TRIGGER_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: delivery infrastructure vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _EMAIL_DELIVERY_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-EMAIL-DELIVERY-STRATEGY: deployment plan mentions sending "
+        "email but names no email delivery service (SES, SendGrid, Postmark, "
+        "Mailgun, etc.) and no bounce/unsubscribe handling strategy. Bare SMTP "
+        "without a managed delivery provider causes deliverability failures, "
+        "blacklisting, and regulatory violations (CAN-SPAM §7, GDPR Art. 6/7). "
+        "Add an 'Email Delivery Strategy' section naming: (1) the ESP (AWS SES, "
+        "SendGrid, Postmark, Mailgun, Resend); (2) DKIM/SPF/DMARC authentication; "
+        "(3) bounce and complaint handling (suppression list); "
+        "(4) unsubscribe mechanism for notification/marketing emails. "
+        "(Kiro production-readiness email gate; CAN-SPAM Act §7; GDPR Art. 6/7; "
+        "RFC 5321; RFC 8058).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-CDN
 # ---------------------------------------------------------------------------
 # Trigger: browser-facing / static-asset serving vocabulary.
@@ -8906,6 +9006,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_event_schema(art, catalog))
     out.extend(_plan_no_multi_tenant_isolation(art, catalog))
     out.extend(_plan_missing_container_registry(art, catalog))
+    out.extend(_plan_missing_email_delivery_strategy(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
