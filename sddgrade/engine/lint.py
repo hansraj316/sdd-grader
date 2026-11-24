@@ -6132,6 +6132,100 @@ def _plan_missing_email_delivery_strategy(
 
 
 # ---------------------------------------------------------------------------
+# PLAN-MISSING-SECRET-ROTATION
+# ---------------------------------------------------------------------------
+# Trigger: specific static-credential vocabulary (API keys, signing keys, etc.)
+# on a non-fenced, non-heading plan line.
+_SECRET_ROTATION_TRIGGER_RE = re.compile(
+    r"\bapi[\s_-]?key\b"
+    r"|\bsigning[\s_-]?key\b"
+    r"|\bjwt[\s_-]?secret\b"
+    r"|\boauth[\s_-]?secret\b"
+    r"|\bclient[\s_-]?secret\b"
+    r"|\bwebhook[\s_-]?secret\b"
+    r"|\bencryption[\s_-]?key\b"
+    r"|\bservice[\s_-]?account[\s_-]?key\b"
+    r"|\bprivate[\s_-]?key\b",
+    re.IGNORECASE,
+)
+
+# Silence: any rotation / expiry / lifecycle vocabulary anywhere in non-fenced text.
+_SECRET_ROTATION_SILENCE_RE = re.compile(
+    r"\brotat(?:e|es|ed|ing|ion)\b"
+    r"|\bkey[\s_-]?rotat"
+    r"|\bsecret[\s_-]?rotat"
+    r"|\bcredential[\s_-]?rotat"
+    r"|\bkey[\s_-]?expir"
+    r"|\bsecret[\s_-]?expir"
+    r"|\bcredential[\s_-]?expir"
+    r"|\bttl[\s_-](?:for[\s_-])?secret"
+    r"|\bkey[\s_-]?lifecycle\b"
+    r"|\bsecret[\s_-]?lifecycle\b"
+    r"|\bautomatic[\s_-]?rotation\b"
+    r"|\bkms[\s_-]?key[\s_-]?rotation\b"
+    r"|\bvault[\s_-]?dynamic\b"
+    r"|\bshort[\s_-]?lived\b"
+    r"|\bephemeral[\s_-]?credential",
+    re.IGNORECASE,
+)
+
+
+def _plan_missing_secret_rotation(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Plan mentions API keys / signing keys but has no rotation or expiry strategy.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains specific static-credential vocab.
+    Silence: any rotation/expiry/lifecycle vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-MISSING-SECRET-ROTATION")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: static-credential vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _SECRET_ROTATION_TRIGGER_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: rotation/expiry vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _SECRET_ROTATION_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-MISSING-SECRET-ROTATION: deployment plan provisions API keys, signing "
+        "keys, or secrets with no rotation or expiry strategy. Long-lived static "
+        "secrets are a critical attack surface — a leaked key grants persistent access "
+        "until manually revoked. Add a 'Credential Rotation' section documenting: "
+        "(1) rotation interval per credential type (e.g., API keys every 90 days, "
+        "signing keys annually); (2) rotation mechanism (manual calendar alert, AWS "
+        "KMS automatic rotation, HashiCorp Vault dynamic secrets, GCP Secret Manager "
+        "rotation); (3) overlap/grace window for in-flight requests; (4) consumer "
+        "update procedure. "
+        "(AWS Well-Architected SEC02-BP03; NIST SP 800-57 §5.6 Cryptoperiods; "
+        "CIS Controls v8 Control 5.4; OWASP API Security API2:2023).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-CDN
 # ---------------------------------------------------------------------------
 # Trigger: browser-facing / static-asset serving vocabulary.
@@ -9007,6 +9101,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_no_multi_tenant_isolation(art, catalog))
     out.extend(_plan_missing_container_registry(art, catalog))
     out.extend(_plan_missing_email_delivery_strategy(art, catalog))
+    out.extend(_plan_missing_secret_rotation(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
