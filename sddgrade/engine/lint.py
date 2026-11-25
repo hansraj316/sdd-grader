@@ -6226,6 +6226,103 @@ def _plan_missing_secret_rotation(
 
 
 # ---------------------------------------------------------------------------
+# PLAN-NO-STRUCTURED-LOGGING
+# ---------------------------------------------------------------------------
+# Trigger: application-logging vocabulary on a non-fenced, non-heading plan line.
+_STRUCTURED_LOG_TRIGGER_RE = re.compile(
+    r"\bapplication[\s_-]?log\b"
+    r"|\bapp[\s_-]?log\b"
+    r"|\bwrite[\s_-]?(?:to[\s_-]?)?log\b"
+    r"|\blog[\s_-](?:entries|events|messages|statements|output)\b"
+    r"|\blogger\b"
+    r"|\blogs?\s+(?:all|every|each|request|error|event|message|exception)\b"
+    r"|\berror[\s_-]?log\b"
+    r"|\baccess[\s_-]?log\b"
+    r"|\baudit[\s_-]?log\b"
+    r"|\bservice[\s_-]?log\b",
+    re.IGNORECASE,
+)
+
+# Silence: any structured-format vocabulary anywhere in non-fenced text.
+_STRUCTURED_LOG_SILENCE_RE = re.compile(
+    r"\bstructured[\s_-]?log\b"
+    r"|\bjson[\s_-]?log\b"
+    r"|\blogfmt\b"
+    r"|\blog[\s_-]?format\b"
+    r"|\blog[\s_-]?schema\b"
+    r"|\becs[\s_-]?format\b"
+    r"|\blog[\s_-]?json\b"
+    r"|\bjson[\s_-]?format[\s_-]?log\b"
+    r"|\blog[\s_-]?template\b"
+    r"|\bstructured[\s_-]?logging\b"
+    r"|\bopentelemetry[\s_-]?log\b"
+    r"|\botel[\s_-]?log\b"
+    r"|\bfluentd\b"
+    r"|\bvector[\s_-]?log\b"
+    r"|\bdatadog[\s_-]?log[\s_-]?format\b"
+    r"|\bcloudwatch[\s_-]?log[\s_-]?format\b"
+    r"|\bstackdriver[\s_-]?log\b"
+    r"|\blog[\s_-]?drain\b",
+    re.IGNORECASE,
+)
+
+
+def _plan_no_structured_logging(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Plan mentions logging but names no structured log format or schema strategy.
+
+    Guard: deploy vocabulary present.
+    Trigger: ≥1 non-fenced non-heading line contains application-logging vocabulary.
+    Silence: any structured-format vocabulary anywhere in non-fenced text.
+    """
+    p = catalog.get("PLAN-NO-STRUCTURED-LOGGING")
+    if p is None or not p.applies_to(art.type):
+        return []
+    # Deploy guard.
+    has_deploy_section = any(
+        _DEPLOY_SECTION_RE.search(s.title) for s in art.sections
+    )
+    has_deploy_vocab = _DEPLOY_VOCAB_RE.search(art.raw) is not None
+    if not (has_deploy_section or has_deploy_vocab):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    # Trigger: logging vocab on ≥1 non-fenced non-heading line.
+    trigger_line: int | None = None
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            continue
+        if line.lstrip().startswith("#"):
+            continue
+        if _STRUCTURED_LOG_TRIGGER_RE.search(line):
+            trigger_line = i + 1
+            break
+    if trigger_line is None:
+        return []
+    # Silence: structured-format vocabulary anywhere in non-fenced text.
+    non_fenced_text = "\n".join(line for i, line in enumerate(lines) if not fenced[i])
+    if _STRUCTURED_LOG_SILENCE_RE.search(non_fenced_text):
+        return []
+    return [_from_pitfall(
+        p,
+        art.path,
+        "PLAN-NO-STRUCTURED-LOGGING: deployment plan mentions application logging "
+        "but names no structured log format (JSON logs, logfmt, ECS) or log schema "
+        "strategy. Unstructured text logs cannot be queried, alerted on, or "
+        "correlated across services — teams cannot build dashboards or investigate "
+        "incidents efficiently. Add a 'Logging Strategy' section documenting: "
+        "(1) the structured format (JSON, logfmt, OpenTelemetry ECS); (2) the "
+        "canonical fields (timestamp, level, service, trace_id, message); "
+        "(3) the log transport and aggregation (Fluentd, Vector, CloudWatch, "
+        "Datadog, Loki); (4) any sampling or PII-redaction rules. "
+        "(12-Factor App Principle XI; OpenTelemetry Logging spec; "
+        "Kiro production-readiness observability gate; Tessl engineering standards).",
+        line=trigger_line,
+    )]
+
+
+# ---------------------------------------------------------------------------
 # PLAN-MISSING-CDN
 # ---------------------------------------------------------------------------
 # Trigger: browser-facing / static-asset serving vocabulary.
@@ -9102,6 +9199,7 @@ def _plan_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_plan_missing_container_registry(art, catalog))
     out.extend(_plan_missing_email_delivery_strategy(art, catalog))
     out.extend(_plan_missing_secret_rotation(art, catalog))
+    out.extend(_plan_no_structured_logging(art, catalog))
     out.extend(_spec_nfr_no_unit(art, catalog))
     out.extend(_spec_nfr_no_load_context(art, catalog))
     return out
