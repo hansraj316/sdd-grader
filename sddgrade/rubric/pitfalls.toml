@@ -1803,6 +1803,17 @@ detect = "Guard: formal-Gherkin mode — at least one When AND one Then line-lea
 fix = "Replace the imperative Then clause with an observable outcome assertion. Examples: 'Then click the Save button' → split into 'When the user clicks Save' (action) and 'Then the record is saved successfully' (observable outcome); 'Then navigate to the dashboard' → 'Then the dashboard page is displayed'; 'Then submit the form' → 'Then the form submission is accepted and a confirmation is shown'. The Then step should describe what the system does in response — a visible state change, a data mutation, an email sent, an HTTP status code — not what the user does next. Reference: Cucumber Gherkin Reference (Then steps describe an observable outcome); MAQA binary-verifiable acceptance-criteria rules; ISO/IEC/IEEE 29148:2018 §5.2.5(c)."
 
 [[pitfall]]
+id = "SPEC-GHERKIN-THEN-WITHOUT-WHEN"
+name = "Gherkin scenario with Then assertion but no When trigger step"
+dimension = "clarity"
+artifacts = ["spec"]
+severity = "high"
+method = "lint"
+why = "Gherkin/Cucumber specification §4.1 defines the scenario structure: Given (precondition), When (action/trigger), Then (expected outcome). A Then step without a When step is an assertion with no described trigger action — the scenario specifies what should happen but not what causes it to happen. This makes the scenario non-automatable: the test harness has nothing to execute before checking the assertion. MAQA binary-verifiable acceptance-criteria rule requires every acceptance criterion to have a specified trigger. ISO/IEC/IEEE 29148:2018 §5.2.5(c) requires requirements to be verifiable; a Then with no trigger is unverifiable because verifiability depends on knowing what stimulus produces the response. Categorically distinct from SPEC-GHERKIN-MISSING-GIVEN (catches a When with no Given — missing precondition state) and SPEC-GHERKIN-NO-THEN (catches a When with no Then — missing assertion). This check catches the complementary gap: a Then with no When — a missing trigger action."
+detect = "Guard: formal-Gherkin mode — at least one non-fenced Then line-leader present in the spec. Per-scenario-block analysis (block bounded by Scenario:/Scenario Outline:/Scenario Template: heading or 2+ consecutive blank lines): fire if the block contains a Then step and contains no When step. One finding per offending block, anchored at the first Then line in that block. Fenced-block lines excluded. Spec-only artifact."
+fix = "Add a 'When <action>' step before the 'Then <outcome>' step in each offending scenario. The When step should describe the action the user or system performs that triggers the outcome asserted by Then. Example: 'Scenario: Payment confirmation\\n  Given the user has items in their cart\\n  When the user submits payment\\n  Then the system shows a confirmation message'. If the scenario has no trigger because the outcome is a passive system state, reconsider whether the scenario belongs in a Background block (a persistent precondition) or should be restructured as a Given+Then with an explicit When action that changes state. Reference: Cucumber/Gherkin documentation §4.1 (Scenario structure); MAQA binary-verifiable acceptance-criteria rule; ISO/IEC/IEEE 29148:2018 §5.2.5(c)."
+
+[[pitfall]]
 id = "SPEC-NFR-SECURITY-NO-MECHANISM"
 name = "Security/safety/confidentiality NFR line with no concrete mechanism named"
 dimension = "clarity"
