@@ -1,9 +1,9 @@
 # SDD-Grader Improvement Loop — State
 
 STATUS: ACTIVE
-Iteration: 160
-Last run: 2026-11-26
-Open loop PRs: 1
+Iteration: 161
+Last run: 2026-11-27
+Open loop PRs: 0
 Consecutive empty research rounds: 0
 
 This file is the loop's only memory between runs. The loop reads it first and writes it
@@ -484,3 +484,4 @@ Tessl, and Spec-Kit extensions/presets.)
 - iter 146 merge (2026-11-12): CI green (test+package both success); squash-merged PR #341 (SPEC-NFR-SCALABILITY-NO-METRIC, issue #339 auto-closed); 0 open loop PRs.
 - iter 148 (2026-11-14): Phase 1 no open loop/* PRs (0). Phase 2 found 0 open loop-candidate issues → Phase 3 research; filed issue #343 (SPEC-NFR-RELIABILITY-UNMEASURED — normative NFR asserts reliability/fault-tolerance/resilience keyword without measurable metric; ISO/IEC 25010:2023 §4.2 (Reliability characteristic distinct from Availability); Volere Canon RF; QVscribe QV-104; ISO 29148 §5.2.5(i); _NFR_RELIABILITY_RE 9-alternative regex + _NFR_RELIABILITY_NUMERIC_RE smart-silence (time units, %, MTBF/MTTR comparisons, error/failure rate + digit, 'less than/at most/under N') + _spec_nfr_reliability_unmeasured() scoped via _requirement_mask()/_fence_mask(); wired after _spec_nfr_scalability_no_metric(); 17 unit tests (8 fire, 9 silent); pytest 2261 green; benchmark good=100.0 bad=50.8 precision=0.984 PASS); PR #344 opened (draft); issue #343 commented. Awaiting CI.
 - iter 148 merge (2026-11-14): CI green (test+package both success); squash-merged PR #344 (SPEC-NFR-RELIABILITY-UNMEASURED, issue #343 auto-closed); 0 open loop PRs.
+- iter 161 (2026-11-27): Phase 1 merged PR #368 (SPEC-GHERKIN-THEN-WITHOUT-WHEN, issue #365 auto-closed) — CI green (test+package both success). Phase 2 found 0 open loop-candidate issues after merge. Phase 3 not triggered (consecutive_empty=0 < 2, iteration not 5th). No new issues created this run. 0 open loop PRs.
