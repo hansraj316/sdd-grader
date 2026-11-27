@@ -8927,6 +8927,81 @@ def _spec_gherkin_then_imperative(
     return findings
 
 
+# SPEC-GHERKIN-THEN-WITHOUT-WHEN: Gherkin scenario block with Then but no When trigger.
+
+
+def _spec_gherkin_then_without_when(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Then step in a scenario block that has no When trigger step (SPEC-GHERKIN-THEN-WITHOUT-WHEN).
+
+    Guard: formal-Gherkin mode — at least one non-fenced Then line-leader present in doc.
+    Per-block: track When and Then step presence. Fire if block has Then but no When.
+    Block boundaries: Scenario:/Scenario Outline: heading or 2+ consecutive blank lines.
+    Fenced blocks excluded. Spec-only.
+    """
+    p = catalog.get("SPEC-GHERKIN-THEN-WITHOUT-WHEN")
+    if p is None or not p.applies_to(art.type):
+        return []
+    raw = art.raw
+    # Guard: at least one Then line-leader present (formal-Gherkin mode).
+    if not _GHERKIN_THEN_RE.search(raw):
+        return []
+    lines = raw.splitlines()
+    fenced = _fence_mask(lines)
+
+    findings: list[Finding] = []
+    block_then_line: int = 0    # 1-indexed first Then line in current block (0 = none)
+    block_has_when: bool = False  # whether current block has a When step
+    blank_streak: int = 0
+
+    def _close_block() -> None:
+        nonlocal block_then_line, block_has_when
+        if block_then_line and not block_has_when:
+            findings.append(
+                _from_pitfall(
+                    p,
+                    art.path,
+                    "SPEC-GHERKIN-THEN-WITHOUT-WHEN: scenario block has a Then assertion "
+                    "but no When trigger step; add a 'When <action>' step before the "
+                    "'Then <outcome>' step so the scenario specifies the trigger action "
+                    "that produces the asserted outcome.",
+                    line=block_then_line,
+                )
+            )
+        block_then_line = 0
+        block_has_when = False
+
+    for i, line in enumerate(lines):
+        if fenced[i]:
+            blank_streak = 0
+            continue
+        stripped = line.strip()
+
+        if not stripped:
+            blank_streak += 1
+            if blank_streak >= 2:
+                _close_block()
+            continue
+        blank_streak = 0
+
+        if _SCENARIO_HEADING_RE.match(line) or _SCENARIO_OUTLINE_RE.match(line):
+            _close_block()
+            continue
+
+        if _GHERKIN_WHEN_RE.match(line):
+            block_has_when = True
+            continue
+
+        if _GHERKIN_THEN_RE.match(line) and block_then_line == 0:
+            block_then_line = i + 1  # 1-indexed, record first Then in block
+
+    # Close any block still open at EOF.
+    _close_block()
+
+    return findings
+
+
 # --------------------------------------------------------------------------- layer 3
 
 def _structural(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
@@ -9111,6 +9186,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_gherkin_given_active_action(art, catalog))
     out.extend(_spec_gherkin_then_multiple_assertions(art, catalog))
     out.extend(_spec_gherkin_then_imperative(art, catalog))
+    out.extend(_spec_gherkin_then_without_when(art, catalog))
     out.extend(_spec_qvscribe_optional_feature(art, catalog))
     return out
 
