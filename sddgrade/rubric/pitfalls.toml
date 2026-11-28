@@ -1935,6 +1935,17 @@ detect = "Guard: spec artifact. Scoped via _requirement_mask() + _fence_mask(). 
 fix = "Replace the bare maintainability assertion with a verifiable metric. Specify a measurement type and target value. Examples: 'NFR-010: The codebase shall maintain a minimum test coverage of 80% as measured by the CI coverage report.' | 'NFR-011: No module shall exceed a cyclomatic complexity of 10 as reported by the static analyser.' | 'NFR-012: The technical debt ratio shall remain below 5% as measured by SonarQube.' Reference: ISO/IEC 25010:2023 Maintainability; ISO 29148 §5.2.5(i) verifiability; Volere Canon Scale/Meter/Must; MAQA completeness."
 
 [[pitfall]]
+id = "SPEC-NFR-RECOVERABILITY-NO-RTO"
+name = "DR/fault-tolerance NFR with no RTO or RPO target"
+dimension = "completeness"
+artifacts = ["spec"]
+severity = "high"
+method = "lint"
+why = "ISO/IEC 25010:2023 §4.2.3.1 defines Recoverability as 'the degree to which, in the event of an interruption or failure, a product or system can recover the data directly affected and re-establish the desired state of the system'. Recoverability is only verifiable when quantified by a Recovery Time Objective (RTO — maximum tolerated downtime) and a Recovery Point Objective (RPO — maximum tolerated data loss). ISO/IEC/IEEE 29148:2018 §5.2.5(i) requires all requirements to be verifiable by finite means: 'NFR-01: The system shall be fault-tolerant' cannot be tested at acceptance because there is no measurable outcome. Canon Volere Scale/Meter/Must template demands a Scale (unit of measure) and Meter (how it is measured) for every quality requirement. Kiro production-readiness gates include explicit documented RTO/RPO. Without numeric targets, architects cannot select the right replication strategy, storage class, or failover topology."
+detect = "Guard: spec artifact only. Scoped via _requirement_mask() + _fence_mask(). Trigger _NFR_RECOVERY_ADJ_RE: normative line contains 'disaster recover', 'fault toleran', 'business continuity', 'failover', 'recoverable', 'self-healing', 'disaster toleran', 'active-active', or 'active-passive' (case-insensitive). Silence _NFR_RTO_RPO_SILENCE_RE: same line contains 'rto', 'rpo', 'recovery time objective', 'recovery point objective', 'within N', a digit followed by a time unit, 'zero data loss', 'no data loss', 'mttr', or 'mtbf'. One finding per offending normative line. Spec-only."
+fix = "Add explicit RTO and RPO targets to the normative requirement. Examples: 'NFR-050: The system shall be fault-tolerant with an RTO of ≤ 4 hours and an RPO of ≤ 1 hour in the event of a single availability-zone failure.' | 'NFR-051: The system shall support active-passive failover. Recovery time objective (RTO): ≤ 15 minutes. Recovery point objective (RPO): zero data loss for completed transactions.' Derive the targets from the business impact analysis and document the measurement method (e.g. DR drill results, automated failover test). Reference: ISO 25010 Recoverability; ISO 29148 §5.2.5(i) verifiability; Canon Volere Scale/Meter/Must; Kiro production-readiness."
+
+[[pitfall]]
 id = "SPEC-QVSCRIBE-OPTIONAL-FEATURE"
 name = "Normative requirement with optional-feature language"
 dimension = "clarity"

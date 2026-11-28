@@ -7986,6 +7986,78 @@ def _spec_nfr_availability_unmeasured(
     return []
 
 
+# SPEC-NFR-RECOVERABILITY-NO-RTO: normative NFR line asserts disaster-recovery,
+# fault-tolerance, or failover without a measurable RTO or RPO target.
+# Sources: ISO 25010 §4.2.3.1 Recoverability; Canon Volere Scale/Meter/Must;
+#          ISO/IEC/IEEE 29148:2018 §5.2.5(i) (verifiable); Kiro production-readiness.
+_NFR_RECOVERY_ADJ_RE = re.compile(
+    r"(?:"
+    r"\bdisaster[\s-]?recover"
+    r"|\bfault[\s-]toleran"
+    r"|\bbusiness[\s-]continuity\b"
+    r"|\bfailover\b"
+    r"|\brecoverable\b"
+    r"|\bself[\s-]?healing\b"
+    r"|\bdisaster[\s-]toleran"
+    r"|\bactive[\s-]active\b"
+    r"|\bactive[\s-]passive\b"
+    r")",
+    re.IGNORECASE,
+)
+_NFR_RTO_RPO_SILENCE_RE = re.compile(
+    r"(?:"
+    r"\brto\b"
+    r"|\brpo\b"
+    r"|\brecovery[\s-]time[\s-]objective\b"
+    r"|\brecovery[\s-]point[\s-]objective\b"
+    r"|\bwithin\s+\d+"
+    r"|\d+\s*(?:minute|hour|second|min|hr|s)\b"
+    r"|\bzero[\s-]data[\s-]loss\b"
+    r"|\bno[\s-]data[\s-]loss\b"
+    r"|\bmttr\b"
+    r"|\bmtbf\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _spec_nfr_recoverability_no_rto(
+    art: Artifact, catalog: dict[str, Pitfall]
+) -> list[Finding]:
+    """Normative NFR line asserts recoverability/DR without RTO or RPO (SPEC-NFR-RECOVERABILITY-NO-RTO).
+
+    ISO 25010 Recoverability and Canon Volere require recovery requirements to
+    specify measurable RTO and/or RPO targets.  ISO 29148 §5.2.5(i): verifiable.
+    Fires once per offending line.  Spec-only.
+    """
+    p = catalog.get("SPEC-NFR-RECOVERABILITY-NO-RTO")
+    if p is None or not p.applies_to(art.type):
+        return []
+    lines = art.raw.splitlines()
+    fenced = _fence_mask(lines)
+    req_mask = _requirement_mask(art, lines)
+    findings: list[Finding] = []
+    for i, (line, in_fence, in_req) in enumerate(zip(lines, fenced, req_mask), start=1):
+        if in_fence or not in_req:
+            continue
+        if not _NFR_RECOVERY_ADJ_RE.search(line):
+            continue
+        if _NFR_RTO_RPO_SILENCE_RE.search(line):
+            continue
+        findings.append(
+            _from_pitfall(
+                p, art.path,
+                "SPEC-NFR-RECOVERABILITY-NO-RTO: normative requirement asserts "
+                "disaster-recovery or fault-tolerance without a measurable RTO or RPO — "
+                "the requirement cannot be verified (ISO 25010 Recoverability; "
+                "ISO 29148 §5.2.5(i); Canon Volere Scale/Meter/Must). "
+                "Add explicit targets, e.g. 'RTO ≤ 4 hours, RPO ≤ 1 hour'.",
+                line=i,
+            )
+        )
+    return findings
+
+
 # SPEC-TBD-PLACEHOLDER: requirement line with TBD/TBC/TODO/FIXME placeholder.
 _TBD_PLACEHOLDER_RE = re.compile(
     r"(?<![`\w])\b(TBD|TBC|TODO|FIXME)\b(?![`\w])",
@@ -9172,6 +9244,7 @@ def _spec_checks(art: Artifact, catalog: dict[str, Pitfall]) -> list[Finding]:
     out.extend(_spec_reference_unresolved(art, catalog))
     out.extend(_spec_qvscribe_indirect_reference(art, catalog))
     out.extend(_spec_nfr_availability_unmeasured(art, catalog))
+    out.extend(_spec_nfr_recoverability_no_rto(art, catalog))
     out.extend(_spec_fr_compound(art, catalog))
     out.extend(_spec_ui_missing_accessibility(art, catalog))
     out.extend(_spec_tbd_placeholder(art, catalog))
